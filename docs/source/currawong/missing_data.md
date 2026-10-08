@@ -37,7 +37,7 @@ To close an item: add the source (see [](procedure.md)), then set the status her
 | ID | Missing | Why it matters | Enters at | Source that would close it | Status |
 |---|---|---|---|---|---|
 | M-08 | **Meaning of Propalyser `u_model`** (relative or absolute, coverage) and the **Monte Carlo level**. Export from a clean Propalyser commit. | The per-point uncertainty of the Ct/Cp table cannot be used until the meaning is known. | `prop.ctcp` dataset | Propalyser spec section on `u_model`. A new export. | closed 2026-10-08: contract B v2 gives absolute 1-sigma columns, Monte Carlo coverage 0.95, export from clean commit 31adc1c |
-| M-13 | **`currawongathenaoutputs.txt`** in the AeroPlan folder. On 2026-10-08 it holds 34 lines of sizing outputs: wing area 0.9745 m^2, span 3.0625 m, MAC 0.3669 m, total mass 8.0228 kg, and scores. | The values differ from the hand config (S 1.0762 m^2, b 3.3 m). It looks like a design-sizing result, not the built aircraft (F-15). | none until its source is known | The tool name and version, and the design it sized. | open |
+| M-13 | **`currawongathenaoutputs.txt`** in the AeroPlan folder. On 2026-10-08 it holds 34 lines of sizing outputs: wing area 0.9745 m^2, span 3.0625 m, MAC 0.3669 m, total mass 8.0228 kg, and scores. | The values differ from the hand config (S 1.0762 m^2, b 3.3 m). It is a design-sizing result, not the built aircraft (F-15). | none | none | closed 2026-10-08: the user says Athena, the old MUAS optimiser, wrote it for the preliminary sizing |
 | M-14 | **Flight data.** None exists. The SITL recording `pdarcs_circuit.csv` was deleted on the user's order (2026-10-08). | Flight data is the only truth source (role `truth`, fidelity L4). | truth datasets | Real flight logs (`.BIN`), test cards, the matching configuration. | open |
 | M-17 | **Ground contact data**: spring, damping, gear geometry. The CAD holds no nose wheel. | Placeholders in the hand config. The structure contacts use 3 times the gear values (old Aerolink rule). | `muas.ground_contacts` on node 1.2.2 | Drop test or measurement. A nose-gear CAD part. | open |
 | M-18 | **Requirements targets.** | Placeholders. The team has not agreed them. The T7 static margin (0.285) is above the target maximum 0.15 (F-12). | ADH requirements on node 1.2 (`muas.target`) | Team decision. | open |
@@ -51,9 +51,8 @@ To close an item: add the source (see [](procedure.md)), then set the status her
 1. A weighing record with the CG, or a statement that none exists (M-02).
 2. The Cube parameter file and the servo data sheet (M-22, M-06).
 3. The blade on the aircraft: Currawong V1 (0.508 m) or a v2 blade (0.57 m) (M-10, F-9).
-4. The origin of `currawongathenaoutputs.txt` (M-13).
-5. Creo mass properties and a parts list (M-03, M-19).
-6. Real flight logs (M-14).
+4. Creo mass properties and a parts list (M-03, M-19).
+5. Real flight logs (M-14).
 
 ## Not yet checked
 

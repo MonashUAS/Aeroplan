@@ -19,7 +19,7 @@ Where each Aerolink data source goes in AeroPlan. Status: **ingested**, **pendin
 | Propalyser `currawongcots.h5` (v1, dirty commit) | none. The adapter refuses version 1 | context | F-5 |
 | Proptimiser `currawong_v2_structural.h5` (contract A) | read by Propalyser only. Not wired to a Propalyser system | pending | F-9 |
 | Aerolink `missions/demo_circuit.json` | `missions/demo_circuit.yaml`, ADH Requirement (category mission) on node 1.2 | ingested | none |
-| `currawong_v5_fuse.stp` (125 MB, not copied) | hash only | context | M-03, M-19 |
+| `currawong_v5_fuse.stp` (125 MB, in `raw/cad/`, git-ignored) | hash only | context | M-03, M-19 |
 | `aircraft/currawong.h5` (Aerolink derived cache) | none. Never an input | not a source | none |
 
 ## Sections of the hand config
@@ -53,7 +53,7 @@ Where each Aerolink data source goes in AeroPlan. Status: **ingested**, **pendin
 | F-12 | Static margin 0.285 from the T7 neutral point (NP x 0.2231 m, CG x 0.1291 m, cbar 0.33 m). The target is 0.05 to 0.15. | T7 file, hand config | A handling requirement fails. The CG is a placeholder (M-02). |
 | F-13 | The flow5 fin ends 0.10 m above the CAD rudder top. The CAD rudder starts 0.035 m below the fin root. | datum check | The visual parts show it. Check the fin in the CAD and in flow5. |
 | F-14 | The CAD has no nose wheel and no boom. | CAD folder | The package has a nose ground contact (hand value) but no nose-wheel part. The boom is a placeholder tube. |
-| F-15 | `currawongathenaoutputs.txt` gives S 0.9745 m^2 and b 3.0625 m. The hand config gives 1.0762 m^2 and 3.3 m. | the file, hand config | Not used. Ask for its source (M-13). |
+| F-15 | `currawongathenaoutputs.txt` gives S 0.9745 m^2 and b 3.0625 m. The hand config gives 1.0762 m^2 and 3.3 m. | the file, hand config. User 2026-10-08: Athena, the old MUAS optimiser, wrote it for the preliminary sizing | Not used. A sizing result is not the built aircraft. |
 
 ## What each dataset holds
 
