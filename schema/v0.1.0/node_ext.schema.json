@@ -1,0 +1,1082 @@
+{
+  "$defs": {
+    "Actuator": {
+      "additionalProperties": false,
+      "description": "Servo of one control surface: a first-order lag and a rate limit (surface deflection, rad).",
+      "properties": {
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Servo make and model, when known",
+          "title": "Model"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "rate_limit_rad_s": {
+          "description": "Largest deflection rate, rad/s",
+          "exclusiveMinimum": 0,
+          "title": "Rate Limit Rad S",
+          "type": "number"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "tau_s": {
+          "description": "First-order lag time constant, s",
+          "exclusiveMinimum": 0,
+          "title": "Tau S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "tau_s",
+        "rate_limit_rad_s",
+        "source"
+      ],
+      "title": "Actuator",
+      "type": "object"
+    },
+    "Autopilot": {
+      "additionalProperties": false,
+      "description": "The flight controller and its output map.",
+      "properties": {
+        "board": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example CubeOrange",
+          "title": "Board"
+        },
+        "firmware": {
+          "description": "For example ArduPlane",
+          "title": "Firmware",
+          "type": "string"
+        },
+        "firmware_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firmware Version"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/ServoOutput"
+          },
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "firmware",
+        "outputs"
+      ],
+      "title": "Autopilot",
+      "type": "object"
+    },
+    "ContactKind": {
+      "enum": [
+        "BOGEY",
+        "STRUCTURE"
+      ],
+      "title": "ContactKind",
+      "type": "string"
+    },
+    "ControlSurface": {
+      "additionalProperties": false,
+      "properties": {
+        "eta_span": {
+          "description": "Span fraction, inboard to outboard",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Eta Span",
+          "type": "array"
+        },
+        "hinge_x_over_c": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Hinge X Over C",
+          "type": "number"
+        },
+        "jsbsim_property": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Jsbsim Property"
+        },
+        "limit_max_rad": {
+          "title": "Limit Max Rad",
+          "type": "number"
+        },
+        "limit_min_rad": {
+          "title": "Limit Min Rad",
+          "type": "number"
+        },
+        "parent": {
+          "description": "muas.instance of the parent surface",
+          "title": "Parent",
+          "type": "string"
+        },
+        "positive_sign": {
+          "title": "Positive Sign",
+          "type": "string"
+        },
+        "s119_name": {
+          "title": "S119 Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parent",
+        "eta_span",
+        "hinge_x_over_c",
+        "limit_min_rad",
+        "limit_max_rad",
+        "positive_sign",
+        "s119_name"
+      ],
+      "title": "ControlSurface",
+      "type": "object"
+    },
+    "Correlation": {
+      "additionalProperties": false,
+      "properties": {
+        "coefficient": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "var_id": {
+          "title": "Var Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var_id",
+        "coefficient"
+      ],
+      "title": "Correlation",
+      "type": "object"
+    },
+    "Distribution": {
+      "enum": [
+        "normal",
+        "uniform",
+        "interval"
+      ],
+      "title": "Distribution",
+      "type": "string"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 Flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "GroundContact": {
+      "additionalProperties": false,
+      "properties": {
+        "damping_N_per_m_s": {
+          "minimum": 0,
+          "title": "Damping N Per M S",
+          "type": "number"
+        },
+        "name": {
+          "pattern": "^[A-Z0-9_]+$",
+          "title": "Name",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "position": {
+          "$ref": "#/$defs/Position"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "spring_N_per_m": {
+          "exclusiveMinimum": 0,
+          "title": "Spring N Per M",
+          "type": "number"
+        },
+        "type": {
+          "$ref": "#/$defs/ContactKind"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "position",
+        "spring_N_per_m",
+        "damping_N_per_m_s",
+        "source"
+      ],
+      "title": "GroundContact",
+      "type": "object"
+    },
+    "Inertia": {
+      "additionalProperties": false,
+      "properties": {
+        "axes": {
+          "default": "parallel_to_design",
+          "title": "Axes",
+          "type": "string"
+        },
+        "ixx": {
+          "title": "Ixx",
+          "type": "number"
+        },
+        "ixy": {
+          "default": 0.0,
+          "title": "Ixy",
+          "type": "number"
+        },
+        "ixz": {
+          "default": 0.0,
+          "title": "Ixz",
+          "type": "number"
+        },
+        "iyy": {
+          "title": "Iyy",
+          "type": "number"
+        },
+        "iyz": {
+          "default": 0.0,
+          "title": "Iyz",
+          "type": "number"
+        },
+        "izz": {
+          "title": "Izz",
+          "type": "number"
+        },
+        "products_convention": {
+          "default": "+integral(xy dm)",
+          "title": "Products Convention",
+          "type": "string"
+        },
+        "units": {
+          "default": "kg*m^2",
+          "title": "Units",
+          "type": "string"
+        },
+        "unverified_products": {
+          "description": "Product terms (for example ixz) stored as written by the source, sign convention unverified",
+          "items": {
+            "type": "string"
+          },
+          "title": "Unverified Products",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ixx",
+        "iyy",
+        "izz"
+      ],
+      "title": "Inertia",
+      "type": "object"
+    },
+    "MassProperties": {
+      "additionalProperties": false,
+      "properties": {
+        "cg": {
+          "$ref": "#/$defs/Position"
+        },
+        "inertia": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Inertia"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mass": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": false,
+          "description": "True when the values are a stand-in, not data",
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "$ref": "#/$defs/MassSource"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uncertainty"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "mass",
+        "cg",
+        "source"
+      ],
+      "title": "MassProperties",
+      "type": "object"
+    },
+    "MassSource": {
+      "enum": [
+        "estimate",
+        "cad",
+        "weighed"
+      ],
+      "title": "MassSource",
+      "type": "string"
+    },
+    "OutputFunction": {
+      "enum": [
+        "aileron",
+        "elevator",
+        "rudder",
+        "throttle"
+      ],
+      "title": "OutputFunction",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "PropRole": {
+      "enum": [
+        "cruise",
+        "lift"
+      ],
+      "title": "PropRole",
+      "type": "string"
+    },
+    "PropellerInstallation": {
+      "additionalProperties": false,
+      "description": "Mount of a propeller or rotor in the design frame (WBS 1.2.3.9).",
+      "properties": {
+        "diameter": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "hub": {
+          "$ref": "#/$defs/Position"
+        },
+        "role": {
+          "$ref": "#/$defs/PropRole"
+        },
+        "spin": {
+          "$ref": "#/$defs/Spin"
+        },
+        "thrust_axis": {
+          "description": "Unit vector, design frame",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Thrust Axis",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role",
+        "hub",
+        "thrust_axis",
+        "spin",
+        "diameter"
+      ],
+      "title": "PropellerInstallation",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "config_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the source does not record a date",
+          "title": "Created"
+        },
+        "geometry_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometry Hash"
+        },
+        "input_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Sha256"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "tool_version",
+        "author"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QualitativeLevel": {
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "QualitativeLevel",
+      "type": "string"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "SafetyFactor": {
+      "additionalProperties": false,
+      "description": "[M&S 29] b: a margin or factor of safety, with what it covers.",
+      "properties": {
+        "covers": {
+          "title": "Covers",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "covers"
+      ],
+      "title": "SafetyFactor",
+      "type": "object"
+    },
+    "ServoOutput": {
+      "additionalProperties": false,
+      "description": "One output channel of the flight controller.\n\n`sign` relates the PWM to the surface: +1 means a PWM above the trim gives a positive deflection in the\nJSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle has no sign.",
+      "properties": {
+        "channel": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Channel",
+          "type": "integer"
+        },
+        "function": {
+          "$ref": "#/$defs/OutputFunction"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "pwm_max_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Max Us"
+        },
+        "pwm_min_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Min Us"
+        },
+        "pwm_trim_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Trim Us"
+        },
+        "reversed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SERVOn_REVERSED on the aircraft. None when not recorded",
+          "title": "Reversed"
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "+1 or -1. Absent for a throttle",
+          "title": "Sign"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "targets": {
+          "description": "muas.instance of each surface or propeller on this output",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Targets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "channel",
+        "function",
+        "targets",
+        "source"
+      ],
+      "title": "ServoOutput",
+      "type": "object"
+    },
+    "Spin": {
+      "enum": [
+        "cw",
+        "ccw"
+      ],
+      "title": "Spin",
+      "type": "string"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "[M&S 28]/[M&S 34]: process and rationale",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "correlations": {
+          "items": {
+            "$ref": "#/$defs/Correlation"
+          },
+          "title": "Correlations",
+          "type": "array"
+        },
+        "covariance_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File that holds a sysID covariance matrix",
+          "title": "Covariance Ref"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability inside lower..upper (interval only)",
+          "title": "Coverage"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Distribution"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/$defs/SafetyFactor"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "num_sigmas": {
+          "default": 1.0,
+          "description": "Sigmas that `sigma` represents (DAVE-ML numSigmas)",
+          "exclusiveMinimum": 0,
+          "title": "Num Sigmas",
+          "type": "number"
+        },
+        "per_point_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Column in the points file that holds sigma",
+          "title": "Per Point Column"
+        },
+        "qualitative_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualitativeLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/UncertaintyScope"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset-level value, in the units of the quantity",
+          "title": "Sigma"
+        },
+        "status": {
+          "$ref": "#/$defs/UncertaintyStatus"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "status",
+        "scope",
+        "basis"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    },
+    "UncertaintyEffect": {
+      "description": "Same values as ADH behavior.UncertaintyEffect (DAVE-ML).",
+      "enum": [
+        "additive",
+        "multiplicative",
+        "percentage",
+        "absolute"
+      ],
+      "title": "UncertaintyEffect",
+      "type": "string"
+    },
+    "UncertaintyMethod": {
+      "enum": [
+        "repeat_scatter",
+        "binning",
+        "grid_study",
+        "tool_spread",
+        "sysid_cov",
+        "measurement_chain",
+        "vendor_spec",
+        "monte_carlo",
+        "engineering"
+      ],
+      "title": "UncertaintyMethod",
+      "type": "string"
+    },
+    "UncertaintyScope": {
+      "description": "[M&S 29] a, b, c.",
+      "enum": [
+        "input",
+        "result",
+        "derived"
+      ],
+      "title": "UncertaintyScope",
+      "type": "string"
+    },
+    "UncertaintyStatus": {
+      "description": "[M&S 33] a, b, c.",
+      "enum": [
+        "quantitative",
+        "qualitative",
+        "unavailable"
+      ],
+      "title": "UncertaintyStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actuator": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Actuator"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "autopilot": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Autopilot"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "control_surface": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ControlSurface"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ext_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Ext Version",
+      "type": "string"
+    },
+    "fidelity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Fidelity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ground_contacts": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/GroundContact"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ground Contacts"
+    },
+    "instance": {
+      "minLength": 1,
+      "title": "Instance",
+      "type": "string"
+    },
+    "mass_properties": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MassProperties"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "propeller": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PropellerInstallation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "provenance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Provenance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "ext_version",
+    "instance"
+  ],
+  "title": "MuasNodeExt",
+  "type": "object"
+}

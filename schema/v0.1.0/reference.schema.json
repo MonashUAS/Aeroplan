@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "Mrp": {
+      "additionalProperties": false,
+      "properties": {
+        "config_id": {
+          "title": "Config Id",
+          "type": "string"
+        },
+        "definition": {
+          "$ref": "#/$defs/MrpDefinition",
+          "default": "nominal_cg"
+        },
+        "mass_properties_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Properties Sha256"
+        },
+        "point": {
+          "$ref": "#/$defs/Position"
+        }
+      },
+      "required": [
+        "config_id",
+        "point"
+      ],
+      "title": "Mrp",
+      "type": "object"
+    },
+    "MrpDefinition": {
+      "enum": [
+        "nominal_cg"
+      ],
+      "title": "MrpDefinition",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "b_ref": {
+      "$ref": "#/$defs/Quantity"
+    },
+    "body_frame": {
+      "const": "FRD",
+      "default": "FRD",
+      "title": "Body Frame",
+      "type": "string"
+    },
+    "c_ref": {
+      "$ref": "#/$defs/Quantity"
+    },
+    "design_frame": {
+      "default": "x_aft_y_right_z_up_m_noseDatum",
+      "enum": [
+        "x_aft_y_right_z_up_m_noseDatum",
+        "x_aft_y_right_z_up_m_flow5Origin"
+      ],
+      "title": "Design Frame",
+      "type": "string"
+    },
+    "euler": {
+      "const": "3-2-1/NED",
+      "default": "3-2-1/NED",
+      "title": "Euler",
+      "type": "string"
+    },
+    "mrp": {
+      "$ref": "#/$defs/Mrp"
+    },
+    "nominal_cg": {
+      "$ref": "#/$defs/Position"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "placeholder_fields": {
+      "description": "Fields whose values are stand-ins",
+      "items": {
+        "type": "string"
+      },
+      "title": "Placeholder Fields",
+      "type": "array"
+    },
+    "s_ref": {
+      "$ref": "#/$defs/Quantity"
+    },
+    "surface_signs": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Surface Signs",
+      "type": "object"
+    }
+  },
+  "required": [
+    "s_ref",
+    "b_ref",
+    "c_ref",
+    "nominal_cg",
+    "mrp"
+  ],
+  "title": "ReferenceData",
+  "type": "object"
+}

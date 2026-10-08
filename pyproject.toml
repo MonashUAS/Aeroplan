@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aeroplan"
+version = "0.1.0"
+description = "ADH-based single source of truth (SSOT) for aircraft data"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2", "pyyaml", "pint", "numpy", "pandas", "pyarrow", "h5py", "lxml"]
+
+[project.optional-dependencies]
+# graphviz, tabulate and IPython are imported by the vendored ADH package
+test = ["pytest", "graphviz", "tabulate", "IPython"]
+
+# docs: same idea as the ADH docs extra (Sphinx and a theme). Markdown through myst-parser.
+docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
+
+[project.scripts]
+aeroplan = "aeroplan.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::pydantic.warnings.PydanticDeprecatedSince20"]
+pythonpath = ["src", "packages/muas_adh/build/src"]

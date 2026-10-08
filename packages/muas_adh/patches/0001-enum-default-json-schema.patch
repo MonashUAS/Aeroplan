@@ -1,0 +1,13 @@
+diff --git a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+index c8e6240..fd93603 100644
+--- a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
++++ b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+@@ -389,7 +389,7 @@ class AsymmetricControl(CommonBaseModel):
+     model_config = {
+         "json_schema_extra": {
+             "example": {
+-                "control_type": ControlType.AILERON,
++                "control_type": ControlType.AILERON.value,
+                 "qty_deflections": 2,
+                 "inboard_aileron_chord_ratio": 0.1,
+                 "outboard_aileron_chord_ratio": 0.2,

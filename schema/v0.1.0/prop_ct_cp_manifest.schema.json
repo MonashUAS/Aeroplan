@@ -1,0 +1,608 @@
+{
+  "$defs": {
+    "Correlation": {
+      "additionalProperties": false,
+      "properties": {
+        "coefficient": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "var_id": {
+          "title": "Var Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var_id",
+        "coefficient"
+      ],
+      "title": "Correlation",
+      "type": "object"
+    },
+    "Distribution": {
+      "enum": [
+        "normal",
+        "uniform",
+        "interval"
+      ],
+      "title": "Distribution",
+      "type": "string"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 Flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "Processing": {
+      "additionalProperties": false,
+      "properties": {
+        "binning": {
+          "title": "Binning",
+          "type": "string"
+        },
+        "n_points": {
+          "minimum": 1,
+          "title": "N Points",
+          "type": "integer"
+        },
+        "n_raw": {
+          "minimum": 0,
+          "title": "N Raw",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "binning",
+        "n_raw",
+        "n_points"
+      ],
+      "title": "Processing",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "config_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the source does not record a date",
+          "title": "Created"
+        },
+        "geometry_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometry Hash"
+        },
+        "input_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Sha256"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "tool_version",
+        "author"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QualitativeLevel": {
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "QualitativeLevel",
+      "type": "string"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "Role": {
+      "enum": [
+        "nominal",
+        "correction",
+        "truth",
+        "validation"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "SafetyFactor": {
+      "additionalProperties": false,
+      "description": "[M&S 29] b: a margin or factor of safety, with what it covers.",
+      "properties": {
+        "covers": {
+          "title": "Covers",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "covers"
+      ],
+      "title": "SafetyFactor",
+      "type": "object"
+    },
+    "ScalarResult": {
+      "additionalProperties": false,
+      "description": "One result with a coverage interval, for example a Propalyser Monte Carlo output (JCGM 101:2008).",
+      "properties": {
+        "coverage": {
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "lower": {
+          "title": "Lower",
+          "type": "number"
+        },
+        "median": {
+          "title": "Median",
+          "type": "number"
+        },
+        "method": {
+          "$ref": "#/$defs/UncertaintyMethod",
+          "default": "monte_carlo"
+        },
+        "units": {
+          "default": "nd",
+          "title": "Units",
+          "type": "string"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "number"
+        }
+      },
+      "required": [
+        "median",
+        "lower",
+        "upper",
+        "coverage"
+      ],
+      "title": "ScalarResult",
+      "type": "object"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "[M&S 28]/[M&S 34]: process and rationale",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "correlations": {
+          "items": {
+            "$ref": "#/$defs/Correlation"
+          },
+          "title": "Correlations",
+          "type": "array"
+        },
+        "covariance_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File that holds a sysID covariance matrix",
+          "title": "Covariance Ref"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability inside lower..upper (interval only)",
+          "title": "Coverage"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Distribution"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/$defs/SafetyFactor"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "num_sigmas": {
+          "default": 1.0,
+          "description": "Sigmas that `sigma` represents (DAVE-ML numSigmas)",
+          "exclusiveMinimum": 0,
+          "title": "Num Sigmas",
+          "type": "number"
+        },
+        "per_point_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Column in the points file that holds sigma",
+          "title": "Per Point Column"
+        },
+        "qualitative_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualitativeLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/UncertaintyScope"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset-level value, in the units of the quantity",
+          "title": "Sigma"
+        },
+        "status": {
+          "$ref": "#/$defs/UncertaintyStatus"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "status",
+        "scope",
+        "basis"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    },
+    "UncertaintyEffect": {
+      "description": "Same values as ADH behavior.UncertaintyEffect (DAVE-ML).",
+      "enum": [
+        "additive",
+        "multiplicative",
+        "percentage",
+        "absolute"
+      ],
+      "title": "UncertaintyEffect",
+      "type": "string"
+    },
+    "UncertaintyMethod": {
+      "enum": [
+        "repeat_scatter",
+        "binning",
+        "grid_study",
+        "tool_spread",
+        "sysid_cov",
+        "measurement_chain",
+        "vendor_spec",
+        "monte_carlo",
+        "engineering"
+      ],
+      "title": "UncertaintyMethod",
+      "type": "string"
+    },
+    "UncertaintyScope": {
+      "description": "[M&S 29] a, b, c.",
+      "enum": [
+        "input",
+        "result",
+        "derived"
+      ],
+      "title": "UncertaintyScope",
+      "type": "string"
+    },
+    "UncertaintyStatus": {
+      "description": "[M&S 33] a, b, c.",
+      "enum": [
+        "quantitative",
+        "qualitative",
+        "unavailable"
+      ],
+      "title": "UncertaintyStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "columns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Columns",
+      "type": "array"
+    },
+    "config_id": {
+      "title": "Config Id",
+      "type": "string"
+    },
+    "data": {
+      "default": "points.parquet",
+      "title": "Data",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "derived": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ScalarResult"
+      },
+      "description": "Scalar results with coverage intervals",
+      "title": "Derived",
+      "type": "object"
+    },
+    "diameter": {
+      "$ref": "#/$defs/Quantity"
+    },
+    "fidelity": {
+      "$ref": "#/$defs/Fidelity"
+    },
+    "kind": {
+      "const": "prop_ct_cp",
+      "default": "prop_ct_cp",
+      "title": "Kind",
+      "type": "string"
+    },
+    "limits": {
+      "description": "Known limits, e.g. the static (J=0) power overstatement",
+      "items": {
+        "type": "string"
+      },
+      "title": "Limits",
+      "type": "array"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "placeholder": {
+      "default": false,
+      "description": "True when the source says its values are a model, not a measurement",
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "processing": {
+      "$ref": "#/$defs/Processing"
+    },
+    "propeller_id": {
+      "title": "Propeller Id",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "role": {
+      "$ref": "#/$defs/Role",
+      "default": "nominal"
+    },
+    "source_tool": {
+      "title": "Source Tool",
+      "type": "string"
+    },
+    "uncertainty": {
+      "$ref": "#/$defs/Uncertainty"
+    },
+    "valid_domain": {
+      "enum": [
+        "static_only",
+        "forward_flight"
+      ],
+      "title": "Valid Domain",
+      "type": "string"
+    },
+    "valid_j": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Advance-ratio range the table covers",
+      "title": "Valid J"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "config_id",
+    "propeller_id",
+    "fidelity",
+    "source_tool",
+    "diameter",
+    "valid_domain",
+    "uncertainty",
+    "processing",
+    "provenance"
+  ],
+  "title": "PropCtCpManifest",
+  "type": "object"
+}

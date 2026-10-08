@@ -1,0 +1,781 @@
+{
+  "$defs": {
+    "AxisSystem": {
+      "enum": [
+        "design",
+        "body",
+        "stability",
+        "wind"
+      ],
+      "title": "AxisSystem",
+      "type": "string"
+    },
+    "Correlation": {
+      "additionalProperties": false,
+      "properties": {
+        "coefficient": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "var_id": {
+          "title": "Var Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var_id",
+        "coefficient"
+      ],
+      "title": "Correlation",
+      "type": "object"
+    },
+    "DatasetInput": {
+      "additionalProperties": false,
+      "properties": {
+        "fixed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "range": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range"
+        },
+        "units": {
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "units"
+      ],
+      "title": "DatasetInput",
+      "type": "object"
+    },
+    "DatasetOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "axis_system": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AxisSystem"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "is_moment": {
+          "default": false,
+          "title": "Is Moment",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sign"
+        },
+        "units": {
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "units"
+      ],
+      "title": "DatasetOutput",
+      "type": "object"
+    },
+    "DatasetReference": {
+      "additionalProperties": false,
+      "properties": {
+        "b_ref_m": {
+          "exclusiveMinimum": 0,
+          "title": "B Ref M",
+          "type": "number"
+        },
+        "c_ref_m": {
+          "exclusiveMinimum": 0,
+          "title": "C Ref M",
+          "type": "number"
+        },
+        "mrp": {
+          "$ref": "#/$defs/Mrp"
+        },
+        "s_ref_m2": {
+          "exclusiveMinimum": 0,
+          "title": "S Ref M2",
+          "type": "number"
+        }
+      },
+      "required": [
+        "s_ref_m2",
+        "b_ref_m",
+        "c_ref_m",
+        "mrp"
+      ],
+      "title": "DatasetReference",
+      "type": "object"
+    },
+    "Distribution": {
+      "enum": [
+        "normal",
+        "uniform",
+        "interval"
+      ],
+      "title": "Distribution",
+      "type": "string"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 Flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "Mrp": {
+      "additionalProperties": false,
+      "properties": {
+        "config_id": {
+          "title": "Config Id",
+          "type": "string"
+        },
+        "definition": {
+          "$ref": "#/$defs/MrpDefinition",
+          "default": "nominal_cg"
+        },
+        "mass_properties_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Properties Sha256"
+        },
+        "point": {
+          "$ref": "#/$defs/Position"
+        }
+      },
+      "required": [
+        "config_id",
+        "point"
+      ],
+      "title": "Mrp",
+      "type": "object"
+    },
+    "MrpDefinition": {
+      "enum": [
+        "nominal_cg"
+      ],
+      "title": "MrpDefinition",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Processing": {
+      "additionalProperties": false,
+      "properties": {
+        "binning": {
+          "title": "Binning",
+          "type": "string"
+        },
+        "n_points": {
+          "minimum": 1,
+          "title": "N Points",
+          "type": "integer"
+        },
+        "n_raw": {
+          "minimum": 0,
+          "title": "N Raw",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "binning",
+        "n_raw",
+        "n_points"
+      ],
+      "title": "Processing",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "config_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the source does not record a date",
+          "title": "Created"
+        },
+        "geometry_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometry Hash"
+        },
+        "input_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Sha256"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "tool_version",
+        "author"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QualitativeLevel": {
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "QualitativeLevel",
+      "type": "string"
+    },
+    "Role": {
+      "enum": [
+        "nominal",
+        "correction",
+        "truth",
+        "validation"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "SafetyFactor": {
+      "additionalProperties": false,
+      "description": "[M&S 29] b: a margin or factor of safety, with what it covers.",
+      "properties": {
+        "covers": {
+          "title": "Covers",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "covers"
+      ],
+      "title": "SafetyFactor",
+      "type": "object"
+    },
+    "Term": {
+      "description": "Build-up term (brief D07).",
+      "enum": [
+        "static",
+        "control",
+        "rate",
+        "power"
+      ],
+      "title": "Term",
+      "type": "string"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "[M&S 28]/[M&S 34]: process and rationale",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "correlations": {
+          "items": {
+            "$ref": "#/$defs/Correlation"
+          },
+          "title": "Correlations",
+          "type": "array"
+        },
+        "covariance_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File that holds a sysID covariance matrix",
+          "title": "Covariance Ref"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability inside lower..upper (interval only)",
+          "title": "Coverage"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Distribution"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/$defs/SafetyFactor"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "num_sigmas": {
+          "default": 1.0,
+          "description": "Sigmas that `sigma` represents (DAVE-ML numSigmas)",
+          "exclusiveMinimum": 0,
+          "title": "Num Sigmas",
+          "type": "number"
+        },
+        "per_point_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Column in the points file that holds sigma",
+          "title": "Per Point Column"
+        },
+        "qualitative_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualitativeLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/UncertaintyScope"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset-level value, in the units of the quantity",
+          "title": "Sigma"
+        },
+        "status": {
+          "$ref": "#/$defs/UncertaintyStatus"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "status",
+        "scope",
+        "basis"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    },
+    "UncertaintyEffect": {
+      "description": "Same values as ADH behavior.UncertaintyEffect (DAVE-ML).",
+      "enum": [
+        "additive",
+        "multiplicative",
+        "percentage",
+        "absolute"
+      ],
+      "title": "UncertaintyEffect",
+      "type": "string"
+    },
+    "UncertaintyMethod": {
+      "enum": [
+        "repeat_scatter",
+        "binning",
+        "grid_study",
+        "tool_spread",
+        "sysid_cov",
+        "measurement_chain",
+        "vendor_spec",
+        "monte_carlo",
+        "engineering"
+      ],
+      "title": "UncertaintyMethod",
+      "type": "string"
+    },
+    "UncertaintyScope": {
+      "description": "[M&S 29] a, b, c.",
+      "enum": [
+        "input",
+        "result",
+        "derived"
+      ],
+      "title": "UncertaintyScope",
+      "type": "string"
+    },
+    "UncertaintyStatus": {
+      "description": "[M&S 33] a, b, c.",
+      "enum": [
+        "quantitative",
+        "qualitative",
+        "unavailable"
+      ],
+      "title": "UncertaintyStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "config_id": {
+      "title": "Config Id",
+      "type": "string"
+    },
+    "data": {
+      "default": "points.parquet",
+      "title": "Data",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "effect": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Effect"
+    },
+    "fidelity": {
+      "$ref": "#/$defs/Fidelity"
+    },
+    "geometry_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Geometry Hash",
+      "type": "string"
+    },
+    "inputs": {
+      "items": {
+        "$ref": "#/$defs/DatasetInput"
+      },
+      "minItems": 1,
+      "title": "Inputs",
+      "type": "array"
+    },
+    "kind": {
+      "const": "aero_point",
+      "default": "aero_point",
+      "title": "Kind",
+      "type": "string"
+    },
+    "nominal_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Nominal Ref"
+    },
+    "notes": {
+      "description": "Source facts a reader needs: sign traps, mappings, doubts",
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/DatasetOutput"
+      },
+      "minItems": 1,
+      "title": "Outputs",
+      "type": "array"
+    },
+    "processing": {
+      "$ref": "#/$defs/Processing"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "raw_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Ref"
+    },
+    "reference": {
+      "$ref": "#/$defs/DatasetReference"
+    },
+    "role": {
+      "$ref": "#/$defs/Role"
+    },
+    "source_tool": {
+      "title": "Source Tool",
+      "type": "string"
+    },
+    "term": {
+      "$ref": "#/$defs/Term",
+      "default": "static"
+    },
+    "uncertainty": {
+      "$ref": "#/$defs/Uncertainty"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "role",
+    "config_id",
+    "geometry_hash",
+    "fidelity",
+    "source_tool",
+    "inputs",
+    "outputs",
+    "reference",
+    "uncertainty",
+    "processing",
+    "provenance"
+  ],
+  "title": "AeroPointManifest",
+  "type": "object"
+}

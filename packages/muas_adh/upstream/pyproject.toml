@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=45","setuptools_scm[toml]>=6.2"]
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+
+[project]
+name = "aircraft_data_hierarchy"
+description = "The Aircraft Data Hierarchy (ADH) is a modern data definition standard for the aerospace vehicle design studies. The ADH enables engineers to exchange information (i.e. geometry, disciplinary tool inputs/outputs, requirements, etc.) between tools using a common data structure and a schema that can be validated."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    {name = "Ranald M Engelbeck"},
+    {email = "ranald.m.engelbeck@boeing.com"},
+    {name = "Eduardo Ocampo"},
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Copyright :: The Boeing Company",
+    "License :: Apache License Version 2.0",
+]
+
+dependencies = [
+    "pydantic >= 2.0",
+    "numpy",
+    "graphviz",
+    "tabulate",
+    "IPython"
+]
+
+dynamic = ["version", "scripts"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+]
+docs = [
+    "sphinx",
+    "jupyter",
+    "autodocsumm",
+    "sphinx-rtd-theme",
+    "sphinx-automodapi",
+    "myst-nb",
+]
+
+[project.urls]
+"Source" = "https://github.com/Boeing/aircraft-data-hierarchy"
+
+[tool.setuptools.packages.find]
+where = ["./src"]
+include = ["aircraft_data_hierarchy*"]
+
+[tool.pytest.ini_options]
+testpaths = "tests"

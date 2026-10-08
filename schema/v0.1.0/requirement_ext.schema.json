@@ -1,0 +1,497 @@
+{
+  "$defs": {
+    "AnalysisPoints": {
+      "additionalProperties": false,
+      "properties": {
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "speeds_mps": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1,
+          "title": "Speeds Mps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "speeds_mps",
+        "source"
+      ],
+      "title": "AnalysisPoints",
+      "type": "object"
+    },
+    "Bound": {
+      "enum": [
+        "min",
+        "max",
+        "target"
+      ],
+      "title": "Bound",
+      "type": "string"
+    },
+    "Jump": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "repeat": {
+          "minimum": 1,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "to": {
+          "title": "To",
+          "type": "string"
+        },
+        "type": {
+          "const": "jump",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "to",
+        "repeat"
+      ],
+      "title": "Jump",
+      "type": "object"
+    },
+    "Land": {
+      "additionalProperties": false,
+      "properties": {
+        "ahead_m": {
+          "title": "Ahead M",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "right_m": {
+          "title": "Right M",
+          "type": "number"
+        },
+        "type": {
+          "const": "land",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "ahead_m",
+        "right_m"
+      ],
+      "title": "Land",
+      "type": "object"
+    },
+    "LoiterToAlt": {
+      "additionalProperties": false,
+      "properties": {
+        "ahead_m": {
+          "title": "Ahead M",
+          "type": "number"
+        },
+        "alt_agl_m": {
+          "title": "Alt Agl M",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "radius_m": {
+          "exclusiveMinimum": 0,
+          "title": "Radius M",
+          "type": "number"
+        },
+        "right_m": {
+          "title": "Right M",
+          "type": "number"
+        },
+        "type": {
+          "const": "loiter_to_alt",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "radius_m",
+        "ahead_m",
+        "right_m",
+        "alt_agl_m"
+      ],
+      "title": "LoiterToAlt",
+      "type": "object"
+    },
+    "LoiterTurns": {
+      "additionalProperties": false,
+      "properties": {
+        "ahead_m": {
+          "title": "Ahead M",
+          "type": "number"
+        },
+        "alt_agl_m": {
+          "title": "Alt Agl M",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "radius_m": {
+          "exclusiveMinimum": 0,
+          "title": "Radius M",
+          "type": "number"
+        },
+        "right_m": {
+          "title": "Right M",
+          "type": "number"
+        },
+        "turns": {
+          "exclusiveMinimum": 0,
+          "title": "Turns",
+          "type": "number"
+        },
+        "type": {
+          "const": "loiter_turns",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "turns",
+        "radius_m",
+        "ahead_m",
+        "right_m",
+        "alt_agl_m"
+      ],
+      "title": "LoiterTurns",
+      "type": "object"
+    },
+    "Mission": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "jump": "#/$defs/Jump",
+                "land": "#/$defs/Land",
+                "loiter_to_alt": "#/$defs/LoiterToAlt",
+                "loiter_turns": "#/$defs/LoiterTurns",
+                "speed": "#/$defs/Speed",
+                "takeoff": "#/$defs/Takeoff",
+                "waypoint": "#/$defs/Waypoint"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Takeoff"
+              },
+              {
+                "$ref": "#/$defs/Speed"
+              },
+              {
+                "$ref": "#/$defs/Waypoint"
+              },
+              {
+                "$ref": "#/$defs/Jump"
+              },
+              {
+                "$ref": "#/$defs/LoiterTurns"
+              },
+              {
+                "$ref": "#/$defs/LoiterToAlt"
+              },
+              {
+                "$ref": "#/$defs/Land"
+              }
+            ]
+          },
+          "minItems": 2,
+          "title": "Items",
+          "type": "array"
+        },
+        "name": {
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Name",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "ArduPilot parameters the mission needs",
+          "title": "Params",
+          "type": "object"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Site name in the Aerolink config. None: chosen at run time",
+          "title": "Site"
+        }
+      },
+      "required": [
+        "name",
+        "items"
+      ],
+      "title": "Mission",
+      "type": "object"
+    },
+    "Speed": {
+      "additionalProperties": false,
+      "properties": {
+        "airspeed_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Airspeed Ms",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "type": {
+          "const": "speed",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "airspeed_ms"
+      ],
+      "title": "Speed",
+      "type": "object"
+    },
+    "Takeoff": {
+      "additionalProperties": false,
+      "properties": {
+        "alt_agl_m": {
+          "exclusiveMinimum": 0,
+          "title": "Alt Agl M",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "pitch_deg": {
+          "title": "Pitch Deg",
+          "type": "number"
+        },
+        "type": {
+          "const": "takeoff",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "pitch_deg",
+        "alt_agl_m"
+      ],
+      "title": "Takeoff",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "bound": {
+          "$ref": "#/$defs/Bound"
+        },
+        "key": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Key",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "units": {
+          "description": "pint spelling, nd for a dimensionless value",
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "key",
+        "value",
+        "bound",
+        "units",
+        "source"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "Waypoint": {
+      "additionalProperties": false,
+      "properties": {
+        "ahead_m": {
+          "title": "Ahead M",
+          "type": "number"
+        },
+        "alt_agl_m": {
+          "title": "Alt Agl M",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "right_m": {
+          "title": "Right M",
+          "type": "number"
+        },
+        "type": {
+          "const": "waypoint",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "ahead_m",
+        "right_m",
+        "alt_agl_m"
+      ],
+      "title": "Waypoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis_points": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnalysisPoints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "mission": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Mission"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "target": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Target"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "RequirementExt",
+  "type": "object"
+}
