@@ -1,0 +1,119 @@
+# flow5 spoke settings for the Currawong (tool settings, not aircraft data).
+# sweep: the sweep folder in flow5/work/currawong/sweeps/ that gives the data (user statement 2026-10-08:
+#   "currawongv5_testfuse is the aircraft for ground truth"). sweep_date: the run date of that sweep (2026-10-04,
+#   the old inventory note "run by the Aerolink sweep runner on 2026-10-04"; the export does not record it).
+# surfaces: flow5 surface name -> the ADH node. The horizontal tail and the fin are subcomponents of 1.2.2.4.1
+#   Stabilizer (ADH has one Stabilizer node).
+# mesh: the panel counts of plane_with_body.xml of that sweep, used by `aeroplan generate flow5`.
+sweep: currawongv5_testfuse
+sweep_date: '2026-10-04'
+foils: plane
+surfaces:
+  Main Wing:
+    node: 1.2.2.3
+    instance: wing_main
+  Elevator:
+    node: 1.2.2.4.1
+    instance: htail
+    subcomponent: true
+    name: Horizontal tail
+  Fin:
+    node: 1.2.2.4.1
+    instance: fin
+    subcomponent: true
+    name: Fin
+body:
+  node: 1.2.2.2
+  instance: fuselage
+mesh:
+  surfaces:
+    Main Wing:
+      tip_strips: 20
+      sections:
+      - x_panels: 10
+        x_dist: UNIFORM
+        y_panels: 60
+        y_dist: UNIFORM
+      - x_panels: 10
+        x_dist: UNIFORM
+        y_panels: 15
+        y_dist: UNIFORM
+      - x_panels: 10
+        x_dist: UNIFORM
+        y_panels: 15
+        y_dist: UNIFORM
+      - x_panels: 10
+        x_dist: UNIFORM
+        y_panels: 30
+        y_dist: UNIFORM
+      - x_panels: 10
+        x_dist: UNIFORM
+        y_panels: 7
+        y_dist: UNIFORM
+    Elevator:
+      tip_strips: 10
+      sections:
+      - x_panels: 20
+        x_dist: TANH
+        y_panels: 48
+        y_dist: UNIFORM
+      - x_panels: 20
+        x_dist: TANH
+        y_panels: 8
+        y_dist: UNIFORM
+      - x_panels: 20
+        x_dist: TANH
+        y_panels: 5
+        y_dist: INV_EXP
+    Fin:
+      tip_strips: 10
+      sections:
+      - x_panels: 20
+        x_dist: TANH
+        y_panels: 80
+        y_dist: TANH
+      - x_panels: 20
+        x_dist: TANH
+        y_panels: 5
+        y_dist: TANH
+  body:
+    name: Fuselage
+    type: FLATPANELS
+    x_panels:
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    panel_stripes:
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2

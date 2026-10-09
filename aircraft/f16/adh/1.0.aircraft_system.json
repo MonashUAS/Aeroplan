@@ -1,0 +1,20 @@
+{
+  "wbs_no": "1.0",
+  "name": "F16",
+  "description": "F16 aircraft system",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "aircraft_system",
+    "build": {
+      "aeroplan_commit": "d087cd369e698db3cc3027b328c58778e0c50233",
+      "aeroplan_dirty": true,
+      "built": "2026-10-10",
+      "author": "Liam M.",
+      "version": "0.1.1",
+      "spokes": {
+        "DAVEML": "5 changes"
+      },
+      "placeholder_items": []
+    }
+  }
+}

@@ -1,0 +1,908 @@
+{
+  "wbs_no": "1.2",
+  "name": "AirVehicle",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "currawong_airvehicle",
+    "mass_properties": {
+      "mass": {
+        "value": 8.28,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.129092,
+          0.0,
+          -0.00907274
+        ],
+        "units": "m"
+      },
+      "inertia": {
+        "axes": "parallel_to_design",
+        "products_convention": "+integral(xy dm)",
+        "ixx": 1.46096,
+        "iyy": 1.52318,
+        "izz": 2.90882,
+        "ixy": 0.0,
+        "ixz": 0.131289,
+        "iyz": 0.0,
+        "units": "kg*m^2",
+        "unverified_products": [
+          "ixz"
+        ]
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "The custom inertia of the flow5 T7 analysis t7_reference.xml (sweep currawongv5_testfuse). It is a typed mass model, not a weighing or a CAD mass report.",
+        "flow5 does not document its Ixz sign convention in the export: Ixz is not verified."
+      ]
+    },
+    "reference": {
+      "design_frame": "x_aft_y_right_z_up_m_flow5Origin",
+      "body_frame": "FRD",
+      "euler": "3-2-1/NED",
+      "s_ref": {
+        "value": 1.0762,
+        "units": "m ** 2"
+      },
+      "b_ref": {
+        "value": 3.3,
+        "units": "m"
+      },
+      "c_ref": {
+        "value": 0.33,
+        "units": "m"
+      },
+      "nominal_cg": {
+        "frame": "design",
+        "xyz": [
+          0.129092,
+          0.0,
+          -0.00907274
+        ],
+        "units": "m"
+      },
+      "mrp": {
+        "definition": "nominal_cg",
+        "config_id": "currawong.nominal",
+        "point": {
+          "frame": "design",
+          "xyz": [
+            0.129092,
+            0.0,
+            -0.00907274
+          ],
+          "units": "m"
+        }
+      },
+      "surface_signs": {
+        "elevator": "trailing edge down positive",
+        "aileron": "positive rolls right",
+        "rudder": "trailing edge left positive"
+      },
+      "placeholder_fields": [
+        "nominal_cg",
+        "mrp"
+      ],
+      "notes": [
+        "S, b and c: the CUSTOM reference dimensions of the flow5 T7 analysis t7_reference.xml.",
+        "The design frame origin is the flow5 origin. Its offset from the nose is not recorded.",
+        "MRP = the CoG of the T7 analysis (the nominal CG). It is a mass model value (placeholder)."
+      ]
+    },
+    "initial_conditions": {
+      "rate_frame": "local_NED",
+      "latitude_type": "geodetic",
+      "attitude_sequence": "3-2-1",
+      "units": "SI",
+      "values": {
+        "speed_mps": 12.0958,
+        "altitude_m": 0.0
+      },
+      "placeholder": true
+    },
+    "datasets": [
+      {
+        "role": "aero",
+        "ref": "asset:sha256:04085caf84514f034e4a5d8649b22041ad2422d2df0583e07004a7a9ab23b6e8"
+      }
+    ],
+    "aero_settings": {
+      "cl_max": 1.3,
+      "cl_min": -0.6,
+      "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (dml/aero.dml, description of the CL table: hand config stall, from the retired hand config)",
+      "placeholder": true
+    },
+    "point_masses": [
+      {
+        "tag": "LG-MAIN",
+        "mass": {
+          "value": 0.6,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.16,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass LG-MAIN",
+        "placeholder": true
+      },
+      {
+        "tag": "LG-FRONT",
+        "mass": {
+          "value": 0.25,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.627,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass LG-FRONT",
+        "placeholder": true
+      },
+      {
+        "tag": "MOTOR",
+        "mass": {
+          "value": 0.5,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.617,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass MOTOR",
+        "placeholder": true
+      },
+      {
+        "tag": "PROP",
+        "mass": {
+          "value": 0.075,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.643,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass PROP",
+        "placeholder": true
+      },
+      {
+        "tag": "ESC",
+        "mass": {
+          "value": 0.21,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.51,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass ESC",
+        "placeholder": true
+      },
+      {
+        "tag": "BATTERY",
+        "mass": {
+          "value": 0.85,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.51,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass BATTERY",
+        "placeholder": true
+      },
+      {
+        "tag": "TANK",
+        "mass": {
+          "value": 1.3,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.053,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass TANK",
+        "placeholder": true
+      },
+      {
+        "tag": "Ballast",
+        "mass": {
+          "value": 1.0,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.2,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "flow5 plane Currawongv5_n0012-3 point mass Ballast",
+        "placeholder": true
+      }
+    ],
+    "sources": [
+      {
+        "tool": "OpenVSP",
+        "asset": "asset:sha256:5fc8d9283fc82fac91d9fb870a7e5c1fe29c04b322f3e16930b38134ee8f5fef",
+        "role": "OpenVSP model (the member's changed copy)"
+      },
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:69c089c2a8211b6152006f1d9fcd4b4e84701fe55ff92854a40d73716155bc3a",
+        "role": "initial sizing outputs (Athena)"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+        "role": "plane definition of the sweep (wings, body, point masses)"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:7da60e326b076e7e3db948e3064ee1c1a04ef9243a31fb66b154ead72b3301e5",
+        "role": "T7 analysis: reference dimensions and the custom mass model"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:7fc7cb5e4e1b4d8532e0269031ffbeb69421757a08e61670f634b511fa480ef7",
+        "role": "T7 point: stability derivatives and trim"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:539af3bd4ab7bc637d3b448ab7b37776998b29edca0025a8cbfa44f258daa7a5",
+        "role": "viscous alpha polar: CD0 and K"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:57e996d516e7798020b3fb459f9a1bbec6ce3599223ac7b7a7693815c1fa277a",
+        "role": "sweep results: control derivatives and validation"
+      }
+    ]
+  },
+  "performance": [
+    {
+      "name": "sizing",
+      "description": "Initial sizing of the aircraft (the first design stage). Unit checks: b^2/S = 9.6243 = AR 9.6243: S in m^2 and b in m (or both in one other unit); the mass parts sum to m_total 8.0228; C_D_i + C_D_o = C_D; C_L / C_D = glide ratio",
+      "tools": [
+        {
+          "model_name": "Athena initial sizing",
+          "generation_tool": "AeroSandbox (Athena sizing scripts)",
+          "description": "Printout of the sizing scripts. The printout gives no units: see units_basis of each output (AeroPlan AeroSandbox/spoke.py).",
+          "data_exchange": {
+            "model_identifier": "athena",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "Take-off distance",
+                "value": 21.7809,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Climb angle",
+                "value": 31.7518,
+                "units": "deg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Glide ratio",
+                "value": 8.4776,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Max speed",
+                "value": 34.579,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Min speed",
+                "value": 9.9304,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing angle",
+                "value": 31.7518,
+                "units": "deg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing distance",
+                "value": 19.8608,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Flight distance",
+                "value": 8.4,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "Specific energy consumption",
+                "value": 92.1399,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "Payload mass",
+                "value": 0.9772,
+                "units": "kg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Payload volume",
+                "value": 0.0011,
+                "units": "m^3",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Wing area",
+                "value": 0.9745,
+                "units": "m^2",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Wing span",
+                "value": 3.0625,
+                "units": "m",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Aspect ratio",
+                "value": 9.6243,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D",
+                "value": 0.0678,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D_i",
+                "value": 0.0109,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D_o",
+                "value": 0.0569,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_L",
+                "value": 0.575,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Cruise speed",
+                "value": 17.5,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Energy consumed",
+                "value": 90.0358,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "m_avionics",
+                "value": 0.8,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_misc",
+                "value": 1.2673,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_fuselage",
+                "value": 0.8788,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_wing",
+                "value": 0.894,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_batteries",
+                "value": 0.905,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_propulsion",
+                "value": 0.63,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_spars",
+                "value": 2.501,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_payload_tank",
+                "value": 0.1466,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_total",
+                "value": 8.0228,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Root chord",
+                "value": 0.4052,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "MAC length",
+                "value": 0.3669,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "MAC location",
+                "value": 1.2997,
+                "units": "m",
+                "units_basis": "unknown datum"
+              },
+              {
+                "name": "Take off points",
+                "value": 10.0113,
+                "units": "nd",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing points",
+                "value": 40.3074,
+                "units": "nd",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Energy efficiency points",
+                "value": 30.2559,
+                "units": "nd",
+                "units_basis": "magnitude"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "acceptance_criteria": "The aircraft flies every item and lands. The flight ends disarmed.",
+      "category": "mission",
+      "description": "Mission profile demo_circuit",
+      "muas": {
+        "mission": {
+          "items": [
+            {
+              "alt_agl_m": 50.0,
+              "pitch_deg": 12.0,
+              "type": "takeoff"
+            },
+            {
+              "airspeed_ms": 12.75,
+              "type": "speed"
+            },
+            {
+              "ahead_m": 300.0,
+              "alt_agl_m": 80.0,
+              "label": "north_leg",
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 300.0,
+              "alt_agl_m": 80.0,
+              "right_m": 250.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 0.0,
+              "alt_agl_m": 80.0,
+              "right_m": 250.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 0.0,
+              "alt_agl_m": 80.0,
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "repeat": 1,
+              "to": "north_leg",
+              "type": "jump"
+            },
+            {
+              "ahead_m": 150.0,
+              "alt_agl_m": 100.0,
+              "radius_m": 60.0,
+              "right_m": 125.0,
+              "turns": 2.0,
+              "type": "loiter_turns"
+            },
+            {
+              "ahead_m": 150.0,
+              "alt_agl_m": 20.0,
+              "radius_m": 60.0,
+              "right_m": 125.0,
+              "type": "loiter_to_alt"
+            },
+            {
+              "ahead_m": -330.0,
+              "alt_agl_m": 20.0,
+              "label": "approach",
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": -60.0,
+              "right_m": 0.0,
+              "type": "land"
+            }
+          ],
+          "name": "demo_circuit",
+          "notes": [],
+          "params": {
+            "AIRSPEED_CRUISE": 12.75,
+            "LAND_FLARE_ALT": 2.0,
+            "LAND_FLARE_SEC": 1.5,
+            "TECS_LAND_ARSPD": 13.0,
+            "TECS_LAND_SINK": 0.6,
+            "WP_LOITER_RAD": 60.0,
+            "WP_RADIUS": 35.0
+          }
+        }
+      },
+      "name": "mission:demo_circuit",
+      "priority": "medium",
+      "status": "draft",
+      "verification_method": "SITL run, then flight test"
+    },
+    {
+      "acceptance_criteria": "static_margin_min is at least 0.05 nd.",
+      "category": "handling",
+      "description": "Handling target static_margin_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "static_margin_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:static_margin_min, from the retired hand config). Was: hand config requirements.static_margin_min",
+          "units": "nd",
+          "value": 0.05
+        }
+      },
+      "name": "handling:static_margin_min",
+      "priority": "medium",
+      "source": "hand config requirements.static_margin_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "static_margin_max is at most 0.15 nd.",
+      "category": "handling",
+      "description": "Handling target static_margin_max",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "static_margin_max",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:static_margin_max, from the retired hand config). Was: hand config requirements.static_margin_max",
+          "units": "nd",
+          "value": 0.15
+        }
+      },
+      "name": "handling:static_margin_max",
+      "priority": "medium",
+      "source": "hand config requirements.static_margin_max",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "htail_volume is equal to 0.65 nd.",
+      "category": "sizing",
+      "description": "Sizing target htail_volume",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "htail_volume",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:htail_volume, from the retired hand config). Was: hand config requirements.htail_volume",
+          "units": "nd",
+          "value": 0.65
+        }
+      },
+      "name": "sizing:htail_volume",
+      "priority": "medium",
+      "source": "hand config requirements.htail_volume",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "vtail_volume is equal to 0.05 nd.",
+      "category": "sizing",
+      "description": "Sizing target vtail_volume",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "vtail_volume",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:vtail_volume, from the retired hand config). Was: hand config requirements.vtail_volume",
+          "units": "nd",
+          "value": 0.05
+        }
+      },
+      "name": "sizing:vtail_volume",
+      "priority": "medium",
+      "source": "hand config requirements.vtail_volume",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "bank_angle_deg is equal to 30 deg.",
+      "category": "sizing",
+      "description": "Sizing target bank_angle_deg",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "bank_angle_deg",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:bank_angle_deg, from the retired hand config). Was: hand config requirements.bank_angle_deg",
+          "units": "deg",
+          "value": 30.0
+        }
+      },
+      "name": "sizing:bank_angle_deg",
+      "priority": "medium",
+      "source": "hand config requirements.bank_angle_deg",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "bank_time_s is at most 2 s.",
+      "category": "sizing",
+      "description": "Sizing target bank_time_s",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "bank_time_s",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:bank_time_s, from the retired hand config). Was: hand config requirements.bank_time_s",
+          "units": "s",
+          "value": 2.0
+        }
+      },
+      "name": "sizing:bank_time_s",
+      "priority": "medium",
+      "source": "hand config requirements.bank_time_s",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "vne_ms is equal to 20 m/s.",
+      "category": "sizing",
+      "description": "Sizing target vne_ms",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "vne_ms",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:vne_ms, from the retired hand config). Was: hand config requirements.vne_ms",
+          "units": "m/s",
+          "value": 20.0
+        }
+      },
+      "name": "sizing:vne_ms",
+      "priority": "medium",
+      "source": "hand config requirements.vne_ms",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "servo_safety_factor is equal to 2 nd.",
+      "category": "sizing",
+      "description": "Sizing target servo_safety_factor",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "servo_safety_factor",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:servo_safety_factor, from the retired hand config). Was: hand config requirements.servo_safety_factor",
+          "units": "nd",
+          "value": 2.0
+        }
+      },
+      "name": "sizing:servo_safety_factor",
+      "priority": "medium",
+      "source": "hand config requirements.servo_safety_factor",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "short_period_zeta_min is at least 0.3 nd.",
+      "category": "handling",
+      "description": "Handling target short_period_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "short_period_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:short_period_zeta_min, from the retired hand config). Was: hand config requirements.short_period_zeta_min",
+          "units": "nd",
+          "value": 0.3
+        }
+      },
+      "name": "handling:short_period_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.short_period_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "short_period_zeta_max is at most 1.3 nd.",
+      "category": "handling",
+      "description": "Handling target short_period_zeta_max",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "short_period_zeta_max",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:short_period_zeta_max, from the retired hand config). Was: hand config requirements.short_period_zeta_max",
+          "units": "nd",
+          "value": 1.3
+        }
+      },
+      "name": "handling:short_period_zeta_max",
+      "priority": "medium",
+      "source": "hand config requirements.short_period_zeta_max",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "phugoid_zeta_min is at least 0.04 nd.",
+      "category": "handling",
+      "description": "Handling target phugoid_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "phugoid_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:phugoid_zeta_min, from the retired hand config). Was: hand config requirements.phugoid_zeta_min",
+          "units": "nd",
+          "value": 0.04
+        }
+      },
+      "name": "handling:phugoid_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.phugoid_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "dutch_roll_zeta_min is at least 0.2 nd.",
+      "category": "handling",
+      "description": "Handling target dutch_roll_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "dutch_roll_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:dutch_roll_zeta_min, from the retired hand config). Was: hand config requirements.dutch_roll_zeta_min",
+          "units": "nd",
+          "value": 0.2
+        }
+      },
+      "name": "handling:dutch_roll_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.dutch_roll_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "roll_mode_tau_max_s is at most 1 s.",
+      "category": "handling",
+      "description": "Handling target roll_mode_tau_max_s",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "roll_mode_tau_max_s",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:roll_mode_tau_max_s, from the retired hand config). Was: hand config requirements.roll_mode_tau_max_s",
+          "units": "s",
+          "value": 1.0
+        }
+      },
+      "name": "handling:roll_mode_tau_max_s",
+      "priority": "medium",
+      "source": "hand config requirements.roll_mode_tau_max_s",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "A linear model exists at each airspeed.",
+      "category": "analysis",
+      "description": "Airspeeds of the linear model family (gain-scheduling study)",
+      "muas": {
+        "analysis_points": {
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement analysis:speeds, from the retired hand config). Was: hand config analysis_points.speeds_ms",
+          "speeds_mps": [
+            11.5,
+            12.75,
+            15.0,
+            17.5,
+            20.0
+          ]
+        }
+      },
+      "name": "analysis:speeds",
+      "priority": "medium",
+      "source": "hand config analysis_points.speeds_ms",
+      "status": "draft",
+      "verification_method": "analysis"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "wbs_no": "1.2.3.9",
+  "name": "PropellerOrFanInstallation",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "prop_cruise",
+    "fidelity": "L0",
+    "propeller": {
+      "role": "cruise",
+      "hub": {
+        "frame": "design",
+        "xyz": [
+          -0.656,
+          0.0,
+          -0.035
+        ],
+        "units": "m"
+      },
+      "thrust_axis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "spin": "cw",
+      "diameter": {
+        "value": 0.508,
+        "units": "m"
+      }
+    },
+    "datasets": [
+      {
+        "role": "propulsion",
+        "ref": "asset:sha256:8fb7ae956a9e6e4497b44380c6caaf4aa59c9ff120a1d1098359e624ec797fbb"
+      }
+    ],
+    "visual": [
+      {
+        "part": "propeller",
+        "mesh": {
+          "tool": "CREO",
+          "asset": "asset:sha256:087029f9c76dee9abc59e245996cf55ff405cef4d8c1828d33ed2d08d43726ac",
+          "role": "CAD mesh of propeller"
+        },
+        "units": "mm",
+        "transform": {
+          "axes": [
+            "-z",
+            "-x",
+            "y"
+          ],
+          "origin_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "source": "Creo export propeller.stl with the CREO settings transform",
+        "placeholder": false
+      }
+    ],
+    "propulsion_system": {
+      "system_id": "currawongcustom",
+      "basis": "stand",
+      "p_max": {
+        "value": 2200.2094742172785,
+        "units": "kg * m ** 2 / s ** 3"
+      },
+      "diameter": {
+        "value": 0.508,
+        "units": "m"
+      },
+      "blades": 2,
+      "ixx": {
+        "value": 0.0008,
+        "units": "kg * m ** 2"
+      },
+      "model": "Currawong V1 (Proptimiser, commit 588118a)",
+      "warnings": [
+        "Ct(J) and Cp(J) are an unsourced generic shape scaled to the static test, not measured (J > 0). The file is a placeholder.",
+        "The rpm is a model estimate from the torque (kappa 1.066, R_tot 0.156 ohm from the vendor datasheet; V_bus 44.4 V +/- 3.5 V from the cell limits).",
+        "Type B inputs at their default: air_density (ISA value, not measured), load_cell_rel, torque_sensor_rel.",
+        "No idle rows. The tare comes from the rows at the lowest throttle (20 %).",
+        "Air density is the ISA sea-level value. Add the test block to run.yaml to use the measured value.",
+        "The stand throttle (%) is taken as the normalized ESC command (linear in PWM between pwm_low and pwm_high).",
+        "The rows of this run were typed by hand. Thrust and torque have coarse steps.",
+        "M1 (model table against the rows (command 30 % and above)): The RMS gap 0.077 (max 0.161) exceeds the combined band 0.009. Gaps are in power fraction.",
+        "C1 (thrust and torque calibration): No calibration date in run.yaml. The intervals hold only the default sensor gain errors.",
+        "D3 skip: The rpm channel of this run is missing. The rpm is a model estimate.",
+        "D4 skip: The rpm channel of this run is missing. The rpm is a model estimate.",
+        "P4 inconclusive: Figure of merit, peak eta, tip Mach (95 % intervals)",
+        "P8 skip: No valid electrical data (current must exceed 1 A and voltage must reach 23.0 V). Efficiency and the battery link are not available.",
+        "R2 inconclusive: Ct0 goes with 1/n^2 and Cp0 with 1/n^3, so the intervals of Ct0 and Cp0 are wide."
+      ],
+      "source": {
+        "tool": "Propalyser",
+        "asset": "asset:sha256:9793769e78810d3936fa544e4da841eb6e173bffb7cfb816ec9af3fb9a974472",
+        "role": "contract B file of the propulsion system currawongcustom"
+      },
+      "placeholder": true
+    }
+  },
+  "description": "Currawong cruise propeller of the system currawongcustom. Diameter: the contract B file. Hub: hand config propulsion.thrust_xyz. Spin: hand config propulsion.spin (CAD blade pitch)."
+}

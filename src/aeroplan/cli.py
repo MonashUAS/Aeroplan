@@ -1,154 +1,252 @@
-"""aeroplan command line. P0 commands: schema, validate, compile-config."""
+"""aeroplan command line.
+
+    aeroplan build <aircraft> --author NAME    run the spokes and write the source tree aircraft/<aircraft>/
+    aeroplan check <aircraft>                  every check: ADH tree, datasets (DAVE-ML), datums, consumers
+    aeroplan show <aircraft>                   print the ADH tree and the asset register
+    aeroplan pack <aircraft> --profile P       write dist/<aircraft>-<version>-<P>.muas (a ZIP package)
+    aeroplan unpack <file.muas> <folder>       check a package and write its source tree into <folder>
+    aeroplan verify <file.muas>                check a package: mimetype, every hash, the package hash
+    aeroplan generate <spoke> <aircraft>       write the tool input files of a spoke from the source tree
+    aeroplan export <spoke> <aircraft> <out>   write the tool files of a spoke (Aerolink: the aerolink package)
+    aeroplan spokes [<aircraft>]               list the spokes and the input in their work folders
+    aeroplan setup <spoke> [<aircraft>]        make the tool runtime of a spoke on this machine (OpenVSP)
+    aeroplan schema --out schema               export the JSON Schema of the MUAS types
+"""
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-from .adapters import REGISTRY
-from .config import compile_yaml, roundtrip_ok
-from .muas.node import validate_node
-from .schema_export import export_schemas
+
+def _build(args) -> int:
+    from .build import build
+
+    res = build(args.aircraft, author=args.author, version=args.version, new=args.new, only=args.only,
+                dry_run=args.dry_run, consumers=args.consumers)
+    for name, changes in res.changes.items():
+        print(f"{name}:")
+        for c in changes:
+            print(f"  {c}")
+    if res.skipped:
+        print(f"no input: {', '.join(res.skipped)}")
+    print("\nDatum checks:\n" + res.datum.text())
+    print(f"\n{len(res.placeholders)} values are marked placeholder (aeroplan show {args.aircraft} --placeholders).")
+    if res.missing_for_flight:
+        print("Not flight ready for Aerolink. Missing:\n  " + "\n  ".join(res.missing_for_flight))
+    else:
+        print("Flight ready: Aerolink has every item it needs.")
+    print(("dry run, nothing written" if args.dry_run else f"wrote {res.path}") + f" (version {res.version})")
+    return 0
 
 
-def _validate(args) -> int:
-    failed = 0
-    for path in args.files:
-        try:
-            validate_node(json.loads(Path(path).read_text(encoding="utf-8")))
-            print(f"ok    {path}")
-        except Exception as e:
-            failed += 1
-            print(f"FAIL  {path}: {e}", file=sys.stderr)
-    return 1 if failed else 0
+def _check(args) -> int:
+    from .build import load_aircraft
+    from .checks import run
+    from .spokes import repo_root
+
+    rep = run(load_aircraft(args.aircraft), repo_root())
+    print(rep.text())
+    print("\nAll checks pass." if rep.passed else f"\n{len(rep.failures)} checks fail.")
+    return 0 if rep.passed else 1
 
 
-def _compile_config(args) -> int:
-    dst = compile_yaml(Path(args.src), Path(args.dst))
-    if not roundtrip_ok(Path(args.src), dst):
-        print("round-trip failed", file=sys.stderr)
-        return 1
-    print(f"wrote {dst}")
+def _show(args) -> int:
+    from . import adh_doc, assets
+    from .build import load_aircraft, placeholders
+
+    acft = load_aircraft(args.aircraft)
+    doc = acft.doc
+    if args.placeholders:
+        for p in placeholders(doc):
+            print(p)
+        return 0
+    for path, item, parent in adh_doc.iter_nodes(doc):
+        depth = path.count(".") + path.count("subcomponents")
+        m = item.get("muas") or {}
+        keys = [k for k in m if k not in ("ext_version", "instance")]
+        label = f"{item.get('wbs_no', '')} {item.get('name', '')}".strip() if parent is None else f"- {item.get('name')}"
+        extra = []
+        if item.get("geometry"):
+            extra.append("geometry: " + ", ".join(item["geometry"]))
+        if item.get("requirements"):
+            extra.append(f"{len(item['requirements'])} requirements")
+        if item.get("performance"):
+            extra.append("performance: " + ", ".join(d.get("name", "?") for d in item["performance"]))
+        if m.get("datasets"):
+            extra.append("datasets: " + ", ".join(d["role"] for d in m["datasets"]))
+        print(f"{'  ' * depth}{label} [{m.get('instance', '')}]  {' '.join(keys)}  {'; '.join(extra)}")
+    print("\nAsset register (1.10.2):")
+    for e in assets.register(doc, create=False):
+        print(f"  {e['kind']:7s} {e['name']:45s} {e['size']:>9d} B  {e['id'][13:25]}  {e['role']}")
+    b = (doc.get("muas") or {}).get("build")
+    if b:
+        print(f"\nversion {b['version']}, built {b['built']} by {b['author']}, AeroPlan {b['aeroplan_commit'][:10]}"
+              f"{' (dirty)' if b['aeroplan_dirty'] else ''}")
+    return 0
+
+
+def _pack(args) -> int:
+    from .build import load_aircraft
+    from .package import open_package, pack
+    from .spokes import repo_root
+
+    acft = load_aircraft(args.aircraft)
+    for profile in args.profile:
+        out = pack(acft, profile, repo_root(), Path(args.out))
+        m = open_package(out).manifest
+        print(f"wrote {out} ({len(m['files'])} files, package hash {m['package_hash'][:16]})")
+    return 0
+
+
+def _unpack(args) -> int:
+    from .package import unpack
+    from .spokes import repo_root
+
+    for n in unpack(Path(args.file), Path(args.folder), repo_root()):
+        print(n)
+    print(f"wrote the source tree {args.folder}")
+    return 0
+
+
+def _verify(args) -> int:
+    from . import assets
+    from .package import open_package
+    from .spokes import repo_root
+
+    pkg = open_package(Path(args.file))
+    m = pkg.manifest
+    print(f"{Path(args.file).name}: {m['kind']} {m['aircraft']} {m['version']}, profile {m['profile']}, "
+          f"format {m['format']} {m['format_version']}")
+    print(f"pass  mimetype, {len(m['files'])} file hashes, package hash {m['package_hash']}")
+    tiers = {}
+    for e in assets.register(pkg.doc, create=False):
+        tiers.setdefault(e.get("storage", "?"), []).append(e)
+    for t, es in sorted(tiers.items()):
+        print(f"      {t}: {len(es)} assets")
+    missing = []
+    for e in tiers.get("linked", []):
+        if e["kind"] == "file":
+            if assets.local_path(e, repo_root()) is None:
+                missing.append(e["name"])
+    if missing:
+        print(f"      {len(missing)} linked files are not on this machine (the package stays valid): "
+              + ", ".join(missing[:8]) + (" ..." if len(missing) > 8 else ""))
+    return 0
+
+
+def _generate(args) -> int:
+    from .build import generate
+
+    for p in generate(args.spoke, args.aircraft):
+        print(f"wrote {p}")
+    return 0
+
+
+def _export(args) -> int:
+    from .build import export
+
+    for p in export(args.spoke, args.aircraft, Path(args.out)):
+        print(f"wrote {p}")
+    return 0
+
+
+def _spokes(args) -> int:
+    from .spokes import SPOKES, context, load
+
+    for name in SPOKES:
+        mod = load(name)
+        steps = [s for s in ("ingest", "generate", "export") if hasattr(mod, s)]
+        line = f"{name:12s} {', '.join(steps)}"
+        if args.aircraft:
+            w = context(name, args.aircraft).work
+            n = sum(1 for p in w.rglob("*") if p.is_file()) if w.is_dir() else 0
+            line += f"   work/{args.aircraft}: {n} files"
+        if hasattr(mod, "describe"):
+            line += f"   ({mod.describe()})"
+        print(line)
+    return 0
+
+
+def _setup(args) -> int:
+    from .spokes import context, load
+
+    mod = load(args.spoke)
+    if not hasattr(mod, "setup"):
+        raise ValueError(f"the spoke {args.spoke} has no setup step")
+    res = mod.setup(context(args.spoke, args.aircraft), vsp=args.vsp)
+    print(f"{args.spoke} is ready: {res['version']} ({res['folder']})")
     return 0
 
 
 def _schema(args) -> int:
+    from .schema_export import export_schemas
+
     for p in export_schemas(Path(args.out)):
         print(f"wrote {p}")
     return 0
 
 
-def _pkg_synthetic(args) -> int:
-    from .synthetic import make_placeholder_package
-
-    m = make_placeholder_package(Path(args.out_dir))
-    print(f"wrote {args.out_dir} ({m.package_id}, sha256 {m.sha256[:12]})")
-    return 0
-
-
-def _pkg_verify(args) -> int:
-    from .package import verify_package
-
-    m = verify_package(Path(args.pkg_dir))
-    print(f"ok {m.package_id} sha256 {m.sha256[:12]}")
-    return 0
-
-
-def _pkg_pack(args) -> int:
-    from .package import pack_h5
-
-    print(f"wrote {pack_h5(Path(args.pkg_dir), Path(args.h5))}")
-    return 0
-
-
-def _pkg_unpack(args) -> int:
-    from .package import unpack_h5
-
-    m = unpack_h5(Path(args.h5), Path(args.out_dir))
-    print(f"ok {m.package_id}")
-    return 0
-
-
-def _pkg_build(args) -> int:
-    import subprocess
-
-    from .export_aircraft import build_aircraft_package
-    from .package import Source
-
-    def head(repo: Path) -> tuple[str, bool]:
-        sha = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True)
-        dirty = subprocess.run(["git", "-C", str(repo), "status", "--porcelain"], capture_output=True, text=True)
-        if sha.returncode or dirty.returncode:
-            raise SystemExit(f"{repo} is not a git repository with a commit")
-        return sha.stdout.strip(), bool(dirty.stdout.strip())
-
-    here = Path(__file__).resolve().parents[2]
-    code, code_dirty = head(here)
-    data, data_dirty = head(Path(args.aircraft_dir))
-    if code_dirty or data_dirty:
-        print(f"refused: uncommitted changes in {'AeroPlan' if code_dirty else ''} {'the aircraft data' if data_dirty else ''}. "
-              "A package comes from committed files only (exchange rule).", file=sys.stderr)
-        return 1
-    m, rep = build_aircraft_package(Path(args.aircraft_dir), Path(args.out_dir), author=args.author, org=args.org,
-                                    version=args.version, source=Source(repo="aeroplan", commit=code, data_repo="muas-fleet-data",
-                                                                        data_commit=data))
-    print(rep.text())
-    print(f"wrote {args.out_dir} ({m.package_id}, sha256 {m.sha256[:12]})")
-    return 0
-
-
-def _integrate(args) -> int:
-    from .integrate import integrate_currawong
-
-    r = integrate_currawong(Path(args.aircraft_dir), force_config=args.force_config)
-    print(json.dumps(r, indent=2))
-    return 1 if r["unclassified"] else 0
-
-
 def main(argv=None) -> int:
-    p = argparse.ArgumentParser(prog="aeroplan")
+    from .consumers import PROFILES
+
+    p = argparse.ArgumentParser(prog="aeroplan", description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    v = sub.add_parser("validate", help="validate ADH node JSON files")
-    v.add_argument("files", nargs="+")
-    v.set_defaults(fn=_validate)
-    c = sub.add_parser("compile-config", help="compile hand YAML to canonical JSON")
-    c.add_argument("src")
-    c.add_argument("dst")
-    c.set_defaults(fn=_compile_config)
-    s = sub.add_parser("schema", help="export JSON Schema files")
-    s.add_argument("--out", default="schema")
-    s.set_defaults(fn=_schema)
-    ig = sub.add_parser("integrate", help="integrate raw artefacts of an aircraft folder (fleet-data repo)")
-    ig.add_argument("aircraft", choices=["currawong"])
-    ig.add_argument("aircraft_dir", help="the aircraft folder, e.g. <fleet-data>/aircraft/currawong")
-    ig.add_argument("--force-config", action="store_true", help="overwrite config/<aircraft>.yaml")
-    ig.set_defaults(fn=_integrate)
-    pk = sub.add_parser("package", help="export package tools")
-    pks = pk.add_subparsers(dest="pcmd", required=True)
-    for name, nargs, fn in (
-        ("synthetic", ["out_dir"], _pkg_synthetic),
-        ("verify", ["pkg_dir"], _pkg_verify),
-        ("pack", ["pkg_dir", "h5"], _pkg_pack),
-        ("unpack", ["h5", "out_dir"], _pkg_unpack),
-    ):
-        sp = pks.add_parser(name)
-        for n in nargs:
-            sp.add_argument(n)
-        sp.set_defaults(fn=fn)
-    b = pks.add_parser("build", help="build the export package of an aircraft folder (contract C)")
-    b.add_argument("aircraft", choices=["currawong"])
-    b.add_argument("aircraft_dir")
-    b.add_argument("out_dir")
-    b.add_argument("--author", required=True, help="the person who makes the package")
-    b.add_argument("--org", default="MUAS")
-    b.add_argument("--version", required=True, help="package version, for example 0.1.0 (a package is never edited)")
-    b.set_defaults(fn=_pkg_build)
-    a = sub.add_parser("adapters", help="list ingestion adapters")
-    a.set_defaults(fn=lambda _: print("\n".join(f"{n}: {c.produces}" for n, c in REGISTRY.items())) or 0)
+    b = sub.add_parser("build", help="run the spokes and write the source tree aircraft/<aircraft>/")
+    b.add_argument("aircraft")
+    b.add_argument("--author", required=True, help="the person who builds the source tree")
+    b.add_argument("--version", help="version of the aircraft (default: the last version, patch + 1)")
+    b.add_argument("--new", action="store_true", help="start a new aircraft (an empty ADH document)")
+    b.add_argument("--only", nargs="+", help="run only these spokes")
+    b.add_argument("--consumers", nargs="+", choices=PROFILES, help="the packing profiles the aircraft serves")
+    b.add_argument("--dry-run", action="store_true", help="check only, write nothing")
+    b.set_defaults(fn=_build)
+    for name, fn, helptext in (("check", _check, "every check of the source tree"),
+                               ("show", _show, "print the ADH tree and the asset register")):
+        c = sub.add_parser(name, help=helptext)
+        c.add_argument("aircraft", nargs="?", default="currawong")
+        if name == "show":
+            c.add_argument("--placeholders", action="store_true", help="list every value marked placeholder")
+        c.set_defaults(fn=fn)
+    pk = sub.add_parser("pack", help="write a .muas package of the source tree")
+    pk.add_argument("aircraft")
+    pk.add_argument("--profile", nargs="+", required=True, choices=PROFILES)
+    pk.add_argument("--out", default="dist")
+    pk.set_defaults(fn=_pack)
+    up = sub.add_parser("unpack", help="check a .muas package and write its source tree")
+    up.add_argument("file")
+    up.add_argument("folder")
+    up.set_defaults(fn=_unpack)
+    vf = sub.add_parser("verify", help="check a .muas package")
+    vf.add_argument("file")
+    vf.set_defaults(fn=_verify)
+    g = sub.add_parser("generate", help="write the tool input files of a spoke")
+    g.add_argument("spoke")
+    g.add_argument("aircraft")
+    g.set_defaults(fn=_generate)
+    e = sub.add_parser("export", help="write the tool files of a spoke into a folder")
+    e.add_argument("spoke")
+    e.add_argument("aircraft")
+    e.add_argument("out")
+    e.set_defaults(fn=_export)
+    s = sub.add_parser("spokes", help="list the spokes")
+    s.add_argument("aircraft", nargs="?")
+    s.set_defaults(fn=_spokes)
+    su = sub.add_parser("setup", help="make the tool runtime of a spoke on this machine (OpenVSP)")
+    su.add_argument("spoke")
+    su.add_argument("aircraft", nargs="?", default="currawong")
+    su.add_argument("--vsp", help="the OpenVSP folder (the folder of vsp.exe), when the search does not find it")
+    su.set_defaults(fn=_setup)
+    sc = sub.add_parser("schema", help="export the JSON Schema of the MUAS types")
+    sc.add_argument("--out", default="schema")
+    sc.set_defaults(fn=_schema)
     args = p.parse_args(argv)
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except (ValueError, KeyError, OSError, RuntimeError) as err:
+        print(f"error: {err}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

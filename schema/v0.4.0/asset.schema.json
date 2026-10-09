@@ -1,0 +1,364 @@
+{
+  "$defs": {
+    "DatasetMeta": {
+      "additionalProperties": false,
+      "description": "The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables).",
+      "properties": {
+        "fidelity": {
+          "$ref": "#/$defs/Fidelity"
+        },
+        "form": {
+          "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}",
+          "enum": [
+            "daveml-adh",
+            "tables",
+            "parameters"
+          ],
+          "title": "Form",
+          "type": "string"
+        },
+        "model_description": {
+          "additionalProperties": true,
+          "description": "ADH ModelDescription: generation_tool, version, generation_date_and_time, author, description",
+          "title": "Model Description",
+          "type": "object"
+        },
+        "mrp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Position"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Moment reference point of the moments, design frame"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ADH Uncertainty form. None: no uncertainty estimate exists in the source",
+          "title": "Sigma"
+        },
+        "units_system": {
+          "default": "SI",
+          "description": "as-source: a published reference model kept in its own units. Each variable names its units",
+          "enum": [
+            "SI",
+            "as-source"
+          ],
+          "title": "Units System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "form",
+        "model_description",
+        "fidelity"
+      ],
+      "title": "DatasetMeta",
+      "type": "object"
+    },
+    "DatasetRole": {
+      "enum": [
+        "aero",
+        "propulsion",
+        "mass",
+        "control",
+        "flight-record",
+        "parameters",
+        "segments",
+        "other"
+      ],
+      "title": "DatasetRole",
+      "type": "string"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight, REF a published reference model.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "REF"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "description": "Where a linked asset can be fetched: a path in the AeroPlan repository, or a URL. `member` names the file\ninside a ZIP archive at the URL: a path, where a part that ends in .zip is a ZIP inside the ZIP.",
+      "properties": {
+        "member": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Member"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path relative to the AeroPlan repository root",
+          "title": "Repo"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "title": "Location",
+      "type": "object"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "built_against": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "<aircraft>@<version> that the asset was made from",
+      "title": "Built Against"
+    },
+    "dataset": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DatasetMeta"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The metadata of a dataset asset"
+    },
+    "dataset_role": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DatasetRole"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "derived_from": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Derived From",
+      "type": "array"
+    },
+    "id": {
+      "pattern": "^asset:sha256:[0-9a-f]{64}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "inline": {
+      "anyOf": [
+        {},
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The dataset of an inline asset",
+      "title": "Inline"
+    },
+    "kind": {
+      "enum": [
+        "file",
+        "dataset"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "locations": {
+      "items": {
+        "$ref": "#/$defs/Location"
+      },
+      "title": "Locations",
+      "type": "array"
+    },
+    "media_type": {
+      "minLength": 1,
+      "title": "Media Type",
+      "type": "string"
+    },
+    "name": {
+      "description": "File name (file) or dataset name (dataset). Unique in the register",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$",
+      "title": "Name",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Note"
+    },
+    "package_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Path in the package of an embedded asset",
+      "title": "Package Path"
+    },
+    "reference": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ADH Reference items (the published source)",
+      "title": "Reference"
+    },
+    "role": {
+      "description": "What the asset gives, for example 'CAD mesh of aileron_l'",
+      "minLength": 1,
+      "title": "Role",
+      "type": "string"
+    },
+    "size": {
+      "description": "Bytes of the file, or of the canonical JSON of the dataset",
+      "minimum": 0,
+      "title": "Size",
+      "type": "integer"
+    },
+    "storage": {
+      "anyOf": [
+        {
+          "enum": [
+            "inline",
+            "embedded",
+            "linked"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Set by aeroplan pack",
+      "title": "Storage"
+    },
+    "tool": {
+      "description": "The spoke that registered the asset",
+      "minLength": 1,
+      "title": "Tool",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "name",
+    "role",
+    "tool",
+    "media_type",
+    "size"
+  ],
+  "title": "Asset",
+  "type": "object"
+}

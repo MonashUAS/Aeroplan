@@ -1,0 +1,384 @@
+{
+  "wbs_no": "1.10.2",
+  "name": "DataRepository",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "data_repository",
+    "assets": [
+      {
+        "id": "asset:sha256:82796577b989b5f3becb7d13430ff6c619b3ecd2e642a6427b743658fb177e51",
+        "kind": "file",
+        "name": "DAVEML.F16_aero.dml",
+        "role": "DAVE-ML model f16 (aero)",
+        "tool": "DAVEML",
+        "media_type": "application/octet-stream",
+        "size": 175444,
+        "locations": [
+          {
+            "repo": "DAVEML/work/f16/F16_aero.dml"
+          },
+          {
+            "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
+            "member": "F16_package.zip/F16_package/F16_S119_source/F16_aero.dml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:bca7789dde61b741de69f697ce8799ee666214d0e1fa203973523774fc3a969b",
+        "kind": "file",
+        "name": "DAVEML.F16_control.dml",
+        "role": "DAVE-ML model f16_control (control)",
+        "tool": "DAVEML",
+        "media_type": "application/octet-stream",
+        "size": 39614,
+        "locations": [
+          {
+            "repo": "DAVEML/work/f16/F16_control.dml"
+          },
+          {
+            "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
+            "member": "F16_package.zip/F16_package/F16_S119_source/F16_control.dml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:fc1dbff00cc14b0228973c43cfc17797fd48d2e36950ec039ff4e77d8577827c",
+        "kind": "file",
+        "name": "DAVEML.F16_gnc.dml",
+        "role": "DAVE-ML model f16_gnc (control)",
+        "tool": "DAVEML",
+        "media_type": "application/octet-stream",
+        "size": 46829,
+        "locations": [
+          {
+            "repo": "DAVEML/work/f16/F16_gnc.dml"
+          },
+          {
+            "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
+            "member": "F16_package.zip/F16_package/F16_S119_source/F16_gnc.dml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:e11d4eba5b158d24db7034bd85682ad0b896dd2f3172f007ca3d6d6d4e693c4a",
+        "kind": "file",
+        "name": "DAVEML.F16_inertia.dml",
+        "role": "DAVE-ML model f16 (mass)",
+        "tool": "DAVEML",
+        "media_type": "application/octet-stream",
+        "size": 5223,
+        "locations": [
+          {
+            "repo": "DAVEML/work/f16/F16_inertia.dml"
+          },
+          {
+            "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
+            "member": "F16_package.zip/F16_package/F16_S119_source/F16_inertia.dml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:e5fd7772e5c05cdac666c94febbe4cb50139418b26045affd92dbd198f2215c6",
+        "kind": "file",
+        "name": "DAVEML.F16_prop.dml",
+        "role": "DAVE-ML model f16 (propulsion)",
+        "tool": "DAVEML",
+        "media_type": "application/octet-stream",
+        "size": 29371,
+        "locations": [
+          {
+            "repo": "DAVEML/work/f16/F16_prop.dml"
+          },
+          {
+            "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
+            "member": "F16_package.zip/F16_package/F16_S119_source/F16_prop.dml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:ef419f452ea0ce42f73888ee752f883d53b1bcc3da2af324646381d0f0bd67fd",
+        "kind": "dataset",
+        "name": "aero.f16",
+        "role": "aero model (DAVE-ML in ADH form)",
+        "tool": "DAVEML",
+        "media_type": "application/json",
+        "size": 104994,
+        "locations": [
+          {
+            "repo": "aircraft/f16/datasets/aero.f16.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:82796577b989b5f3becb7d13430ff6c619b3ecd2e642a6427b743658fb177e51"
+        ],
+        "built_against": "f16@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "DAVE-ML 2.0 (ANSI/AIAA S-119)",
+            "model_name": "F-16 Subsonic Aerodynamics Model (a la Garza)",
+            "author": "Bruce Jackson (NASA Langley Research Center)",
+            "version": "Mod P, 2013-10-21",
+            "description": "F-16 aero data file. Based on Morelli's adaptation of Stevens and Lewis' F-16 example [1] described in Garza & Morelli's TM [2]. Obtained from E. A. Morelli in the form of Matlab scripts [3] & [4]."
+          },
+          "fidelity": "REF",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": [
+            "Published reference model: NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations, NESC-RP-12-00770. F-16 package, folder F16_S119_source.",
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "The moments are about the reference point that the model itself defines (see its variables)."
+          ]
+        },
+        "dataset_role": "aero",
+        "reference": [
+          {
+            "ref_id": "REF01",
+            "author": "Stevens, Brian L. and Lewis, Frank L.",
+            "title": "Aircraft Control and Simulation",
+            "accession": "ISBN O-471-61397-5",
+            "date": "1992"
+          },
+          {
+            "href": "http://techreports.larc.nasa.gov/ltrs/PDF/2003/tm/NASA-2003-tm212145.pdf",
+            "ref_id": "REF02",
+            "author": "Garza, Fredrico R.; and Morelli, Eugene A.",
+            "title": "A Collection of Nonlinear Aircraft Simulations in MATLAB",
+            "accession": "NASA TM-2003-212145",
+            "date": "2003-01"
+          },
+          {
+            "ref_id": "REF03",
+            "author": "Morelli, Eugene A.",
+            "title": "f16_aero.m",
+            "date": "1995-06-17"
+          },
+          {
+            "ref_id": "REF04",
+            "author": "Morelli, Eugene A.",
+            "title": "f16_aero_setup.m",
+            "date": "1995-06-17"
+          },
+          {
+            "ref_id": "NOTE1",
+            "author": "Bruce Jackson",
+            "title": "Checkcase data source",
+            "date": "2004-02-13",
+            "description": {
+              "value": "From E. A. Morelli's f16 matlab script, dated 09-Oct-2000;\n        Generated using 'make_DAVEML_checkcases.m'"
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset:sha256:bed286efc3b5390573e1a6730d00d3b02014efe01aaeb419dc0b0c1d27a2296e",
+        "kind": "dataset",
+        "name": "control.f16_control",
+        "role": "control model (DAVE-ML in ADH form)",
+        "tool": "DAVEML",
+        "media_type": "application/json",
+        "size": 34540,
+        "locations": [
+          {
+            "repo": "aircraft/f16/datasets/control.f16_control.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:bca7789dde61b741de69f697ce8799ee666214d0e1fa203973523774fc3a969b"
+        ],
+        "built_against": "f16@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "DAVE-ML 2.0 (ANSI/AIAA S-119)",
+            "model_name": "F-16 simple control system",
+            "author": "Bruce Jackson (NASA Langley Research Center)",
+            "version": "Revision F, 2013-10-22",
+            "description": "Control system for DAVE-ML example F-16 aircraft model. Includes LQR inner-loop and loop-closure outerloop autopilot to follow altitude, courseline, and airspeed commands. The gains are set for a nominal flight condition of 10,013 ft MSL at Mach 0.525 (565.7 ft/s true airspeed or 287.8 kt equivalent) which correspond with atmospheric scenarios 11, 13, 15 and 16 of reference 1. Inputs are pilot primary flight controls, autopilot settings, mode selection flags, and feedback of various flight condition parameters. Outputs are control surface deflection commands for the F-16 described in reference 2."
+          },
+          "fidelity": "REF",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": [
+            "Published reference model: NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations, NESC-RP-12-00770. F-16 package, folder F16_S119_source.",
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "The moments are about the reference point that the model itself defines (see its variables)."
+          ]
+        },
+        "dataset_role": "control",
+        "reference": [
+          {
+            "ref_id": "REF01",
+            "author": "Jackson, E. Bruce; Shelton, Robert O.; et al.",
+            "title": "Development of Verification Data for Flight Simulations",
+            "date": "2013-08-00",
+            "description": {
+              "value": "A planned AIAA report describing the efforts to generate checkcase data for\n        flight simulations of simple aerospacecraft for use in gaining confidence in other flight\n        simulation tools. To be presented at the 2013 AIAA Modeling and Simulation Conference in\n        Boston, MA, August 2013."
+            }
+          },
+          {
+            "href": "http://techreports.larc.nasa.gov/ltrs/PDF/2003/tm/NASA-2003-tm212145.pdf",
+            "ref_id": "REF02",
+            "author": "Garza, Fredrico R.; and Morelli, Eugene A.",
+            "title": "A Collection of Nonlinear Aircraft Simulations in MATLAB",
+            "accession": "NASA TM-2003-212145",
+            "date": "2003-01"
+          }
+        ]
+      },
+      {
+        "id": "asset:sha256:617479da4d6a83817aa895c39f1974d60b34b1adb3e4caf797af9bd9165a167b",
+        "kind": "dataset",
+        "name": "control.f16_gnc",
+        "role": "control model (DAVE-ML in ADH form)",
+        "tool": "DAVEML",
+        "media_type": "application/json",
+        "size": 40818,
+        "locations": [
+          {
+            "repo": "aircraft/f16/datasets/control.f16_gnc.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:fc1dbff00cc14b0228973c43cfc17797fd48d2e36950ec039ff4e77d8577827c"
+        ],
+        "built_against": "f16@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "DAVE-ML 2.0 (ANSI/AIAA S-119)",
+            "model_name": "Example F-16 guidance, navigation and control system",
+            "author": "Bruce Jackson (NASA Langley Research Center)",
+            "version": "Revision C, 2013-10-22",
+            "description": "Guidance, navigation and control system for DAVE-ML example F-16 aircraft model. Includes LQR inner-loop and loop-closure outerloop autopilot to follow altitude, courseline, and airspeed commands. The gains are set for a nominal flight condition of 10,013 ft MSL at Mach 0.525 (565.7 ft/s true airspeed or 287.8 kt equivalent) which correspond with atmospheric scenarios 11, 13, 15 and 16 of reference 1. Inputs are pilot primary flight controls, autopilot settings, mode selection flags, and feedback of various flight condition parameters. Outputs are control surface deflection commands for the F-16 described in reference 2. This is a modified version of Rev E of the F16_control.dml file, with two selectable navigators to circle either the North Pole or the intersection of the equator and the International Date Line at a distance of 3 nautical miles."
+          },
+          "fidelity": "REF",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": [
+            "Published reference model: NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations, NESC-RP-12-00770. F-16 package, folder F16_S119_source.",
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "The moments are about the reference point that the model itself defines (see its variables)."
+          ]
+        },
+        "dataset_role": "control",
+        "reference": [
+          {
+            "ref_id": "REF01",
+            "author": "Jackson, E. Bruce; Shelton, Robert O.; et al.",
+            "title": "Development of Verification Data for Flight Simulations",
+            "date": "2013-08-00",
+            "description": {
+              "value": "A planned AIAA report describing the efforts to generate checkcase data for\n        flight simulations of simple aerospacecraft for use in gaining confidence in other flight\n        simulation tools. To be presented at the 2013 AIAA Modeling and Simulation Conference in\n        Boston, MA, August 2013."
+            }
+          },
+          {
+            "href": "http://techreports.larc.nasa.gov/ltrs/PDF/2003/tm/NASA-2003-tm212145.pdf",
+            "ref_id": "REF02",
+            "author": "Garza, Fredrico R.; and Morelli, Eugene A.",
+            "title": "A Collection of Nonlinear Aircraft Simulations in MATLAB",
+            "accession": "NASA TM-2003-212145",
+            "date": "2003-01"
+          }
+        ]
+      },
+      {
+        "id": "asset:sha256:0a6a77da1449ab691799f3419ed718916a62bba41643f306179645d321da5ae0",
+        "kind": "dataset",
+        "name": "mass.f16",
+        "role": "mass model (DAVE-ML in ADH form)",
+        "tool": "DAVEML",
+        "media_type": "application/json",
+        "size": 3648,
+        "locations": [
+          {
+            "repo": "aircraft/f16/datasets/mass.f16.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:e11d4eba5b158d24db7034bd85682ad0b896dd2f3172f007ca3d6d6d4e693c4a"
+        ],
+        "built_against": "f16@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "DAVE-ML 2.0 (ANSI/AIAA S-119)",
+            "model_name": "F-16 inertia model (a la Stevens & Lewis)",
+            "author": "Bruce Jackson (NASA Langley Research Center)",
+            "version": "Initial version",
+            "description": "A simple constant mass matrix for the F-16 Fighting Falcon, as described in Stevens & Lewis [01]."
+          },
+          "fidelity": "REF",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": [
+            "Published reference model: NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations, NESC-RP-12-00770. F-16 package, folder F16_S119_source.",
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "The moments are about the reference point that the model itself defines (see its variables)."
+          ]
+        },
+        "dataset_role": "mass",
+        "reference": [
+          {
+            "ref_id": "REF01",
+            "author": "Stevens, Brian L. and Lewis, Frank L.",
+            "title": "Aircraft control and Simulation, 2nd Edition",
+            "accession": "ISBN 0-471-37145-9",
+            "date": "2003-01-01"
+          }
+        ]
+      },
+      {
+        "id": "asset:sha256:797f769adabe6ea2472b95caedd0ccc8b45bbd3b5405aba2b72d23c148ca9a73",
+        "kind": "dataset",
+        "name": "propulsion.f16",
+        "role": "propulsion model (DAVE-ML in ADH form)",
+        "tool": "DAVEML",
+        "media_type": "application/json",
+        "size": 18540,
+        "locations": [
+          {
+            "repo": "aircraft/f16/datasets/propulsion.f16.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:e5fd7772e5c05cdac666c94febbe4cb50139418b26045affd92dbd198f2215c6"
+        ],
+        "built_against": "f16@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "DAVE-ML 2.0 (ANSI/AIAA S-119)",
+            "model_name": "F-16 propulsion model (a la Stevens & Lewis)",
+            "author": "Bruce Jackson (NASA Langley Research Center)",
+            "version": "Initial version",
+            "description": "A simple propulsion model for the F-16 Fighting Falcon, as described in Stevens & Lewis [01]."
+          },
+          "fidelity": "REF",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": [
+            "Published reference model: NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations, NESC-RP-12-00770. F-16 package, folder F16_S119_source.",
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "The moments are about the reference point that the model itself defines (see its variables)."
+          ]
+        },
+        "dataset_role": "propulsion",
+        "reference": [
+          {
+            "ref_id": "REF01",
+            "author": "Stevens, Brian L. and Lewis, Frank L.",
+            "title": "Aircraft control and Simulation, 2nd Edition",
+            "accession": "ISBN 0-471-37145-9",
+            "date": "2003-01-01"
+          }
+        ]
+      }
+    ]
+  }
+}

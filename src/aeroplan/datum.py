@@ -1,19 +1,19 @@
-"""Datum checks of an export package: every geometry source must agree in the one design frame.
+"""Datum checks of the ADH document: every geometry source must agree in the one design frame.
 
-The design frame is the flow5 frame: x aft, y right, z up, metres, origin = the flow5 origin. The sources are the CAD
-parts (after their hand-config transforms), the flow5 plane XML, the hand values (thrust line, ground contacts, CG),
-the T7 point and the contract B file. Each check has a tolerance. A failed check stops the package build.
-An `info` row records a value with no second source to compare against.
+The design frame is the flow5 frame: x aft, y right, z up, metres, origin = the flow5 origin. The sources are the
+flow5 planforms, the reference dimensions, the mass model, the propeller installation, the ground contacts, the
+contract B propeller and, when they are on this machine, the CAD meshes of the CREO spoke. Each check has a
+tolerance. A failed check stops the build. An `info` row records a value with no second source to compare against.
+A `warn` row does not stop the build. It asks for an action (for example a new flow5 sweep after an OpenVSP change).
+A CAD check is left out when the CAD mesh is not on this machine. An info row says so.
 """
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
-
-from .adapters.flow5_geometry import Plane
-from .muas.reference import ReferenceData
 
 MM = 0.001
 
@@ -25,7 +25,7 @@ class Check:
     expected: Optional[float]
     tol: Optional[float]
     units: str
-    status: str                       # pass, fail or info
+    status: str                       # pass, fail, info or warn
     source: str
 
 
@@ -45,11 +45,18 @@ class DatumReport:
         self.checks.append(Check(name, float(value), None if expected is None else float(expected),
                                  None if tol is None else float(tol), units, status, source))
 
+    def warn(self, name: str, source: str) -> None:
+        """A row that does not stop the build but asks for an action."""
+        self.checks.append(Check(name, 0.0, None, None, "-", "warn", source))
+
     def text(self) -> str:
         rows = []
         for c in self.checks:
+            if c.status == "warn":
+                rows.append(f"warn  {c.name}: {c.source}")
+                continue
             exp = "" if c.expected is None else f"{c.expected:+.4f} +/- {c.tol:g}"
-            rows.append(f"{c.status:4s}  {c.name:44s} {c.value:+.4f} {c.units:4s} {exp}")
+            rows.append(f"{c.status:4s}  {c.name:52s} {c.value:+.4f} {c.units:4s} {exp}")
         return "\n".join(rows)
 
     def as_dict(self) -> Dict:
@@ -93,67 +100,185 @@ def prop_spin(tri: np.ndarray, hub: np.ndarray) -> str:
     return "cw" if votes < 0 else "ccw"
 
 
-def datum_checks(cfg: dict, ref: ReferenceData, plane: Plane, design: Dict[str, np.ndarray], prop_diameter_m: float,
-                 trim: dict) -> DatumReport:
+def _get(doc, inst):
+    from . import adh_doc
+
+    try:
+        return adh_doc.find(doc, inst)
+    except KeyError:
+        return None
+
+
+def _surface_checks(rep: DatumReport, air: Dict, pf: Optional[Dict]) -> None:
+    from .geometry import planform_reference
+
+    am = air.get("muas") or {}
+    ref = am.get("reference")
+    if not pf:
+        return
+    pr = planform_reference(pf)
+    if ref:
+        rep.add("b_ref against the main wing planform span", ref["b_ref"]["value"], pr["span_m"], 5 * MM, "m",
+                "muas.reference b_ref, wing_main planform")
+        rep.add("S_ref against the main wing planform area", ref["s_ref"]["value"], pr["area_m2"],
+                0.005 * pr["area_m2"], "m^2", "muas.reference s_ref, wing_main planform (flat)")
+        rep.add("c_ref against the main wing mean aerodynamic chord", ref["c_ref"]["value"], pr["mac_m"],
+                0.01 * pr["mac_m"], "m", "muas.reference c_ref, wing_main planform")
+    for perf in air.get("performance") or []:
+        if perf.get("name") != "sizing":
+            continue
+        outs = {o["name"]: o["value"] for o in perf["tools"][0]["data_exchange"]["outputs"]}
+        rep.add("wing area: initial sizing (Athena) less flow5", outs["Wing area"] - pr["area_m2"], None, None, "m^2",
+                "sizing output Wing area, wing_main planform")
+        rep.add("wing span: initial sizing (Athena) less flow5", outs["Wing span"] - pr["span_m"], None, None, "m",
+                "sizing output Wing span, wing_main planform")
+        if "mass_properties" in am:
+            rep.add("mass: initial sizing (Athena) less the flow5 mass model",
+                    outs["m_total"] - am["mass_properties"]["mass"]["value"], None, None, "kg",
+                    "sizing output m_total, muas.mass_properties")
+
+
+def datum_checks(doc: Dict, root) -> DatumReport:
+    from . import adh_doc
+    from .parts import part_meshes
+
     rep = DatumReport()
-    wing, htail = plane.by_kind("MAINWING"), plane.by_kind("ELEVATOR")
+    air = adh_doc.node(doc, "1.2") if adh_doc.has_node(doc, "1.2") else {}
+    am = air.get("muas") or {}
+    ref = am.get("reference")
+    wing = _get(doc, "wing_main")
+    pf = (wing or {}).get("muas", {}).get("planform")
+    _surface_checks(rep, air, pf)
 
-    w = _pts(design["wing"])
-    rep.add("wing span (CAD) against b_ref", np.ptp(w[:, 1]), ref.b_ref.value, 5 * MM, "m",
-            "raw/cad/wing.stl, reference.json b_ref")
-    root = _inboard(w)
-    rep.add("wing root leading edge x (CAD) against flow5", root[:, 0].min(), wing.position[0], 10 * MM, "m",
-            "raw/cad/wing.stl, flow5 Main Wing position")
-    h = _pts(design["htail"])
-    hroot = _inboard(h)
-    rep.add("htail root leading edge x (CAD) against flow5", hroot[:, 0].min(), htail.position[0], 10 * MM, "m",
-            "raw/cad/hstab.stl, flow5 Elevator position")
-    rep.add("htail root z (CAD mid) against flow5", (hroot[:, 2].min() + hroot[:, 2].max()) / 2, htail.position[2],
-            10 * MM, "m", "raw/cad/hstab.stl, flow5 Elevator position")
-    al, ar = _pts(design["aileron_l"]), _pts(design["aileron_r"])
-    rep.add("aileron_l mirror of aileron_r (y extent)", al[:, 1].min(), -ar[:, 1].max(), 5 * MM, "m",
-            "raw/cad/aileron_l.stl, aileron_r.stl")
-    rep.add("aileron_l mirror of aileron_r (x extent)", np.ptp(al[:, 0]), np.ptp(ar[:, 0]), 5 * MM, "m",
-            "raw/cad/aileron_l.stl, aileron_r.stl")
+    mp = am.get("mass_properties")
+    if ref and mp:
+        cg = np.array(mp["cg"]["xyz"], float)
+        rep.add("MRP against the mass CG (distance)", float(np.linalg.norm(np.array(ref["mrp"]["point"]["xyz"]) - cg)),
+                0.0, 1e-6, "m", "muas.reference mrp, muas.mass_properties cg")
 
-    p = cfg["propulsion"]
-    hub = np.array([p["thrust_x"], p["thrust_y"], p["thrust_z"]], float)
-    pr = _pts(design["propeller"])
-    centre = (pr.min(axis=0) + pr.max(axis=0)) / 2
-    for i, ax in enumerate("xyz"):
-        rep.add(f"propeller hub {ax} (CAD centre) against the thrust line", centre[i], hub[i], 5 * MM, "m",
-                "raw/cad/propeller.stl, hand config propulsion.thrust_xyz")
-    d_cad = 2 * np.hypot(pr[:, 1] - hub[1], pr[:, 2] - hub[2]).max()
-    rep.add("propeller diameter (CAD) against contract B", d_cad, prop_diameter_m, 0.01 * prop_diameter_m, "m",
-            "raw/cad/propeller.stl, contract B /propeller diameter_m")
-    spin = prop_spin(design["propeller"], hub)
-    rep.checks.append(Check("propeller spin (CAD blade pitch) against the hand config", 1.0 if spin == "cw" else -1.0,
-                            1.0 if p["spin"] == "cw" else -1.0, 0.0, "cw=1",
-                            "pass" if spin == p["spin"] else "fail", f"CAD gives {spin}, hand config propulsion.spin {p['spin']}"))
+    ps = part_meshes(doc, root)
+    for n in ps.notes:
+        rep.add("view part note", 0.0, None, None, "-", n)
+    P = {k: _pts(p.tri) for k, p in ps.parts.items() if not p.source.startswith(("full lifting", "body lofted"))}
+    htail = _get(doc, "htail")
+    hpf = (htail or {}).get("muas", {}).get("planform")
+    if "wing" in P and ref:
+        w = P["wing"]
+        rep.add("wing span (CAD) against b_ref", np.ptp(w[:, 1]), ref["b_ref"]["value"], 5 * MM, "m",
+                "CAD wing, muas.reference b_ref")
+        if pf:
+            rep.add("wing root leading edge x (CAD) against flow5", _inboard(w)[:, 0].min(), pf["position"]["xyz"][0],
+                    10 * MM, "m", "CAD wing, wing_main planform position")
+    if "htail" in P and hpf:
+        hroot = _inboard(P["htail"])
+        rep.add("htail root leading edge x (CAD) against flow5", hroot[:, 0].min(), hpf["position"]["xyz"][0], 10 * MM,
+                "m", "CAD htail, htail planform position")
+        rep.add("htail root z (CAD mid) against flow5", (hroot[:, 2].min() + hroot[:, 2].max()) / 2,
+                hpf["position"]["xyz"][2], 10 * MM, "m", "CAD htail, htail planform position")
+    if "aileron_l" in P and "aileron_r" in P:
+        al, ar = P["aileron_l"], P["aileron_r"]
+        rep.add("aileron_l mirror of aileron_r (y extent)", al[:, 1].min(), -ar[:, 1].max(), 5 * MM, "m", "CAD ailerons")
+        rep.add("aileron_l mirror of aileron_r (x extent)", np.ptp(al[:, 0]), np.ptp(ar[:, 0]), 5 * MM, "m", "CAD ailerons")
 
-    g = cfg["ground"]
-    gear = _pts(design["gear"])
-    rep.add("main wheel contact z against the CAD gear bottom", g["left_main"][2], gear[:, 2].min(), 5 * MM, "m",
-            "hand config ground.left_main, raw/cad/gear.stl")
-    rep.add("main wheel track (contact y) against the CAD gear", g["right_main"][1] - g["left_main"][1], np.ptp(gear[:, 1]),
-            30 * MM, "m", "hand config ground, raw/cad/gear.stl (outer wheel faces)")
-
-    cg = np.array(cfg["mass"]["cg"], float)
-    rep.add("MRP against the mass CG (distance)", float(np.linalg.norm(np.array(ref.mrp.point.xyz) - cg)), 0.0, 1e-6, "m",
-            "reference.json mrp, hand config mass.cg")
-    rep.add("T7 moment point against the mass CG (distance)", float(np.linalg.norm(np.array(trim["cog"]) - cg)), 0.0, 1e-6,
-            "m", "flow5 T7 CoG, hand config mass.cg")
-
-    f = _pts(design["fuselage"])
-    rep.add("nose x (CAD fuselage front) from the flow5 origin", f[:, 0].min(), None, None, "m",
-            "raw/cad/fuselage.stl. The nose datum is this far ahead of the design origin (M-01)")
-    rep.add("propeller disc x (CAD front) from the flow5 origin", pr[:, 0].min(), None, None, "m", "raw/cad/propeller.stl")
-    rep.add("static margin from the T7 neutral point", (trim["NP_x"] - cg[0]) / ref.c_ref.value, None, None, "nd",
-            "flow5 T7 NP_x, hand config mass.cg, reference.json c_ref")
-    fin = _pts(design["fin"])
-    rd = _pts(design["rudder"])
-    rep.add("fin top z (flow5) less the rudder top z (CAD)", fin[:, 2].max() - rd[:, 2].max(), None, None, "m",
-            "flow5 Fin wing, raw/cad/rudder.stl")
-    b = _pts(design["boom"])
-    rep.add("boom x extent (generated)", np.ptp(b[:, 0]), None, None, "m", "the boom part of the package (placeholder)")
+    prop = _get(doc, "prop_cruise")
+    pm = (prop or {}).get("muas", {})
+    inst, psys = pm.get("propeller"), pm.get("propulsion_system")
+    if inst and psys:
+        rep.add("propeller diameter (installation) against contract B", inst["diameter"]["value"],
+                psys["diameter"]["value"], 1e-9, "m", "prop_cruise muas.propeller, muas.propulsion_system")
+    if inst and "propeller" in P:
+        hub = np.array(inst["hub"]["xyz"], float)
+        pr_ = P["propeller"]
+        centre = (pr_.min(axis=0) + pr_.max(axis=0)) / 2
+        for i, ax in enumerate("xyz"):
+            rep.add(f"propeller hub {ax} (CAD centre) against the installation", centre[i], hub[i], 5 * MM, "m",
+                    "CAD propeller, prop_cruise muas.propeller hub")
+        d_cad = 2 * np.hypot(pr_[:, 1] - hub[1], pr_[:, 2] - hub[2]).max()
+        rep.add("propeller diameter (CAD) against the installation", d_cad, inst["diameter"]["value"],
+                0.01 * inst["diameter"]["value"], "m", "CAD propeller, prop_cruise muas.propeller diameter")
+        spin = prop_spin(ps.parts["propeller"].tri, hub)
+        rep.checks.append(Check("propeller spin (CAD blade pitch) against the installation", 1.0 if spin == "cw" else -1.0,
+                                1.0 if inst["spin"] == "cw" else -1.0, 0.0, "cw=1",
+                                "pass" if spin == inst["spin"] else "fail",
+                                f"CAD gives {spin}, prop_cruise muas.propeller spin {inst['spin']}"))
+    frame = _get(doc, "airframe")
+    gc = {c["name"]: c for c in (frame or {}).get("muas", {}).get("ground_contacts") or []}
+    if "gear" in P and "LEFT_MAIN" in gc:
+        gear = P["gear"]
+        lm, rm = gc["LEFT_MAIN"]["position"]["xyz"], gc["RIGHT_MAIN"]["position"]["xyz"]
+        rep.add("main wheel contact z against the CAD gear bottom", lm[2], gear[:, 2].min(), 5 * MM, "m",
+                "airframe ground contact LEFT_MAIN, CAD gear")
+        rep.add("main wheel track (contact y) against the CAD gear", rm[1] - lm[1], np.ptp(gear[:, 1]), 30 * MM, "m",
+                "airframe ground contacts, CAD gear (outer wheel faces)")
+    if "fuselage" in P:
+        rep.add("nose x (CAD fuselage front) from the flow5 origin", P["fuselage"][:, 0].min(), None, None, "m",
+                "CAD fuselage. The nose is this far ahead of the design origin")
+    _skin_checks(rep, doc, root)
+    _geometry_age(rep, doc, air)
+    _stale_assets(rep, doc)
     return rep
+
+
+def _skin_checks(rep: DatumReport, doc: Dict, root) -> None:
+    """The gap from the ADH body frames to the CAD outer skin (info: the body is a fit of the skin)."""
+    from . import adh_doc
+    from .geometry import body_frames, distance_to_mesh
+    from .parts import mesh_name, skin_mesh
+
+    for _, item, _ in adh_doc.iter_nodes(doc):
+        m = item.get("muas") or {}
+        if not m.get("skin"):
+            continue
+        tri = skin_mesh(doc, item, root)
+        if tri is None:
+            rep.add("view part note", 0.0, None, None, "-",
+                    f"{m['instance']}: skin {mesh_name(doc, m['skin']['mesh'])} is not on this machine (or changed): no skin check")
+            continue
+        body = (item.get("geometry") or {}).get("body")
+        if not body:
+            continue
+        d = distance_to_mesh(np.vstack(body_frames(body)), tri)
+        src = f"{m['instance']} geometry.body frames, skin {mesh_name(doc, m['skin']['mesh'])}"
+        rep.add(f"{m['instance']} body frames to the CAD skin: largest gap", float(d.max()), None, None, "m", src)
+        rep.add(f"{m['instance']} body frames to the CAD skin: RMS gap", float(np.sqrt(np.mean(d ** 2))), None, None,
+                "m", src)
+
+
+def _geometry_age(rep: DatumReport, doc: Dict, air: Dict) -> None:
+    """A warn row for each item whose geometry comes from another spoke than the aero model (flow5)."""
+    from . import adh_doc, assets
+
+    aero = assets.item_dataset(air, "aero") if air else None
+    if aero is None:
+        return
+    try:
+        e = assets.entry(doc, aero["ref"].partition("#")[0])
+        built = e.get("built_against") or e["name"]
+    except assets.AssetError:
+        built = "?"
+    for _, item, _ in adh_doc.iter_nodes(doc):
+        m = item.get("muas") or {}
+        tool = m.get("geometry_tool")
+        if tool and tool != "flow5":
+            rep.warn(f"{m['instance']}: aero model is older than the geometry",
+                     f"the aero model ({built}) comes from flow5, the geometry of {m['instance']} comes from "
+                     f"{tool}. Run a new flow5 sweep")
+
+
+def _stale_assets(rep: DatumReport, doc: Dict) -> None:
+    """Every item reference must name an asset of the register. A derived asset whose input left the register is
+    stale (for example an aero model made from CAD or geometry files that changed since): a warn row."""
+    from . import assets
+
+    reg = {e["id"]: e for e in assets.register(doc, create=False)}
+    missing = sorted(set(assets.referenced(doc)) - set(reg) - {
+        d for e in reg.values() for d in e.get("derived_from") or []})
+    for aid in missing:
+        rep.checks.append(Check("asset reference", 1.0, 0.0, 0.0, "-", "fail",
+                                f"{aid} is named by an item but is not in the register (1.10.2)"))
+    for e in reg.values():
+        gone = [d for d in e.get("derived_from") or [] if d not in reg]
+        if gone:
+            rep.warn(f"{e['name']}: stale derived asset",
+                     f"made from {len(gone)} asset(s) that are no longer in the register (the input changed). "
+                     f"Built against {e.get('built_against', '?')}. Run its spoke again")

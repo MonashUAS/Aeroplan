@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight, REF a published reference model.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "REF"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables).",
+  "properties": {
+    "fidelity": {
+      "$ref": "#/$defs/Fidelity"
+    },
+    "form": {
+      "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}",
+      "enum": [
+        "daveml-adh",
+        "tables",
+        "parameters"
+      ],
+      "title": "Form",
+      "type": "string"
+    },
+    "model_description": {
+      "additionalProperties": true,
+      "description": "ADH ModelDescription: generation_tool, version, generation_date_and_time, author, description",
+      "title": "Model Description",
+      "type": "object"
+    },
+    "mrp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Position"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Moment reference point of the moments, design frame"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "placeholder": {
+      "default": false,
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "sigma": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ADH Uncertainty form. None: no uncertainty estimate exists in the source",
+      "title": "Sigma"
+    },
+    "units_system": {
+      "default": "SI",
+      "description": "as-source: a published reference model kept in its own units. Each variable names its units",
+      "enum": [
+        "SI",
+        "as-source"
+      ],
+      "title": "Units System",
+      "type": "string"
+    }
+  },
+  "required": [
+    "form",
+    "model_description",
+    "fidelity"
+  ],
+  "title": "DatasetMeta",
+  "type": "object"
+}

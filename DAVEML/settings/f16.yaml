@@ -1,0 +1,44 @@
+# The NASA F-16 model of the NESC 6-DOF flight simulation check cases (NASA/TM-2015-218675).
+# Source page: https://nescacademy.nasa.gov/flightsim/2015 (Models: Atmospheric_models.zip, downloaded 2026-10-10).
+# The sha256 values are of the files in that archive.
+source:
+  url: https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip
+  reference: >-
+    NASA/TM-2015-218675, Check-Cases for Verification of 6-Degree-of-Freedom Flight Vehicle Simulations,
+    NESC-RP-12-00770. F-16 package, folder F16_S119_source.
+models:
+  - file: F16_aero.dml
+    member: F16_package.zip/F16_package/F16_S119_source/F16_aero.dml
+    sha256: 82796577b989b5f3becb7d13430ff6c619b3ecd2e642a6427b743658fb177e51
+    role: aero
+    name: f16
+    node: "1.2"
+    instance: f16_airvehicle
+  - file: F16_inertia.dml
+    member: F16_package.zip/F16_package/F16_S119_source/F16_inertia.dml
+    sha256: e11d4eba5b158d24db7034bd85682ad0b896dd2f3172f007ca3d6d6d4e693c4a
+    role: mass
+    name: f16
+    node: "1.2"
+    instance: f16_airvehicle
+  - file: F16_prop.dml
+    member: F16_package.zip/F16_package/F16_S119_source/F16_prop.dml
+    sha256: e5fd7772e5c05cdac666c94febbe4cb50139418b26045affd92dbd198f2215c6
+    role: propulsion
+    name: f16
+    node: "1.2.3.1"
+    instance: f16_engine
+  - file: F16_control.dml
+    member: F16_package.zip/F16_package/F16_S119_source/F16_control.dml
+    sha256: bca7789dde61b741de69f697ce8799ee666214d0e1fa203973523774fc3a969b
+    role: control
+    name: f16_control
+    node: "1.2.4.2"
+    instance: f16_flight_control
+  - file: F16_gnc.dml
+    member: F16_package.zip/F16_package/F16_S119_source/F16_gnc.dml
+    sha256: fc1dbff00cc14b0228973c43cfc17797fd48d2e36950ec039ff4e77d8577827c
+    role: control
+    name: f16_gnc
+    node: "1.2.5.10"
+    instance: f16_gnc

@@ -69,7 +69,11 @@ def make_propalyser_h5(path: Path, *, version=2, dirty=False, units=True, status
                 t[k].attrs["units"] = "nd"
         t["source_id"] = np.array(["model"] * 3, dtype=s)
         t.attrs.update(valid_J=np.array([0.0, 0.5]), selected_source="model")
-        f.create_group("propeller").attrs.update(model="PROP_X", diameter_m=0.5, blades=2)
+        f.create_group("propeller").attrs.update(model="PROP_X", diameter_m=0.5, blades=2, ixx_kgm2=0.001)
+        tm = f.create_group("throttle_map")
+        tm["esc_command_norm"] = np.array([0.0, 0.5, 1.0])
+        tm["power_fraction"] = np.array([0.0, 0.4, 1.0])
+        tm.attrs["p_max_W"] = 1000.0
         u = f.create_group("uncertainty/prop_ctcp")
         u.attrs.update(status=status, scope="result", basis="relative 1-sigma model error converted to absolute")
         if status == "quantitative":

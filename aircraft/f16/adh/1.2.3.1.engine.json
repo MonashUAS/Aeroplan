@@ -1,0 +1,21 @@
+{
+  "wbs_no": "1.2.3.1",
+  "name": "Engine",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "f16_engine",
+    "datasets": [
+      {
+        "role": "propulsion",
+        "ref": "asset:sha256:797f769adabe6ea2472b95caedd0ccc8b45bbd3b5405aba2b72d23c148ca9a73"
+      }
+    ],
+    "sources": [
+      {
+        "tool": "DAVEML",
+        "asset": "asset:sha256:e5fd7772e5c05cdac666c94febbe4cb50139418b26045affd92dbd198f2215c6",
+        "role": "DAVE-ML model f16 (propulsion)"
+      }
+    ]
+  }
+}

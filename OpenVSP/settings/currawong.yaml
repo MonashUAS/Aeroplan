@@ -1,0 +1,10 @@
+# OpenVSP spoke settings for the Currawong (tool settings, not aircraft data).
+# vsp_version: the OpenVSP version that the round-trip tests ran with (2026-10-08).
+# model: the member's OpenVSP model in OpenVSP/work/currawong/ (a copy of generated/currawong.vsp3).
+# wings, body: the ADH items (muas.instance) that go into OpenVSP. Each OpenVSP component has the name of its item.
+# reference_skin: the item whose CAD skin (CREO spoke, muas.skin) goes into the model as a reference mesh.
+vsp_version: 3.54.0
+model: currawong.vsp3
+wings: [wing_main, htail, fin]
+body: fuselage
+reference_skin: fuselage

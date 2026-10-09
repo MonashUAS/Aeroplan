@@ -1,0 +1,740 @@
+{
+  "file_header": {
+    "name": "Currawong aerodynamic model",
+    "author": [
+      {
+        "name": "AeroPlan flow5 spoke",
+        "org": "MUAS"
+      }
+    ],
+    "creation_date": {
+      "date": "2026-10-04"
+    },
+    "file_version": {
+      "value": "1"
+    },
+    "description": {
+      "value": "currawong aero build-up from the flow5 sweep currawongv5_testfuse (plane Currawongv5_n0012-3). Moments about the MRP (the T7 CoG). Trim point of the T7 analysis: V 12.0958 m/s, alpha 4.8134 deg, CL 0.840284. The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."
+    }
+  },
+  "variable_def": [
+    {
+      "name": "angleOfAttack",
+      "var_id": "alpha",
+      "units": "rad",
+      "axis_system": "stability axes",
+      "sign": "positive nose up relative to the air",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "angleOfSideslip",
+      "var_id": "beta",
+      "units": "rad",
+      "axis_system": "stability axes",
+      "sign": "positive with the air from the right",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "rollRateNondim",
+      "var_id": "phat",
+      "units": "nd",
+      "axis_system": "body axes",
+      "sign": "p b / (2 V), positive right wing down",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "pitchRateNondim",
+      "var_id": "qhat",
+      "units": "nd",
+      "axis_system": "body axes",
+      "sign": "q c / (2 V), positive nose up",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "yawRateNondim",
+      "var_id": "rhat",
+      "units": "nd",
+      "axis_system": "body axes",
+      "sign": "r b / (2 V), positive nose right",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "elevatorDeflection",
+      "var_id": "de",
+      "units": "rad",
+      "axis_system": "none",
+      "sign": "positive trailing edge down (JSBSim)",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "aileronDeflection",
+      "var_id": "da",
+      "units": "rad",
+      "axis_system": "none",
+      "sign": "positive rolls right (JSBSim)",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "rudderDeflection",
+      "var_id": "dr",
+      "units": "rad",
+      "axis_system": "none",
+      "sign": "positive trailing edge left (JSBSim)",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "CD0",
+      "var_id": "CD0",
+      "units": "nd",
+      "initial_value": "0.01623387152266248",
+      "description": {
+        "value": "source: flow5 viscous alpha polar currawongv5_testfuse (6 points, least squares CD on CL^2); placeholder: false"
+      }
+    },
+    {
+      "name": "CDde",
+      "var_id": "CDde",
+      "units": "1_per_rad",
+      "initial_value": "0.013277307835293682",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run elevator (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0000); placeholder: false"
+      }
+    },
+    {
+      "name": "CL0",
+      "var_id": "CL0",
+      "units": "nd",
+      "initial_value": "0.44315932981718692",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (CL_trim - CLa alpha_trim); placeholder: false"
+      }
+    },
+    {
+      "name": "CLa",
+      "var_id": "CLa",
+      "units": "1_per_rad",
+      "initial_value": "4.7271299999999998",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (-CZa); placeholder: false"
+      }
+    },
+    {
+      "name": "CLde",
+      "var_id": "CLde",
+      "units": "1_per_rad",
+      "initial_value": "0.30612360882972128",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run elevator (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0117); placeholder: false"
+      }
+    },
+    {
+      "name": "CLq",
+      "var_id": "CLq",
+      "units": "1_per_rad",
+      "initial_value": "5.5355999999999996",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (-CZq); placeholder: false"
+      }
+    },
+    {
+      "name": "CYb",
+      "var_id": "CYb",
+      "units": "1_per_rad",
+      "initial_value": "-0.215526",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cyb); placeholder: false"
+      }
+    },
+    {
+      "name": "CYdr",
+      "var_id": "CYdr",
+      "units": "1_per_rad",
+      "initial_value": "0.15992543600146944",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run rudder (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0004); placeholder: false"
+      }
+    },
+    {
+      "name": "CYp",
+      "var_id": "CYp",
+      "units": "1_per_rad",
+      "initial_value": "-0.034693599999999998",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cyp); placeholder: false"
+      }
+    },
+    {
+      "name": "CYr",
+      "var_id": "CYr",
+      "units": "1_per_rad",
+      "initial_value": "0.18578600000000001",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cyr); placeholder: false"
+      }
+    },
+    {
+      "name": "Clb",
+      "var_id": "Clb",
+      "units": "1_per_rad",
+      "initial_value": "-0.069928000000000004",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Clb); placeholder: false"
+      }
+    },
+    {
+      "name": "Clda",
+      "var_id": "Clda",
+      "units": "1_per_rad",
+      "initial_value": "0.14719144010817312",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run aileron (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0155); placeholder: false"
+      }
+    },
+    {
+      "name": "Cldr",
+      "var_id": "Cldr",
+      "units": "1_per_rad",
+      "initial_value": "0.0042372458551196692",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run rudder (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0033); placeholder: false"
+      }
+    },
+    {
+      "name": "Clp",
+      "var_id": "Clp",
+      "units": "1_per_rad",
+      "initial_value": "-0.38954100000000003",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Clp); placeholder: false"
+      }
+    },
+    {
+      "name": "Clr",
+      "var_id": "Clr",
+      "units": "1_per_rad",
+      "initial_value": "-0.0081939400000000003",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Clr); placeholder: false"
+      }
+    },
+    {
+      "name": "Cm0",
+      "var_id": "Cm0",
+      "units": "nd",
+      "initial_value": "0.1131786797022471",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cm_trim - Cma alpha_trim); placeholder: false"
+      }
+    },
+    {
+      "name": "Cma",
+      "var_id": "Cma",
+      "units": "1_per_rad",
+      "initial_value": "-1.34721",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt; placeholder: false"
+      }
+    },
+    {
+      "name": "Cmde",
+      "var_id": "Cmde",
+      "units": "1_per_rad",
+      "initial_value": "-1.1891653989208879",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run elevator (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0140); placeholder: false"
+      }
+    },
+    {
+      "name": "Cmq",
+      "var_id": "Cmq",
+      "units": "1_per_rad",
+      "initial_value": "-17.124600000000001",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt; placeholder: false"
+      }
+    },
+    {
+      "name": "Cnb",
+      "var_id": "Cnb",
+      "units": "1_per_rad",
+      "initial_value": "0.070281099999999999",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cnb); placeholder: false"
+      }
+    },
+    {
+      "name": "Cnda",
+      "var_id": "Cnda",
+      "units": "1_per_rad",
+      "initial_value": "-0.019118812380627421",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run aileron (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0306); placeholder: false"
+      }
+    },
+    {
+      "name": "Cndr",
+      "var_id": "Cndr",
+      "units": "1_per_rad",
+      "initial_value": "-0.067704145707594157",
+      "description": {
+        "value": "source: flow5 sweep currawongv5_testfuse run rudder (plane Currawongv5_n0012-3, flow5 7.57, linearity 0.0029); placeholder: false"
+      }
+    },
+    {
+      "name": "Cnp",
+      "var_id": "Cnp",
+      "units": "1_per_rad",
+      "initial_value": "-0.000439018",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cnp); placeholder: false"
+      }
+    },
+    {
+      "name": "Cnr",
+      "var_id": "Cnr",
+      "units": "1_per_rad",
+      "initial_value": "-0.074371499999999993",
+      "description": {
+        "value": "source: flow5 T7 currawongv5_testfuse/t7_reference_opoint.txt (Cnr); placeholder: false"
+      }
+    },
+    {
+      "name": "K",
+      "var_id": "K",
+      "units": "nd",
+      "initial_value": "0.045843633399784443",
+      "description": {
+        "value": "source: flow5 viscous alpha polar currawongv5_testfuse (6 points, least squares CD on CL^2); placeholder: false"
+      }
+    },
+    {
+      "name": "liftCoefficientBasic",
+      "var_id": "CL_basic",
+      "units": "nd"
+    },
+    {
+      "name": "liftCoefficient",
+      "var_id": "CL",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <ci>CL_basic</ci>\n          <apply>\n            <times />\n            <ci>CLq</ci>\n            <ci>qhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CLde</ci>\n            <ci>de</ci>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "liftCoefficientLinear",
+      "var_id": "CL_linear",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <ci>CL0</ci>\n          <apply>\n            <times />\n            <ci>CLa</ci>\n            <ci>alpha</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CLq</ci>\n            <ci>qhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CLde</ci>\n            <ci>de</ci>\n          </apply>\n        </apply>\n      </math>"
+      }
+    },
+    {
+      "name": "dragCoefficient",
+      "var_id": "CD",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <ci>CD0</ci>\n          <apply>\n            <times />\n            <ci>K</ci>\n            <apply>\n              <power />\n              <ci>CL_linear</ci>\n              <cn>2</cn>\n            </apply>\n          </apply>\n          <apply>\n            <times />\n            <ci>CDde</ci>\n            <apply>\n              <abs />\n              <ci>de</ci>\n            </apply>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "sideForceCoefficient",
+      "var_id": "CY",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <apply>\n            <times />\n            <ci>CYb</ci>\n            <ci>beta</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CYp</ci>\n            <ci>phat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CYr</ci>\n            <ci>rhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>CYdr</ci>\n            <ci>dr</ci>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "rollMomentCoefficient",
+      "var_id": "Cl",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <apply>\n            <times />\n            <ci>Clb</ci>\n            <ci>beta</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Clp</ci>\n            <ci>phat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Clr</ci>\n            <ci>rhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Clda</ci>\n            <ci>da</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cldr</ci>\n            <ci>dr</ci>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "pitchMomentCoefficient",
+      "var_id": "Cm",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <ci>Cm0</ci>\n          <apply>\n            <times />\n            <ci>Cma</ci>\n            <ci>alpha</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cmq</ci>\n            <ci>qhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cmde</ci>\n            <ci>de</ci>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "yawMomentCoefficient",
+      "var_id": "Cn",
+      "units": "nd",
+      "axis_system": "stability axes",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <plus />\n          <apply>\n            <times />\n            <ci>Cnb</ci>\n            <ci>beta</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cnp</ci>\n            <ci>phat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cnr</ci>\n            <ci>rhat</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cnda</ci>\n            <ci>da</ci>\n          </apply>\n          <apply>\n            <times />\n            <ci>Cndr</ci>\n            <ci>dr</ci>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    }
+  ],
+  "breakpoint_def": [
+    {
+      "name": "alpha breakpoints",
+      "bp_id": "BP_ALPHA",
+      "units": "rad",
+      "bp_vals": "-1.5707963267948966, -0.56974083285485655, -0.2206749824559906, 0.18126022981868767, 0.35579315501812059, 0.78539816339744828, 1.5707963267948966"
+    }
+  ],
+  "gridded_table_def": [
+    {
+      "name": "basic lift coefficient",
+      "gt_id": "GT_CL_BASIC",
+      "units": "nd",
+      "description": {
+        "value": "source: linear CL0 + CLa alpha inside CL_min -0.6 to CL_max 1.3 (stall settings, placeholder true), post-stall shape of Aerolink 6f7edb7 jsbsim_xml.cl_alpha_table (placeholder); placeholder: true"
+      },
+      "breakpoint_refs": [
+        {
+          "bp_id": "BP_ALPHA"
+        }
+      ],
+      "data_table": {
+        "value": "0, -0.35999999999999999, -0.59999999999999998, 1.3, 0.97500000000000009, 0.90000000000000002, 0"
+      }
+    }
+  ],
+  "function": [
+    {
+      "name": "basicLiftCoefficient",
+      "independent_var_ref": [
+        {
+          "var_id": "alpha",
+          "min": "-1.5707963267948966",
+          "max": "1.5707963267948966",
+          "extrapolate": "neither",
+          "interpolate": "linear"
+        }
+      ],
+      "dependent_var_ref": [
+        {
+          "var_id": "CL_basic"
+        }
+      ],
+      "function_defn": {
+        "name": "basic lift table",
+        "gridded_table_ref": {
+          "gt_id": "GT_CL_BASIC"
+        }
+      }
+    }
+  ],
+  "check_data": {
+    "static_shot": [
+      {
+        "name": "trim",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "alpha",
+              "signal_value": "0.084009678215495057"
+            },
+            {
+              "var_id": "beta",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "phat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "qhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "rhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "de",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "da",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "dr",
+              "signal_value": "0"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "CL",
+              "signal_value": "0.84028399999999992",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CD",
+              "signal_value": "0.048603015861482191",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CY",
+              "signal_value": "0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cl",
+              "signal_value": "0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cm",
+              "signal_value": "1.1135500022074751e-09",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cn",
+              "signal_value": "0",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "alpha_elevator",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "alpha",
+              "signal_value": "0.080000000000000002"
+            },
+            {
+              "var_id": "beta",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "phat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "qhat",
+              "signal_value": "0.01"
+            },
+            {
+              "var_id": "rhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "de",
+              "signal_value": "-0.089999999999999997"
+            },
+            {
+              "var_id": "da",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "dr",
+              "signal_value": "0"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "CL",
+              "signal_value": "0.84913460502251181",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CD",
+              "signal_value": "0.050483444846708629",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CY",
+              "signal_value": "0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cl",
+              "signal_value": "0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cm",
+              "signal_value": "-0.058819234394873007",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cn",
+              "signal_value": "0",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "sideslip_rudder",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "alpha",
+              "signal_value": "0.050000000000000003"
+            },
+            {
+              "var_id": "beta",
+              "signal_value": "0.089999999999999997"
+            },
+            {
+              "var_id": "phat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "qhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "rhat",
+              "signal_value": "0.02"
+            },
+            {
+              "var_id": "de",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "da",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "dr",
+              "signal_value": "0.070000000000000007"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "CL",
+              "signal_value": "0.67951582981718672",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CD",
+              "signal_value": "0.037401791629727441",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CY",
+              "signal_value": "-0.0044868394798971388",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cl",
+              "signal_value": "-0.0061607915901416236",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cm",
+              "signal_value": "0.045818179702247094",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cn",
+              "signal_value": "9.8578800468408778e-05",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "roll_aileron",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "alpha",
+              "signal_value": "0.059999999999999998"
+            },
+            {
+              "var_id": "beta",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "phat",
+              "signal_value": "0.029999999999999999"
+            },
+            {
+              "var_id": "qhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "rhat",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "de",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "da",
+              "signal_value": "0.12"
+            },
+            {
+              "var_id": "dr",
+              "signal_value": "0"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "CL",
+              "signal_value": "0.72678712981718674",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CD",
+              "signal_value": "0.040449374105389173",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "CY",
+              "signal_value": "-0.0010408079999999998",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cl",
+              "signal_value": "0.0059767428129807714",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cm",
+              "signal_value": "0.032346079702247094",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Cn",
+              "signal_value": "-0.0023074280256752903",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

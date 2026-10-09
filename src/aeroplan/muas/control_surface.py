@@ -1,7 +1,8 @@
-"""Control-surface extension (brief D13). Rudder and elevator are instances under 1.2.2.4, not new WBS numbers."""
+"""Control-surface extension (brief D13). A control surface is a subcomponent of the surface that carries it
+(ADH has no Elevator or Rudder class). It holds no WBS number of its own."""
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import Field, model_validator
 
@@ -17,6 +18,8 @@ class ControlSurface(MuasModel):
     positive_sign: str
     s119_name: str
     jsbsim_property: Optional[str] = None
+    side: Literal["left", "right", "both"] = Field(
+        "both", description="Which half of the parent carries the surface. both: every half the parent has")
 
     @model_validator(mode="after")
     def _check(self):

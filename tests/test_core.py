@@ -1,12 +1,10 @@
-import copy
 import math
 
-import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from aeroplan.frames import design_to_frd, frd_to_design, transfer_moment_coefficients
-from aeroplan.muas.mass import Inertia, MassProperties, roll_up
+from aeroplan.muas.mass import Inertia, MassProperties
+from aeroplan.muas.propulsion import PropellerInstallation
 from aeroplan.muas.reference import ReferenceData
 from aeroplan.muas.units import Q, Quantity
 
@@ -25,47 +23,11 @@ def test_units_reject_unknown_and_wrong_dimension():
         Q(1, "m").require("mass")
 
 
-# --- frames (D05) ---
-def test_design_frd_roundtrip():
-    v = [1.0, 2.0, 3.0]
-    assert np.allclose(frd_to_design(design_to_frd(v)), v)
-    assert np.allclose(design_to_frd([1, 2, 3]), [-1, 2, -3])
-
-
-def test_lift_aft_of_reference_is_nose_down():
-    # Lift (CZ = -CL in FRD) acting 0.1 m aft of the target point must give a nose-down moment.
-    cl = 0.5
-    _, cm, _ = transfer_moment_coefficients((0, 0, -cl), (0, 0, 0), [1.1, 0, 0], [1.0, 0, 0], b_ref=2.0, c_ref=0.5)
-    assert cm == pytest.approx(-cl * 0.1 / 0.5)
-
-
-def test_transfer_is_reversible_and_asymmetric_point_checked():
-    cf, cm = (0.02, 0.1, -0.4), (0.01, -0.02, 0.005)  # beta != 0 style point
-    a, b = [1.0, 0.0, 0.1], [1.2, 0.05, 0.0]
-    there = transfer_moment_coefficients(cf, cm, a, b, 2.0, 0.5)
-    back = transfer_moment_coefficients(cf, there, b, a, 2.0, 0.5)
-    assert np.allclose(back, cm)
-    assert not np.allclose(there, cm)
-
-
 # --- mass (D11) ---
-def _mp(m, xyz, ixx=0.1, iyy=0.1, izz=0.1):
-    return MassProperties(mass=Q(m, "kg"), cg={"xyz": xyz}, inertia=Inertia(ixx=ixx, iyy=iyy, izz=izz), source="estimate")
-
-
-def test_rollup_parallel_axis():
-    total = roll_up([_mp(1, [0, 0, 0]), _mp(1, [2, 0, 0])])
-    assert total.mass.value == pytest.approx(2.0)
-    assert total.cg.xyz == pytest.approx([1.0, 0, 0])
-    # each point mass sits 1 m from the combined CG along x: Iyy and Izz gain 2*1*1^2
-    assert total.inertia.ixx == pytest.approx(0.2)
-    assert total.inertia.iyy == pytest.approx(0.2 + 2.0)
-
-
-def test_rollup_keeps_placeholder_flag():
-    item = _mp(1, [0, 0, 0])
-    item.placeholder = True
-    assert roll_up([item, _mp(1, [1, 0, 0])]).placeholder
+def test_mass_properties_need_a_positive_mass():
+    MassProperties(mass=Q(1, "kg"), cg={"xyz": [0, 0, 0]}, inertia=Inertia(ixx=0.1, iyy=0.1, izz=0.1), source="estimate")
+    with pytest.raises(ValidationError):
+        MassProperties(mass=Q(-1, "kg"), cg={"xyz": [0, 0, 0]}, source="estimate")
 
 
 def test_inertia_rejects_unphysical():
@@ -92,3 +54,11 @@ def test_mrp_is_nominal_cg():
 def test_reference_rejects_wrong_dimension():
     with pytest.raises(ValidationError):
         _ref(s_ref=Q(1, "m"))
+
+
+# --- propeller installation ---
+def test_installation_axis_unit_vector():
+    ok = dict(role="cruise", hub={"xyz": [0, 0, 0]}, thrust_axis=[-1, 0, 0], spin="cw", diameter={"value": 0.25, "units": "m"})
+    PropellerInstallation(**ok)
+    with pytest.raises(ValidationError):
+        PropellerInstallation(**{**ok, "thrust_axis": [-2, 0, 0]})

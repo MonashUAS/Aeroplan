@@ -1,0 +1,171 @@
+{
+  "file_header": {
+    "name": "F-16 inertia model (a la Stevens & Lewis)",
+    "author": [
+      {
+        "name": "Bruce Jackson",
+        "org": "NASA Langley Research Center",
+        "email": "bruce.jackson@nasa.gov",
+        "address": [
+          "MS 132 NASA, Hampton, VA 23681"
+        ]
+      }
+    ],
+    "creation_date": {
+      "date": "2012-08-07"
+    },
+    "file_version": {
+      "value": "Initial version"
+    },
+    "description": {
+      "value": "A simple constant mass matrix for the F-16 Fighting Falcon, as described in Stevens & Lewis [01]."
+    },
+    "reference": [
+      {
+        "ref_id": "REF01",
+        "author": "Stevens, Brian L. and Lewis, Frank L.",
+        "title": "Aircraft control and Simulation, 2nd Edition",
+        "accession": "ISBN 0-471-37145-9",
+        "date": "2003-01-01"
+      }
+    ]
+  },
+  "variable_def": [
+    {
+      "name": "vrsPositionOfCM",
+      "var_id": "CG_PCT_MAC",
+      "units": "pct",
+      "sign": "+AFT",
+      "initial_value": "35.0",
+      "description": {
+        "value": "Longitudinal location of the center of mass in percent of MAC. Reference location is 35%."
+      },
+      "is_input": true
+    },
+    {
+      "name": "referenceWingChord",
+      "var_id": "CBAR",
+      "units": "ft",
+      "initial_value": "11.32",
+      "description": {
+        "value": "Mean aerodynamic chord, needed for center-of-mass calculations"
+      },
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyMomentOfInertia_Roll",
+      "var_id": "XIXX",
+      "units": "slugft2",
+      "initial_value": "9496.0",
+      "description": {
+        "value": "Rolling moment of inertia about the body X axis"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyMomentOfInertia_Pitch",
+      "var_id": "XIYY",
+      "units": "slugft2",
+      "initial_value": "55814.0",
+      "description": {
+        "value": "Pitching moment of inertia about the body Y axis"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyMomentOfInertia_Yaw",
+      "var_id": "XIZZ",
+      "units": "slugft2",
+      "initial_value": "63100.0",
+      "description": {
+        "value": "Yawing moment of inertia about the body Z axis"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyProductOfInertia_ZX",
+      "var_id": "XIZX",
+      "units": "slugft2",
+      "initial_value": "982.0",
+      "description": {
+        "value": "Cross-product of inertia in the body X-Z plane"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyProductOfInertia_XY",
+      "var_id": "XIXY",
+      "units": "slugft2",
+      "initial_value": "0.0",
+      "description": {
+        "value": "Cross-product of inertia in the body X-Y plane"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyProductOfInertia_YZ",
+      "var_id": "XIYZ",
+      "units": "slugft2",
+      "initial_value": "0.0",
+      "description": {
+        "value": "Cross-product of inertia in the body Y-Z plane"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "totalMass",
+      "var_id": "XMASS",
+      "units": "slug",
+      "initial_value": "637.1595",
+      "description": {
+        "value": "Total mass of vehicle (20,500 lbm)"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyPositionOfCmWrtMrc_Y",
+      "var_id": "DYCG",
+      "units": "ft",
+      "sign": "RT",
+      "initial_value": "0",
+      "description": {
+        "value": "Lateral location of the center of mass relative to the plane of symmetry (0 BL),\n      positive if the CM is right of the X-Z plane."
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyPositionOfCmWrtMrc_Z",
+      "var_id": "DZCG",
+      "units": "ft",
+      "sign": "DOWN",
+      "initial_value": "0.",
+      "description": {
+        "value": "Vertical location of the center of mass relative to the bottom of the flat part of the belly,\n      positive if the CM is below the waterline of the vehicle."
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    },
+    {
+      "name": "bodyPositionOfCmWrtMrc_X",
+      "var_id": "DXCG",
+      "units": "ft",
+      "sign": "FWD",
+      "description": {
+        "value": "Longitudinal location of the center of mass relative to the moment reference center (35% MAC),\n      positive if the CM is forward of the MRC. Calculated as (35 - CG_PCT_MAC)*CBAR/100."
+      },
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n\t<apply>\n\t  <times />\n\t  <cn>0.01</cn>\n\t  <ci>CBAR</ci>\n\t  <apply>\n\t    <minus />\n\t    <cn>35</cn>\n\t    <ci>CG_PCT_MAC</ci>\n\t  </apply>\n\t</apply>\n      </math>"
+      },
+      "is_output": true,
+      "is_std_aiaa": true
+    }
+  ]
+}

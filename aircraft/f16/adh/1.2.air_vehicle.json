@@ -1,0 +1,25 @@
+{
+  "wbs_no": "1.2",
+  "name": "AirVehicle",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "f16_airvehicle",
+    "datasets": [
+      {
+        "role": "aero",
+        "ref": "asset:sha256:ef419f452ea0ce42f73888ee752f883d53b1bcc3da2af324646381d0f0bd67fd"
+      },
+      {
+        "role": "mass",
+        "ref": "asset:sha256:0a6a77da1449ab691799f3419ed718916a62bba41643f306179645d321da5ae0"
+      }
+    ],
+    "sources": [
+      {
+        "tool": "DAVEML",
+        "asset": "asset:sha256:e11d4eba5b158d24db7034bd85682ad0b896dd2f3172f007ca3d6d6d4e693c4a",
+        "role": "DAVE-ML model f16 (mass)"
+      }
+    ]
+  }
+}

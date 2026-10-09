@@ -1,0 +1,29 @@
+diff --git a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_geometry.py b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_geometry.py
+index edd949e..8f9082f 100644
+--- a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_geometry.py
++++ b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_geometry.py
+@@ -387,13 +387,19 @@ class Spline(BaseModel):
+         Raises:
+             ValueError: If the number of points is less than the required for the spline's degree.
+         """
+-        degree = values.degree if hasattr(values, "degree") else 3  # Default to cubic if degree is not yet validated
+-        if len(value) < degree + 1:
+-            raise ValueError(
+-                f"At least {degree + 1} points are required to define a spline of degree {degree}."
+-            )
++        # MUAS patch 0002: `degree` is declared after `points`, so it is not known here. The count check moved to
++        # `check_point_count`, which runs after both fields are validated.
+         return value
+ 
++    @model_validator(mode="after")
++    def check_point_count(self) -> "Spline":
++        """MUAS patch 0002. A spline of degree d < 3 needs d + 1 points (a polyline needs 2). From degree 3 up, the
++        upstream minimum of 4 points stays (upstream always checked against degree 3, and its tests rely on it)."""
++        need = min(self.degree, 3) + 1
++        if len(self.points) < need:
++            raise ValueError(f"At least {need} points are required to define a spline of degree {self.degree}.")
++        return self
++
+     @field_validator("degree", mode="before")
+     def validate_degree(cls, value: int) -> int:
+         """Validate that the degree of the spline is a positive integer.

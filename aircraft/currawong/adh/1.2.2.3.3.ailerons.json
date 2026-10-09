@@ -1,0 +1,142 @@
+{
+  "wbs_no": "1.2.2.3.3",
+  "name": "Ailerons",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "ailerons"
+  },
+  "subcomponents": [
+    {
+      "name": "Aileron L",
+      "description": "Currawong aileron l. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "aileron_l",
+        "fidelity": "L0",
+        "control_surface": {
+          "parent": "wing_main",
+          "eta_span": [
+            0.55,
+            0.92
+          ],
+          "hinge_x_over_c": 0.75,
+          "limit_min_rad": -0.3490658503988659,
+          "limit_max_rad": 0.3490658503988659,
+          "positive_sign": "JSBSim",
+          "s119_name": "aileronDeflection",
+          "jsbsim_property": "fcs/left-aileron-pos-rad",
+          "side": "left"
+        },
+        "actuator": {
+          "tau_s": 0.04,
+          "rate_limit_rad_s": 5.235987755982989,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (aileron_l control surface, from the retired hand config). Was: hand config actuators (servo_tau_s, servo_rate_dps). Origin: old Aerolink hand config",
+          "placeholder": true
+        },
+        "visual": [
+          {
+            "part": "aileron_l",
+            "mesh": {
+              "tool": "CREO",
+              "asset": "asset:sha256:79a7ded9d7f9699f034b604202f67b5260a4e7a28de236e7864a40406b0f8191",
+              "role": "CAD mesh of aileron_l"
+            },
+            "units": "mm",
+            "transform": {
+              "axes": [
+                "-z",
+                "-x",
+                "y"
+              ],
+              "origin_m": [
+                0.0744,
+                0.0,
+                0.0
+              ]
+            },
+            "hinge": [
+              [
+                0.102231,
+                -1.424385,
+                0.05722
+              ],
+              [
+                0.10909,
+                -1.306005,
+                0.052196
+              ]
+            ],
+            "source": "Creo export aileron_l.stl with the CREO settings transform",
+            "placeholder": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Aileron R",
+      "description": "Currawong aileron r. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "aileron_r",
+        "fidelity": "L0",
+        "control_surface": {
+          "parent": "wing_main",
+          "eta_span": [
+            0.55,
+            0.92
+          ],
+          "hinge_x_over_c": 0.75,
+          "limit_min_rad": -0.3490658503988659,
+          "limit_max_rad": 0.3490658503988659,
+          "positive_sign": "JSBSim",
+          "s119_name": "aileronDeflection",
+          "jsbsim_property": "fcs/right-aileron-pos-rad",
+          "side": "right"
+        },
+        "actuator": {
+          "tau_s": 0.04,
+          "rate_limit_rad_s": 5.235987755982989,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (aileron_r control surface, from the retired hand config). Was: hand config actuators (servo_tau_s, servo_rate_dps). Origin: old Aerolink hand config",
+          "placeholder": true
+        },
+        "visual": [
+          {
+            "part": "aileron_r",
+            "mesh": {
+              "tool": "CREO",
+              "asset": "asset:sha256:81e9aeb344cba37c17cd7c72c567ea5eeb7c220cb0abb42e15665c8a490655e7",
+              "role": "CAD mesh of aileron_r"
+            },
+            "units": "mm",
+            "transform": {
+              "axes": [
+                "z",
+                "x",
+                "y"
+              ],
+              "origin_m": [
+                0.0744,
+                0.0,
+                0.0
+              ]
+            },
+            "hinge": [
+              [
+                0.10909,
+                1.306005,
+                0.052196
+              ],
+              [
+                0.102231,
+                1.424385,
+                0.05722
+              ]
+            ],
+            "source": "Creo export aileron_r.stl with the CREO settings transform",
+            "placeholder": false
+          }
+        ]
+      }
+    }
+  ]
+}

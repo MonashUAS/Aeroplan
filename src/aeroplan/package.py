@@ -1,180 +1,307 @@
-"""Export package v1: an immutable folder, plus a one-file .h5 wrapper (brief D19, section 6.5).
+"""The `.muas` package: a ZIP archive that holds one immutable, hashed snapshot of an aircraft or a flight record.
 
-Folder layout: manifest.json plus the files the manifest lists, each with a sha256.
-The package sha256 is the hash of the sorted "path<TAB>sha256" lines. A package is never edited.
-The .h5 wrapper holds the same bytes, so a hand copy of one file moves the whole package.
+    <name>-<version>-<profile>.muas      (ZIP64 when needed)
+    ├── mimetype                        "application/vnd.muas+zip", the first entry, not compressed
+    ├── manifest.json                   kind, format version, ADH fork, MUAS schema version, profile, consumers,
+    │                                   the files {path, sha256, size, role, storage, asset}, package hash
+    ├── aircraft.adh.json               the monolithic ADH tree, MUAS additions under "muas"
+    ├── data/<name>.h5                  embedded datasets (not compressed in the ZIP, gzip by chunk inside HDF5)
+    ├── assets/<sha256>-<name>          embedded raw files (archive profile)
+    └── preview/aircraft.glb            the glTF view of the parts (aerolink: required, review, archive)
+
+`pack` builds it from the source tree and never edits a package: a package of the same name with other bytes is
+refused. `open_package` checks the mimetype, every file hash, the package hash, and the hash of every embedded
+dataset. `unpack` writes the source tree back.
+
+The package hash is the sha256 of the canonical JSON of the manifest `files` list (every file except mimetype and
+manifest.json). The ZIP is deterministic: sorted entries, fixed time stamps.
 """
 from __future__ import annotations
 
-import hashlib
+import copy
+import io
 import json
+import zipfile
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import Field, model_validator
+from . import MUAS_SCHEMA_VERSION, adh_doc, assets, consumers, h5json, source_tree
 
-from . import MUAS_SCHEMA_VERSION
-from .config import canonical_json
-from .dml_validate import validate_dml
-from .muas.base import MuasModel
-
-PACKAGE_SPEC = "muas-export/1.0.0"
-MANIFEST = "manifest.json"
+MIMETYPE = "application/vnd.muas+zip"
+FORMAT, FORMAT_VERSION = "muas", "2.0.0"
+EPOCH = (1980, 1, 1, 0, 0, 0)
+ADH_JSON, MANIFEST, PREVIEW = "aircraft.adh.json", "manifest.json", "preview/aircraft.glb"
+PACK_FIELDS = ("storage", "package_path", "inline")
 
 
-class FileEntry(MuasModel):
-    path: str
-    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    standard: Optional[str] = None
+class PackageError(ValueError):
+    """The package is not a `.muas` package, or a hash does not match."""
 
 
-class Source(MuasModel):
-    repo: str
-    commit: str
-    data_repo: Optional[str] = None
-    data_commit: Optional[str] = None
-    muas_schema_version: str = MUAS_SCHEMA_VERSION
-    adh_upstream: str = "96179ca+patches"
+def adh_fork(root: Path) -> Dict[str, Any]:
+    """The ADH copy that checks the package: upstream commit, the hash of the upstream tree and of each patch."""
+    base = Path(root) / "packages" / "muas_adh"
+    up = base / "upstream" / "src"
+    h = []
+    for p in sorted(up.rglob("*.py")):
+        h.append(f"{p.relative_to(up).as_posix()} {assets.sha256_file(p)}")
+    info = {}
+    if (base / "upstream_commit.txt").is_file():
+        for line in (base / "upstream_commit.txt").read_text(encoding="utf-8").splitlines():
+            k, _, v = line.partition(":")
+            info[k.strip()] = v.strip()
+    return {"repository": info.get("repository"), "upstream_commit": info.get("commit"),
+            "upstream_tree_sha256": assets.sha256_bytes("\n".join(h).encode()),
+            "patches": [{"name": p.name, "sha256": assets.sha256_file(p)}
+                        for p in sorted((base / "patches").glob("*.patch"))]}
 
 
-class Correction(MuasModel):
-    effect: str
-    default_weight: float = 1.0
+def _zinfo(path: str, stored: bool) -> zipfile.ZipInfo:
+    zi = zipfile.ZipInfo(path, date_time=EPOCH)
+    zi.compress_type = zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED
+    zi.create_system = 3
+    zi.external_attr = 0o644 << 16
+    return zi
 
 
-class PackageManifest(MuasModel):
-    package_spec: str = PACKAGE_SPEC
-    package_id: str
-    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    supersedes: Optional[str] = None
-    source: Source
-    config_id: str
-    fidelity_summary: Dict[str, str]
-    frames: Dict[str, str]
-    reference: Dict[str, object]
-    files: List[FileEntry] = Field(min_length=1)
-    datasets_used: List[Dict[str, str]] = Field(default_factory=list)
-    corrections: List[Correction] = Field(default_factory=list)
-    known_limits: List[str] = Field(default_factory=list)
-    placeholder: bool = Field(False, description="True when any value is a stand-in")
-
-    @model_validator(mode="after")
-    def _check(self):
-        paths = [f.path for f in self.files]
-        if len(set(paths)) != len(paths):
-            raise ValueError("duplicate file path")
-        for p in paths:
-            if p.startswith(("/", "..")) or "\\" in p or ".." in p.split("/") or p == MANIFEST:
-                raise ValueError(f"bad package path {p!r}")
-        return self
+def _json_bytes(value: Any) -> bytes:
+    return (json.dumps(value, indent=1, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
 
 
-def sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
+def _preview(acft, root: Path) -> Optional[bytes]:
+    from .gltf import write_glb
+    from .parts import part_meshes
+
+    ps = part_meshes(acft.doc, root)
+    if not ps.parts:
+        return None
+    parts = []
+    for name, p in ps.parts.items():
+        ex = {"item": p.instance, "source": p.source}
+        if p.hinge is not None:
+            ex["hinge"] = p.hinge
+        if p.material:
+            ex["material"] = p.material
+        if p.placeholder:
+            ex["placeholder"] = True
+        parts.append((name, p.tri, ex))
+    return write_glb(parts, aircraft=acft.name)
 
 
-def package_hash(entries: List[FileEntry]) -> str:
-    lines = "".join(f"{e.path}\t{e.sha256}\n" for e in sorted(entries, key=lambda e: e.path))
-    return sha256_bytes(lines.encode("utf-8"))
+def package_name(acft, profile: str) -> str:
+    return f"{acft.name}-{acft.version}-{profile}.muas"
 
 
-def build_package(
-    out_dir: Path,
-    files: Dict[str, bytes],
-    *,
-    package_id: str,
-    source: Source,
-    config_id: str,
-    fidelity_summary: Dict[str, str],
-    frames: Dict[str, str],
-    reference: Dict[str, object],
-    standards: Optional[Dict[str, str]] = None,
-    supersedes: Optional[str] = None,
-    datasets_used: Optional[List[Dict[str, str]]] = None,
-    corrections: Optional[List[Correction]] = None,
-    known_limits: Optional[List[str]] = None,
-    placeholder: bool = False,
-) -> PackageManifest:
-    """Write a new package folder. Refuses to touch an existing one (immutable)."""
+def pack(acft, profile: str, root: Path, out_dir: Path, *, supersedes: Optional[str] = None) -> Path:
+    """Write `<out_dir>/<name>-<version>-<profile>.muas`. Raises PackageError when the profile needs an item that
+    the aircraft lacks, or when a package of that name with other bytes exists."""
+    problems = consumers.profile_problems(acft, profile)
+    if problems:
+        raise PackageError(f"cannot pack {acft.name} as {profile}:\n  " + "\n  ".join(problems))
+    adh_doc.validate_document(acft.doc)
+    doc = copy.deepcopy(acft.doc)
+    payload: Dict[str, tuple] = {}            # path -> (bytes, role, asset id, stored)
+    for e in assets.register(doc, create=False):
+        t = consumers.tier(profile, e)
+        if t == "embedded" and e["kind"] == "dataset":
+            value = acft.datasets.get(e["id"])
+            if value is None:
+                raise PackageError(f"dataset {e['name']} is not on this machine")
+            if e["size"] <= consumers.INLINE_MAX:
+                e.update(storage="inline", inline=value)
+                continue
+            path = f"data/{e['name']}.h5"
+            payload[path] = (h5json.to_bytes(value, attrs={"asset_id": e["id"], "name": e["name"]}),
+                             f"dataset {e.get('dataset_role')}", e["id"], True)
+            e.update(storage="embedded", package_path=path)
+        elif t == "embedded":
+            try:
+                local = assets.fetch(e, root)
+            except assets.AssetError as err:
+                raise PackageError(f"the {profile} profile embeds every file: {err}") from err
+            path = f"assets/{assets.sha_of(e['id'])}-{e['name']}"
+            payload[path] = (local.read_bytes(), f"file {e['role']}", e["id"], True)
+            e.update(storage="embedded", package_path=path)
+        else:
+            e["storage"] = "linked"
+    if consumers.PREVIEW.get(profile):
+        glb = _preview(acft, root)
+        if glb is None and consumers.PREVIEW[profile] == "required":
+            raise PackageError(f"the {profile} profile needs the glTF preview: the aircraft has no visual parts")
+        if glb is not None:
+            payload[PREVIEW] = (glb, "preview glTF", None, True)
+    payload[ADH_JSON] = (_json_bytes(doc), "ADH document", None, False)
+    files = []
+    for path in sorted(payload, key=lambda p: (p != ADH_JSON, p)):
+        data, role, aid, stored = payload[path]
+        f = {"path": path, "sha256": assets.sha256_bytes(data), "size": len(data), "role": role,
+             "storage": "stored" if stored else "deflated"}
+        if aid:
+            f["asset"] = aid
+        files.append(f)
     out_dir = Path(out_dir)
-    if out_dir.exists():
-        raise FileExistsError(f"package {out_dir} exists. Packages are immutable: cut a new id")
-    standards = standards or {}
-    for p, std in standards.items():
-        if "S-119" in std:  # DAVE-ML must pass the vendored 2.0 DTD before it enters a package
-            errors = validate_dml(files[p])
-            if errors:
-                raise ValueError(f"{p} is not valid DAVE-ML 2.0: {errors[:3]}")
-    entries = [FileEntry(path=p, sha256=sha256_bytes(b), standard=standards.get(p)) for p, b in sorted(files.items())]
-    manifest = PackageManifest(
-        package_id=package_id, sha256=package_hash(entries), supersedes=supersedes, source=source,
-        config_id=config_id, fidelity_summary=fidelity_summary, frames=frames, reference=reference, files=entries,
-        datasets_used=datasets_used or [], corrections=corrections or [], known_limits=known_limits or [],
-        placeholder=placeholder,
-    )
-    for p, b in files.items():
-        dst = out_dir / p
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        dst.write_bytes(b)
-    (out_dir / MANIFEST).write_text(canonical_json(json.loads(manifest.model_dump_json())), encoding="utf-8")
-    return manifest
+    name = package_name(acft, profile)
+    manifest = {"format": FORMAT, "format_version": FORMAT_VERSION, "kind": acft.info.get("kind", "aircraft"),
+                "aircraft": acft.name, "version": acft.version, "profile": profile,
+                "consumers": list(acft.info.get("consumers") or []),
+                "muas_schema_version": MUAS_SCHEMA_VERSION, "adh": adh_fork(root),
+                "supersedes": supersedes if supersedes is not None else _previous(out_dir, acft, profile),
+                "files": files, "package_hash": assets.sha256_bytes(assets.canonical_json(files))}
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", allowZip64=True) as z:
+        z.writestr(_zinfo("mimetype", True), MIMETYPE.encode("ascii"))
+        z.writestr(_zinfo(MANIFEST, False), _json_bytes(manifest))
+        for f in files:
+            z.writestr(_zinfo(f["path"], f["storage"] == "stored"), payload[f["path"]][0])
+    data = buf.getvalue()
+    out = out_dir / name
+    if out.exists() and out.read_bytes() != data:
+        raise PackageError(f"{out} exists with other content. A package is never edited: run `aeroplan build` "
+                           "(a new version) first")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_suffix(".muas.tmp")
+    tmp.write_bytes(data)
+    tmp.replace(out)
+    return out
 
 
-def verify_package(pkg_dir: Path) -> PackageManifest:
-    """Check the manifest, every file hash, the package hash and that no extra file exists."""
-    pkg_dir = Path(pkg_dir)
-    manifest = PackageManifest.model_validate_json((pkg_dir / MANIFEST).read_text(encoding="utf-8"))
-    for e in manifest.files:
-        f = pkg_dir / e.path
-        if not f.is_file():
-            raise ValueError(f"missing file {e.path}")
-        if sha256_bytes(f.read_bytes()) != e.sha256:
-            raise ValueError(f"hash mismatch {e.path}")
-    if package_hash(manifest.files) != manifest.sha256:
-        raise ValueError("package sha256 does not match the file list")
-    on_disk = {p.relative_to(pkg_dir).as_posix() for p in pkg_dir.rglob("*") if p.is_file()} - {MANIFEST}
-    extra = on_disk - {e.path for e in manifest.files}
-    if extra:
-        raise ValueError(f"files not in manifest: {sorted(extra)}")
-    return manifest
+def _version_key(v: str):
+    return tuple(int(x) for x in v.split("."))
 
 
-def pack_h5(pkg_dir: Path, h5_path: Path) -> Path:
-    """Wrap a verified package folder into ONE .h5 file."""
-    import h5py
-    import numpy as np
+def _previous(out_dir: Path, acft, profile: str) -> Optional[str]:
+    """The package hash of the newest older package of this aircraft and profile in `out_dir`, or None."""
+    best = None
+    for p in Path(out_dir).glob(f"{acft.name}-*-{profile}.muas"):
+        v = p.name[len(acft.name) + 1: -len(f"-{profile}.muas")]
+        try:
+            if _version_key(v) >= _version_key(acft.version):
+                continue
+        except ValueError:
+            continue
+        if best is None or _version_key(v) > _version_key(best[0]):
+            best = (v, p)
+    if best is None:
+        return None
+    try:
+        return open_package(best[1]).manifest["package_hash"]
+    except PackageError:
+        return None
 
-    pkg_dir, h5_path = Path(pkg_dir), Path(h5_path)
-    manifest = verify_package(pkg_dir)
-    if h5_path.exists():
-        raise FileExistsError(h5_path)
-    with h5py.File(h5_path, "w") as h:
-        h.attrs["package_spec"] = manifest.package_spec
-        h.attrs["package_id"] = manifest.package_id
-        h.attrs["sha256"] = manifest.sha256
-        h.create_dataset("manifest", data=np.frombuffer((pkg_dir / MANIFEST).read_bytes(), dtype=np.uint8))
-        grp = h.create_group("files")
-        for e in manifest.files:
-            grp.create_dataset(e.path, data=np.frombuffer((pkg_dir / e.path).read_bytes(), dtype=np.uint8))
-    return h5_path
+
+@dataclass
+class Package:
+    """An open `.muas` package (every hash checked)."""
+
+    path: Path
+    manifest: Dict[str, Any]
+    doc: Dict[str, Any]
+    files: Dict[str, bytes] = field(repr=False, default_factory=dict)
+
+    def entry(self, aid: str) -> Dict[str, Any]:
+        return assets.entry(self.doc, aid)
+
+    def dataset(self, ref: str) -> Any:
+        """The JSON value of a dataset reference. Raises PackageError for a linked dataset."""
+        aid, ptr = assets.split_ref(ref)
+        e = self.entry(aid)
+        if e.get("storage") == "inline":
+            return assets.resolve(e["inline"], ptr)
+        if e.get("storage") == "embedded":
+            return assets.resolve(h5json.read_file(self.files[e["package_path"]])[1], ptr)
+        raise PackageError(f"dataset {e['name']} is linked: it is not in this {self.manifest['profile']} package")
+
+    @property
+    def preview(self) -> Optional[bytes]:
+        return self.files.get(PREVIEW)
 
 
-def unpack_h5(h5_path: Path, out_dir: Path) -> PackageManifest:
-    """Rebuild the package folder from the .h5 file and verify it."""
-    import h5py
+def open_package(path: Path) -> Package:
+    path = Path(path)
+    try:
+        z = zipfile.ZipFile(path)
+    except (zipfile.BadZipFile, OSError) as err:
+        raise PackageError(f"{path.name} is not a ZIP archive: {err}") from err
+    with z:
+        infos = z.infolist()
+        if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
+            raise PackageError(f"{path.name}: the first entry must be 'mimetype', not compressed")
+        if z.read("mimetype").decode("ascii", "replace") != MIMETYPE:
+            raise PackageError(f"{path.name}: mimetype is not {MIMETYPE}")
+        manifest = json.loads(z.read(MANIFEST))
+        if manifest.get("format") != FORMAT or str(manifest.get("format_version", "")).split(".")[0] != \
+                FORMAT_VERSION.split(".")[0]:
+            raise PackageError(f"{path.name}: format {manifest.get('format')} {manifest.get('format_version')} is "
+                               f"not readable (this reader: {FORMAT} {FORMAT_VERSION})")
+        names = {i.filename for i in infos} - {"mimetype", MANIFEST}
+        listed = {f["path"] for f in manifest["files"]}
+        if names != listed:
+            raise PackageError(f"{path.name}: the archive and the manifest list other files: "
+                               f"{sorted(names ^ listed)}")
+        if assets.sha256_bytes(assets.canonical_json(manifest["files"])) != manifest["package_hash"]:
+            raise PackageError(f"{path.name}: the package hash does not match the file list")
+        files = {}
+        for f in manifest["files"]:
+            try:
+                data = z.read(f["path"])
+            except (zipfile.BadZipFile, KeyError) as err:
+                raise PackageError(f"{path.name}: {f['path']} cannot be read (sha256 not checked): {err}") from err
+            if len(data) != f["size"] or assets.sha256_bytes(data) != f["sha256"]:
+                raise PackageError(f"{path.name}: {f['path']} does not match its sha256 in the manifest")
+            files[f["path"]] = data
+    doc = json.loads(files[ADH_JSON])
+    pkg = Package(path, manifest, doc, files)
+    for e in assets.register(doc, create=False):
+        if e.get("storage") == "inline" and assets.dataset_id(e["inline"]) != e["id"]:
+            raise PackageError(f"{path.name}: the inline dataset {e['name']} does not match {e['id']}")
+        if e.get("storage") == "embedded":
+            if e["package_path"] not in files:
+                raise PackageError(f"{path.name}: {e['package_path']} of {e['name']} is missing")
+            if e["kind"] == "dataset":
+                if assets.dataset_id(pkg.dataset(e["id"])) != e["id"]:
+                    raise PackageError(f"{path.name}: the dataset {e['name']} does not match {e['id']}")
+            elif assets.sha256_bytes(files[e["package_path"]]) != assets.sha_of(e["id"]):
+                raise PackageError(f"{path.name}: the file {e['name']} does not match {e['id']}")
+    return pkg
 
-    out_dir = Path(out_dir)
-    if out_dir.exists():
-        raise FileExistsError(out_dir)
-    with h5py.File(h5_path, "r") as h:
-        out_dir.mkdir(parents=True)
-        (out_dir / MANIFEST).write_bytes(bytes(h["manifest"][()]))
 
-        def _write(name, obj):
-            if hasattr(obj, "shape"):
-                dst = out_dir / name
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                dst.write_bytes(bytes(obj[()]))
-
-        h["files"].visititems(_write)
-    return verify_package(out_dir)
+def unpack(path: Path, folder: Path, root: Optional[Path] = None) -> List[str]:
+    """Write the source tree of a package into `folder`. A linked dataset comes from its repository location under
+    `root` (hash checked). Embedded raw files go into the asset cache. Returns notes. Raises PackageError when a
+    dataset cannot be found."""
+    pkg = open_package(path)
+    doc = copy.deepcopy(pkg.doc)
+    acft = source_tree.Aircraft(pkg.manifest["aircraft"], doc, {}, {
+        "name": pkg.manifest["aircraft"], "kind": pkg.manifest["kind"]})
+    notes, missing = [], []
+    for e in assets.register(doc, create=False):
+        storage = e.get("storage")
+        if e["kind"] == "dataset":
+            if storage in ("inline", "embedded"):
+                acft.datasets[e["id"]] = pkg.dataset(e["id"])
+            else:
+                value = None
+                for loc in e.get("locations") or []:
+                    p = Path(root) / loc["repo"] if root is not None and "repo" in loc else None
+                    if p is not None and p.is_file():
+                        v = json.loads(p.read_text(encoding="utf-8"))
+                        if assets.dataset_id(v) == e["id"]:
+                            value = v
+                            break
+                if value is None:
+                    missing.append(f"{e['name']} ({e['id']})")
+                else:
+                    acft.datasets[e["id"]] = value
+        elif storage == "embedded":
+            dest = assets.cache_dir() / assets.sha_of(e["id"])
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(pkg.files[e["package_path"]])
+            notes.append(f"{e['name']}: into the asset cache {dest}")
+        for k in PACK_FIELDS:
+            e.pop(k, None)
+    if missing:
+        raise PackageError(f"{Path(path).name}: linked datasets not found: {', '.join(missing)}")
+    acft.info["consumers"] = list(pkg.manifest.get("consumers") or [pkg.manifest["profile"]])
+    source_tree.write(acft, folder)
+    return notes

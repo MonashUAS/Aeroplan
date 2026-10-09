@@ -1,0 +1,35 @@
+diff --git a/src/aircraft_data_hierarchy/behavior.py b/src/aircraft_data_hierarchy/behavior.py
+index aba201e..ee7ec7d 100644
+--- a/src/aircraft_data_hierarchy/behavior.py
++++ b/src/aircraft_data_hierarchy/behavior.py
+@@ -131,7 +131,8 @@ class Reference(CommonBaseModel):
+         title (Optional[str]): The title of the referenced document.
+         classification (Optional[str]): The classification of the referenced document.
+         accession (Optional[str]): The accession number of the referenced document.
+-        date (Optional[date]): The publication date of the referenced document.
++        date (Optional[Union[date, str]]): The publication date of the referenced document. DAVE-ML 2.0 declares it
++            as CDATA: ISO 8601 text of YYYY, YYYY-MM or YYYY-MM-DD (NASA files use "1992" and "2013-08-00").
+         href (Optional[str]): The URL of the referenced document.
+         description (Optional[Description]): A description of the referenced document.
+     """
+@@ -142,10 +143,19 @@ class Reference(CommonBaseModel):
+     classification: Optional[str] = Field(None, description="The classification of the referenced document")
+     accession: Optional[str] = Field(None, description="The accession number of the referenced document")
+     # date: Optional[date] = Field(None, description="The publication date of the referenced document")
+-    date: Optional[date]
++    date: Optional[Union[date, str]]
+     href: Optional[str] = Field(None, description="The URL of the referenced document")
+     description: Optional[Description] = Field(None, description="A description of the referenced document")
+ 
++    @field_validator("date")
++    def validate_date_text(cls, v):
++        if isinstance(v, str):
++            import re
++
++            if not re.fullmatch(r"\d{4}(-\d{2}(-\d{2})?)?", v.strip()):
++                raise ValueError("date must be ISO 8601 text: YYYY, YYYY-MM or YYYY-MM-DD")
++        return v
++
+ 
+ class ModificationRecord(CommonBaseModel):
+     """

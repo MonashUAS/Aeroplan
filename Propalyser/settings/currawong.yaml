@@ -1,0 +1,5 @@
+# Propalyser spoke settings for the Currawong (tool settings, not aircraft data).
+# system: the propulsion system that flies. User statement 2026-10-08: "The propeller that flies is the currawongcustom".
+# instance: muas.instance of the ADH propeller node 1.2.3.9.
+system: currawongcustom
+instance: prop_cruise

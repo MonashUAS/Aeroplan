@@ -1,10 +1,10 @@
-"""Visual parts of contract C (`visual/parts.json`, `visual/parts/*.stl`): CAD meshes in the design frame.
+"""Visual parts: CAD meshes in the design frame, for the glTF view of a `.muas` package (aeroplan.gltf).
 
-Layout (Aerolink docs/package_contract.md): `units`, and `parts` with `file`, `transform` (`axes`, `origin_m`),
-optional `hinge` (two points, metres, design frame) and `material`. A movable part (elevator, rudder, aileron_l,
-aileron_r) turns about its hinge. The part `propeller` turns about the thrust axis through the hub.
+Each part has a mesh, a transform into the design frame (`axes`, `origin_m`), an optional `hinge` (two points,
+metres, design frame) and a `material`. A movable part (elevator, rudder, aileron_l, aileron_r) turns about its
+hinge. The part `propeller` turns about the thrust axis through the hub.
 
-AeroPlan writes each hinge into the file, so the reader does not guess it. The hinge is a line through the front
+AeroPlan writes each hinge into the glTF node extras, so the reader does not guess it. The hinge is a line through the front
 edge of the movable mesh: the vertices in the front 10 % of its x extent, fitted with a least-squares line. It points
 along +y (or +z for the rudder), so a positive turn about it moves the trailing edge down (or to the right).
 Method: hand copy of Aerolink `visual/cad.front_edge_axis`.
@@ -44,7 +44,8 @@ def read_stl(data: bytes, name: str) -> np.ndarray:
 
 
 def write_stl(tri: np.ndarray, header: str) -> bytes:
-    """A binary STL of triangles (T, 3, 3) in metres. Deterministic bytes."""
+    """A binary STL of triangles (T, 3, 3) in metres. Deterministic bytes. Only for the OpenVSP reference mesh: the
+    package uses glTF."""
     tri = np.asarray(tri, float)
     out = bytearray(header.encode("ascii", "replace")[:80].ljust(80, b" ")) + struct.pack("<I", len(tri))
     for t in tri:
@@ -101,17 +102,19 @@ def _wing_to_design(points: np.ndarray, wing: Wing) -> np.ndarray:
 
 
 def lifting_surface(wing: Wing, foils: Dict[str, np.ndarray], x_over_c_max=1.0, n_chord: int = 24,
-                    n_span: int = 8) -> np.ndarray:
-    """A closed solid of the right half of a flow5 wing, from the leading edge to `x_over_c_max` of the chord.
+                    n_span: int = 8, x_over_c_min: float = 0.0, y_range=None) -> np.ndarray:
+    """A closed solid of the right half of a flow5 wing, from `x_over_c_min` to `x_over_c_max` of the chord.
 
     `x_over_c_max` is a number, or a function f(y, le_x, chord) of the local span station, the design-frame x of the
-    leading edge and the chord (a cut along a hinge line).
+    leading edge and the chord (a cut along a hinge line). `y_range` (lo, hi) limits the span (a control surface).
     """
     xs1 = (1 - np.cos(np.linspace(0, np.pi, n_chord))) / 2
     secs = wing.sections
     sy = np.array([s.y for s in secs])
     zd = np.concatenate([[0.0], np.cumsum(np.diff(sy) * np.tan(np.radians([s.dihedral_deg for s in secs[:-1]])))])
-    ys = np.unique(np.concatenate([np.linspace(a, b, n_span) for a, b in zip(sy[:-1], sy[1:])]))
+    lo, hi = y_range if y_range is not None else (sy[0], sy[-1])
+    ys = np.unique(np.concatenate([np.linspace(max(a, lo), min(b, hi), n_span)
+                                   for a, b in zip(sy[:-1], sy[1:]) if min(b, hi) > max(a, lo)]))
     rings = []
     for y in ys:
         k = int(min(max(np.searchsorted(sy, y, side="right") - 1, 0), len(secs) - 2))
@@ -120,9 +123,9 @@ def lifting_surface(wing: Wing, foils: Dict[str, np.ndarray], x_over_c_max=1.0, 
         chord, xo = a.chord + t * (b.chord - a.chord), a.x_offset + t * (b.x_offset - a.x_offset)
         le_x = float(_wing_to_design(np.array([[xo, y, 0.0]]), wing)[0, 0])
         cut = x_over_c_max(y, le_x, chord) if callable(x_over_c_max) else x_over_c_max
-        if not 0 < cut <= 1:
+        if not x_over_c_min < cut <= 1:
             raise ValueError(f"wing {wing.name}: the cut at y {y:.3f} m is {cut:.3f} of the chord")
-        xs = xs1 * cut
+        xs = x_over_c_min + xs1 * (cut - x_over_c_min)
         tw = math.radians(a.twist_deg + t * (b.twist_deg - a.twist_deg))
         ua, la = _foil_surfaces(foils[a.foil], xs)
         ub, lb = _foil_surfaces(foils[b.foil], xs)
@@ -134,6 +137,11 @@ def lifting_surface(wing: Wing, foils: Dict[str, np.ndarray], x_over_c_max=1.0, 
                                zd[k] + t * (zd[k + 1] - zd[k]) - px * math.sin(tw) + pz * math.cos(tw)])
         rings.append(_wing_to_design(pts, wing))
     return _loft(np.array(rings))
+
+
+def mirror_y(tri: np.ndarray) -> np.ndarray:
+    """The mirror image of triangles about the y = 0 plane (winding reversed, so the normals point out)."""
+    return (np.asarray(tri) * np.array([1.0, -1.0, 1.0]))[:, ::-1]
 
 
 def _loft(rings: np.ndarray) -> np.ndarray:

@@ -1,6 +1,1 @@
-from .cad import CadAdapter
-from .config_yaml import ConfigYamlAdapter
-from .flow5 import Flow5SweepAdapter
-from .propalyser import PropalyserAdapter
-
-REGISTRY = {a.name: a for a in (ConfigYamlAdapter, Flow5SweepAdapter, PropalyserAdapter, CadAdapter)}
+"""Readers of tool files that the spokes share (flow5 polars, plane XML, foils and the T7 point)."""

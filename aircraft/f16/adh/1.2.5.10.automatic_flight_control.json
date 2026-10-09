@@ -1,0 +1,21 @@
+{
+  "wbs_no": "1.2.5.10",
+  "name": "AutomaticFlightControl",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "f16_gnc",
+    "datasets": [
+      {
+        "role": "control",
+        "ref": "asset:sha256:617479da4d6a83817aa895c39f1974d60b34b1adb3e4caf797af9bd9165a167b"
+      }
+    ],
+    "sources": [
+      {
+        "tool": "DAVEML",
+        "asset": "asset:sha256:fc1dbff00cc14b0228973c43cfc17797fd48d2e36950ec039ff4e77d8577827c",
+        "role": "DAVE-ML model f16_gnc (control)"
+      }
+    ]
+  }
+}

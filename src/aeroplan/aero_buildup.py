@@ -86,8 +86,8 @@ def _cl_table(cl0: float, cla: float, cl_max: float, cl_min: float) -> List[Tupl
     return pts
 
 
-def from_flow5(sweep_dir: Path, viscous_points: Path, stall: dict) -> AeroBuildUp:
-    """Coefficients from the ground-truth sweep folder, the processed viscous alpha polar and the stall hand values."""
+def from_flow5(sweep_dir: Path, viscous: pd.DataFrame, stall: dict) -> AeroBuildUp:
+    """Coefficients from the sweep folder, the viscous alpha polar (columns CL, CD) and the stall values."""
     sweep_dir = Path(sweep_dir)
     t7_file = sweep_dir / "t7_reference_opoint.txt"
     op = read_t7_scalars(t7_file)
@@ -112,7 +112,7 @@ def from_flow5(sweep_dir: Path, viscous_points: Path, stall: dict) -> AeroBuildU
     for f5, k in T7_LATERAL.items():
         add(k, op[f5], "1_per_rad", f"{t7} ({f5})")
 
-    pts = pd.read_parquet(viscous_points)
+    pts = viscous
     k, cd0 = np.polyfit(pts["CL"].to_numpy() ** 2, pts["CD"].to_numpy(), 1)
     vsrc = f"flow5 viscous alpha polar {sweep_dir.name} ({len(pts)} points, least squares CD on CL^2)"
     add("CD0", cd0, "nd", vsrc)
@@ -127,7 +127,7 @@ def from_flow5(sweep_dir: Path, viscous_points: Path, stall: dict) -> AeroBuildU
 
     ph = bool(stall.get("placeholder", True))
     table = _cl_table(co["CL0"].value, cla, float(stall["CL_max"]), float(stall["CL_min"]))
-    table_src = (f"linear CL0 + CLa alpha inside CL_min {stall['CL_min']} to CL_max {stall['CL_max']} (hand config stall, "
+    table_src = (f"linear CL0 + CLa alpha inside CL_min {stall['CL_min']} to CL_max {stall['CL_max']} (stall settings, "
                  f"placeholder {str(ph).lower()}), post-stall shape of Aerolink 6f7edb7 jsbsim_xml.cl_alpha_table (placeholder)")
     trim = {"speed_mps": op["VInf"], "alpha_rad": a0, "mass_kg": op["mass"],
             "cog": [op["CoG_x"], op["CoG_y"], op["CoG_z"]], "NP_x": op["NP_x"]}

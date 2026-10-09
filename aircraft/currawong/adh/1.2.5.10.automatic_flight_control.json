@@ -1,0 +1,60 @@
+{
+  "wbs_no": "1.2.5.10",
+  "name": "AutomaticFlightControl",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "autopilot",
+    "autopilot": {
+      "firmware": "ArduPlane",
+      "board": "CubeOrange",
+      "outputs": [
+        {
+          "channel": 1,
+          "function": "aileron",
+          "targets": [
+            "aileron_l",
+            "aileron_r"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 2,
+          "function": "elevator",
+          "targets": [
+            "elevator"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 3,
+          "function": "throttle",
+          "targets": [
+            "prop_cruise"
+          ],
+          "pwm_min_us": 1050,
+          "pwm_max_us": 1940,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 4,
+          "function": "rudder",
+          "targets": [
+            "rudder"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        }
+      ],
+      "notes": [
+        "The surface PWM range, the trims and SERVOn_REVERSED of the Cube are not recorded."
+      ]
+    }
+  },
+  "description": "Currawong flight controller and its output map (ground truth for SITL and the Cube)"
+}

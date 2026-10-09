@@ -6,3 +6,11 @@ packages/muas_adh/build/
 build/
 dist/
 docs/_build/
+# Raw tool files: each spoke keeps them in <spoke>/work/ on the user's machine. They never go to GitHub.
+*/work/
+# The retired export package 0.1.0 (input of the one-time seed only) and partial writes of an aircraft file
+aircraft/*.h5
+*.muas.tmp
+
+# the OpenVSP Python of this machine (aeroplan setup OpenVSP)
+OpenVSP/.venv/

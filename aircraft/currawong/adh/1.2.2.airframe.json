@@ -1,0 +1,138 @@
+{
+  "wbs_no": "1.2.2",
+  "name": "Airframe",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "airframe",
+    "ground_contacts": [
+      {
+        "name": "NOSE",
+        "type": "BOGEY",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.627,
+            0.0,
+            -0.355
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.nose_gear",
+        "placeholder": true
+      },
+      {
+        "name": "LEFT_MAIN",
+        "type": "BOGEY",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.159,
+            -0.33,
+            -0.355
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.left_main",
+        "placeholder": true
+      },
+      {
+        "name": "RIGHT_MAIN",
+        "type": "BOGEY",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.159,
+            0.33,
+            -0.355
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.right_main",
+        "placeholder": true
+      },
+      {
+        "name": "TAIL_SKID",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.45,
+            0.0,
+            -0.05
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.tail_skid, spring and damping times structure_factor 3",
+        "placeholder": true
+      },
+      {
+        "name": "LEFT_TIP",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.25,
+            -1.65,
+            0.05
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.left_tip, spring and damping times structure_factor 3",
+        "placeholder": true
+      },
+      {
+        "name": "RIGHT_TIP",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.25,
+            1.65,
+            0.05
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (ground, from the retired hand config). Was: hand config ground.right_tip, spring and damping times structure_factor 3",
+        "placeholder": true
+      }
+    ],
+    "visual": [
+      {
+        "part": "gear",
+        "mesh": {
+          "tool": "CREO",
+          "asset": "asset:sha256:b4ec673d4c25c5daecf2a364018646aad0b95dcc9658d0bfee5de54a29f3d0cd",
+          "role": "CAD mesh of gear"
+        },
+        "units": "mm",
+        "transform": {
+          "axes": [
+            "-z",
+            "-x",
+            "y"
+          ],
+          "origin_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "source": "Creo export gear.stl with the CREO settings transform",
+        "placeholder": false
+      }
+    ]
+  },
+  "description": "Currawong airframe. ADH has no landing-gear WBS number: the ground contacts sit here."
+}

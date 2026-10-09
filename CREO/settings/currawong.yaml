@@ -1,0 +1,24 @@
+# CREO spoke settings for the Currawong (tool settings, not aircraft data).
+# The CAD exports in CREO/work/currawong/cad/ (STL, units mm) and the transform that puts each part into the design
+# frame (x aft, y right, z up, m, flow5 origin). Source of the transforms: the retired hand config (AeroPlan package
+# 0.1.0, visual.parts). They were fitted to the flow5 surfaces:
+#   assembly axes [-z, -x, y], no shift (the CAD assembly frame: z forward, y up): 4 to 7 mm median.
+#   wing frame (wing, aileron_r): axes [z, x, y], origin_m 0.0744: 4.8 mm median, 9.9 mm max.
+#   aileron_l: the wing frame turned 180 deg about y: axes [-z, -x, y], same shift: 5.0 mm median.
+# elevator.stl holds both elevator halves. elevator_l/r.stl and fuseskinshrinkwrap.stl are not parts of the view.
+# skins: the outer skin of the fuselage, the Creo shrinkwrap fuseskinshrinkwrap.stp (written 2026-10-04, faceted,
+#   unit INCH). Same assembly frame as fuselage.stl, so the same axes. A reference shape, not the fuselage geometry.
+# instance: the ADH item (muas.instance) that the part belongs to.
+units: mm
+parts:
+  fuselage: {file: fuselage.stl, instance: fuselage, axes: [-z, -x, y]}
+  wing: {file: wing.stl, instance: wing_main, axes: [z, x, y], origin_m: [0.0744, 0.0, 0.0]}
+  aileron_r: {file: aileron_r.stl, instance: aileron_r, axes: [z, x, y], origin_m: [0.0744, 0.0, 0.0]}
+  aileron_l: {file: aileron_l.stl, instance: aileron_l, axes: [-z, -x, y], origin_m: [0.0744, 0.0, 0.0]}
+  htail: {file: hstab.stl, instance: htail, axes: [-z, -x, y]}
+  elevator: {file: elevator.stl, instance: elevator, axes: [-z, -x, y]}
+  rudder: {file: rudder.stl, instance: rudder, axes: [-z, -x, y]}
+  gear: {file: gear.stl, instance: airframe, axes: [-z, -x, y]}
+  propeller: {file: propeller.stl, instance: prop_cruise, axes: [-z, -x, y]}
+skins:
+  fuselage: {file: fuseskinshrinkwrap.stp, instance: fuselage, axes: [-z, -x, y]}
