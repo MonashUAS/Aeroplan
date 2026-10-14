@@ -6,11 +6,11 @@
     "ext_version": "0.4.0",
     "instance": "aircraft_system",
     "build": {
-      "aeroplan_commit": "d087cd369e698db3cc3027b328c58778e0c50233",
+      "aeroplan_commit": "97f949574cdd8cde98c220ab353f5266aae3d188",
       "aeroplan_dirty": true,
-      "built": "2026-10-10",
+      "built": "2026-10-14",
       "author": "Liam M.",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "spokes": {
         "AeroSandbox": "1 changes",
         "flow5": "4 changes",
@@ -55,13 +55,11 @@
         "aircraft_system.air_vehicle.airframe.wing.ailerons.subcomponents[1].muas.actuator",
         "aircraft_system.air_vehicle.airframe.empennage.stabilizer.subcomponents[0].subcomponents[0].muas.actuator",
         "aircraft_system.air_vehicle.airframe.empennage.stabilizer.subcomponents[1].subcomponents[0].muas.actuator",
-        "aircraft_system.air_vehicle.propulsion.propeller_or_fan_installation.muas.propulsion_system",
         "aircraft_system.air_vehicle.avionics.automatic_flight_control.muas.autopilot.outputs[0]",
         "aircraft_system.air_vehicle.avionics.automatic_flight_control.muas.autopilot.outputs[1]",
         "aircraft_system.air_vehicle.avionics.automatic_flight_control.muas.autopilot.outputs[2]",
         "aircraft_system.air_vehicle.avionics.automatic_flight_control.muas.autopilot.outputs[3]",
-        "aircraft_system.data.data_repository.muas.assets[13].dataset",
-        "aircraft_system.data.data_repository.muas.assets[25].dataset"
+        "aircraft_system.data.data_repository.muas.assets[13].dataset"
       ]
     }
   }

@@ -1,5 +1,282 @@
 {
   "$defs": {
+    "BatteryData": {
+      "additionalProperties": false,
+      "description": "The battery of a propulsion system (contract B /battery). The file has no internal resistance.",
+      "properties": {
+        "capacity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cell_v_max": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cell_v_min": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cells_p": {
+          "minimum": 1,
+          "title": "Cells P",
+          "type": "integer"
+        },
+        "cells_s": {
+          "minimum": 1,
+          "title": "Cells S",
+          "type": "integer"
+        },
+        "mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "v_nominal": {
+          "$ref": "#/$defs/Quantity"
+        }
+      },
+      "required": [
+        "cells_s",
+        "cells_p",
+        "v_nominal"
+      ],
+      "title": "BatteryData",
+      "type": "object"
+    },
+    "EscData": {
+      "additionalProperties": false,
+      "description": "The ESC of a propulsion system (contract B /esc).",
+      "properties": {
+        "imax_continuous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protocol"
+        },
+        "pwm_high": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pwm_low": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "EscData",
+      "type": "object"
+    },
+    "MotorData": {
+      "additionalProperties": false,
+      "description": "The motor of a propulsion system (contract B /motor). kappa, r_tot and q0 are the constants of the chain that\nmade the contract file: d*V_bus = omega/(kappa*Kv) + r_tot*I, I = i0 + (Q + q0)*Kv.",
+      "properties": {
+        "i0": {
+          "$ref": "#/$defs/Quantity",
+          "description": "No-load current"
+        },
+        "imax_continuous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kappa": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ESC voltage factor of the chain (nd)",
+          "title": "Kappa"
+        },
+        "kv": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Speed constant, given as rpm/V"
+        },
+        "mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "pole_pairs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pole Pairs"
+        },
+        "q0": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Friction torque of the chain (only when the rpm was measured)"
+        },
+        "r": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Winding resistance (maker value)"
+        },
+        "r_tot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Motor, ESC and lead resistance of the chain"
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kv",
+        "r",
+        "i0"
+      ],
+      "title": "MotorData",
+      "type": "object"
+    },
     "Quantity": {
       "additionalProperties": false,
       "properties": {
@@ -71,6 +348,17 @@
       "title": "Basis",
       "type": "string"
     },
+    "battery": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BatteryData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "blades": {
       "minimum": 1,
       "title": "Blades",
@@ -78,6 +366,17 @@
     },
     "diameter": {
       "$ref": "#/$defs/Quantity"
+    },
+    "esc": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EscData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "ixx": {
       "$ref": "#/$defs/Quantity",
@@ -94,6 +393,17 @@
       ],
       "default": null,
       "title": "Model"
+    },
+    "motor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MotorData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "p_max": {
       "$ref": "#/$defs/Quantity",

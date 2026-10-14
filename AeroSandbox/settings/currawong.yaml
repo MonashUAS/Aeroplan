@@ -1,0 +1,23 @@
+# AeroSandbox spoke settings for the Currawong (tool settings, not aircraft data).
+# wings: the ADH items (muas.instance) with a planform that go into the AeroSandbox airplane.
+# body: the ADH item with the fuselage body.
+# propeller: the ADH item (muas.instance) of the propeller installation. Its muas.propulsion_system gives the motor,
+#   ESC and battery.
+# proptimiser_design: the Proptimiser design of the propeller (designs/<name>.yaml and propellers/<name>.state.json).
+#   Copy both files by hand into AeroSandbox/work/<aircraft>/proptimiser/designs and .../propellers.
+# proptimiser_git: where `aeroplan setup AeroSandbox` installs Proptimiser from, when no --proptimiser folder is given.
+#   The revision must hold the design above and the CasADi path without JAX (Proptimiser commit 3346e66, not pushed on
+#   2026-10-14: push it, or use --proptimiser <checkout>).
+# cruise_speed_output: the name of the sizing output (node 1.2 performance "sizing") that gives the cruise speed.
+# alpha_deg: the angles of attack of the polar job.
+wings: [wing_main, htail, fin]
+body: fuselage
+propeller: prop_cruise
+proptimiser_design: Currawong_V1
+proptimiser_git:
+  url: https://github.com/MonashUAS/Propcalc-2_prop-er_faster_stronger.git
+  rev: 3346e66
+cruise_speed_output: Cruise speed
+alpha_deg: [-4, -2, 0, 2, 4, 6, 8, 10, 12]
+# altitude_m: the altitude of the flight state. 0 is ISA sea level, the air of the Proptimiser and Propalyser tables.
+altitude_m: 0.0

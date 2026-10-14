@@ -30,7 +30,7 @@
     "datasets": [
       {
         "role": "propulsion",
-        "ref": "asset:sha256:8fb7ae956a9e6e4497b44380c6caaf4aa59c9ff120a1d1098359e624ec797fbb"
+        "ref": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c"
       }
     ],
     "visual": [
@@ -60,7 +60,7 @@
     ],
     "propulsion_system": {
       "system_id": "currawongcustom",
-      "basis": "stand",
+      "basis": "mixed",
       "p_max": {
         "value": 2200.2094742172785,
         "units": "kg * m ** 2 / s ** 3"
@@ -75,8 +75,86 @@
         "units": "kg * m ** 2"
       },
       "model": "Currawong V1 (Proptimiser, commit 588118a)",
+      "motor": {
+        "model": "X5220 IPE V1.0 220KV",
+        "kv": {
+          "value": 23.03834612632515,
+          "units": "A * rad * s ** 2 / kg / m ** 2"
+        },
+        "r": {
+          "value": 0.037,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "i0": {
+          "value": 2.0,
+          "units": "A"
+        },
+        "kappa": 1.0663825697522735,
+        "r_tot": {
+          "value": 0.1560714276186098,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "pole_pairs": 7,
+        "mass": {
+          "value": 0.436,
+          "units": "kg"
+        },
+        "imax_continuous": {
+          "value": 72.4,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 50.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "esc": {
+        "model": "AMPX 80A (5-14S) V2.0 CAN",
+        "protocol": "DroneCAN / CyphalCAN",
+        "pwm_low": {
+          "value": 0.00105,
+          "units": "s"
+        },
+        "pwm_high": {
+          "value": 0.0019399999999999999,
+          "units": "s"
+        },
+        "imax_continuous": {
+          "value": 80.0,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 64.0,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "battery": {
+        "model": "NXE 22.2v 4500mAh 50C Hard Case LiPo (SKU 4500HC506SXT90)",
+        "cells_s": 12,
+        "cells_p": 1,
+        "capacity": {
+          "value": 16200.0,
+          "units": "A * s"
+        },
+        "v_nominal": {
+          "value": 44.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_min": {
+          "value": 3.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_max": {
+          "value": 4.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "mass": {
+          "value": 1.262,
+          "units": "kg"
+        }
+      },
       "warnings": [
-        "Ct(J) and Cp(J) are an unsourced generic shape scaled to the static test, not measured (J > 0). The file is a placeholder.",
+        "Ct(J) and Cp(J) are the Proptimiser model scaled to the static test. The J > 0 part is not measured.",
         "The rpm is a model estimate from the torque (kappa 1.066, R_tot 0.156 ohm from the vendor datasheet; V_bus 44.4 V +/- 3.5 V from the cell limits).",
         "Type B inputs at their default: air_density (ISA value, not measured), load_cell_rel, torque_sensor_rel.",
         "No idle rows. The tare comes from the rows at the lowest throttle (20 %).",
@@ -93,10 +171,10 @@
       ],
       "source": {
         "tool": "Propalyser",
-        "asset": "asset:sha256:9793769e78810d3936fa544e4da841eb6e173bffb7cfb816ec9af3fb9a974472",
+        "asset": "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d",
         "role": "contract B file of the propulsion system currawongcustom"
       },
-      "placeholder": true
+      "placeholder": false
     }
   },
   "description": "Currawong cruise propeller of the system currawongcustom. Diameter: the contract B file. Hub: hand config propulsion.thrust_xyz. Spin: hand config propulsion.spin (CAD blade pitch)."

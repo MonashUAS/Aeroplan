@@ -328,6 +328,10 @@ def test_propalyser_reads_contract_b(tmp_path):
     d = load("Propalyser").read_system(p)
     assert d["system_id"] == "sys_x" and d["blades"] == 2 and d["placeholder"] is True
     assert d["throttle_map"]["columns"]["esc_command_norm"] == [0.0, 0.5, 1.0]
+    assert d["motor"]["kappa"] == 1.1 and d["motor"]["r_tot"] == {"value": 0.12, "units": "ohm"} and "q0" not in d["motor"]
+    assert d["battery"]["cells_s"] == 6 and d["esc"]["pwm_high"]["value"] == 2000
+    from aeroplan.muas.aircraft import PropulsionSystemData
+    PropulsionSystemData(**{k: v for k, v in d.items() if k not in ("prop_ctcp", "throttle_map")}, source=dict(tool="Propalyser", asset="asset:sha256:" + "0" * 64, role="test"))
     make_propalyser_h5(tmp_path / "v1.h5", version=1)
     with pytest.raises(ValueError, match="version"):
         load("Propalyser").read_system(tmp_path / "v1.h5")

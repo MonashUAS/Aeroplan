@@ -146,6 +146,47 @@ class PropulsionTables(MuasModel):
         return self
 
 
+class MotorData(MuasModel):
+    """The motor of a propulsion system (contract B /motor). kappa, r_tot and q0 are the constants of the chain that
+    made the contract file: d*V_bus = omega/(kappa*Kv) + r_tot*I, I = i0 + (Q + q0)*Kv."""
+
+    model: Optional[str] = None
+    kv: Quantity = Field(description="Speed constant, given as rpm/V")
+    r: Quantity = Field(description="Winding resistance (maker value)")
+    i0: Quantity = Field(description="No-load current")
+    kappa: Optional[float] = Field(None, description="ESC voltage factor of the chain (nd)")
+    r_tot: Optional[Quantity] = Field(None, description="Motor, ESC and lead resistance of the chain")
+    q0: Optional[Quantity] = Field(None, description="Friction torque of the chain (only when the rpm was measured)")
+    pole_pairs: Optional[int] = None
+    mass: Optional[Quantity] = None
+    imax_continuous: Optional[Quantity] = None
+    vmax: Optional[Quantity] = None
+
+
+class EscData(MuasModel):
+    """The ESC of a propulsion system (contract B /esc)."""
+
+    model: Optional[str] = None
+    protocol: Optional[str] = None
+    pwm_low: Optional[Quantity] = None
+    pwm_high: Optional[Quantity] = None
+    imax_continuous: Optional[Quantity] = None
+    vmax: Optional[Quantity] = None
+
+
+class BatteryData(MuasModel):
+    """The battery of a propulsion system (contract B /battery). The file has no internal resistance."""
+
+    model: Optional[str] = None
+    cells_s: int = Field(ge=1)
+    cells_p: int = Field(ge=1)
+    capacity: Optional[Quantity] = None
+    v_nominal: Quantity
+    cell_v_min: Optional[Quantity] = None
+    cell_v_max: Optional[Quantity] = None
+    mass: Optional[Quantity] = None
+
+
 class PropulsionSystemData(MuasModel):
     """The propulsion system that flies, from a Propalyser contract B file. Its Ct/Cp table and throttle map are a
     dataset (`PropulsionTables`, role propulsion) in `muas.datasets` of the same node."""
@@ -157,6 +198,9 @@ class PropulsionSystemData(MuasModel):
     blades: int = Field(ge=1)
     ixx: Quantity = Field(description="Propeller moment of inertia about the shaft")
     model: Optional[str] = None
+    motor: Optional[MotorData] = None
+    esc: Optional[EscData] = None
+    battery: Optional[BatteryData] = None
     warnings: List[str] = Field(default_factory=list)
     source: SourceRef
     placeholder: bool = False

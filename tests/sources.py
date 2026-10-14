@@ -70,6 +70,11 @@ def make_propalyser_h5(path: Path, *, version=2, dirty=False, units=True, status
         t["source_id"] = np.array(["model"] * 3, dtype=s)
         t.attrs.update(valid_J=np.array([0.0, 0.5]), selected_source="model")
         f.create_group("propeller").attrs.update(model="PROP_X", diameter_m=0.5, blades=2, ixx_kgm2=0.001)
+        f.create_group("motor").attrs.update(model="MOTOR_X", kv_rpm_per_V=200.0, r_ohm=0.05, i0_A=1.5, pole_pairs=7,
+                                             mass_kg=0.4, chain_kappa_nd=1.1, chain_r_tot_ohm=0.12)
+        f.create_group("esc").attrs.update(model="ESC_X", pwm_low_us=1000, pwm_high_us=2000, imax_continuous_A=60)
+        f.create_group("battery").attrs.update(model="BATT_X", cells_s=6, cells_p=1, capacity_Ah=5.0, v_nominal_V=22.2,
+                                               mass_kg=0.7)
         tm = f.create_group("throttle_map")
         tm["esc_command_norm"] = np.array([0.0, 0.5, 1.0])
         tm["power_fraction"] = np.array([0.0, 0.4, 1.0])

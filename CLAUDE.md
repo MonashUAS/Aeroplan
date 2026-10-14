@@ -26,6 +26,9 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 - A new aircraft starts from the AeroSandbox sizing output, then moves forward to flow5. A published reference
   model (the NASA F-16, `aircraft/f16/`) starts from the DAVEML spoke.
 - Manual changes come in through a spoke, by script only. Nobody edits the source tree by hand.
+- 2026-10-14: AeroSandbox runs in its own Python (`AeroSandbox/.venv`, made by `aeroplan setup AeroSandbox` with uv).
+  The spoke sends jobs to `AeroSandbox/asb_worker.py`, which imports aerosandbox and proptimiser (CasADi path, no JAX).
+  Only that worker file imports them. Tests that need it skip without it.
 - The web editor and viewer are shelved for now.
 - The changed file wins (2026-10-08): a geometry spoke writes an item only when its input file differs from the
   asset that the item names. `muas.geometry_tool` names the spoke that wrote the geometry last.

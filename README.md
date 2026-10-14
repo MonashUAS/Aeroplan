@@ -68,7 +68,7 @@ surfaces). They then look simpler, but they move the same.
 | Folder | What it holds |
 |---|---|
 | `aircraft/<aircraft>/` | The source tree of each aircraft (the SSOT): `aircraft.yaml`, `adh/`, `datasets/` |
-| `AeroSandbox/` | Spoke: initial sizing (the first source of a new aircraft) |
+| `AeroSandbox/` | Spoke: initial sizing (the first source of a new aircraft), and the AeroSandbox model with the propulsion chain (`aeroplan setup AeroSandbox` first) |
 | `flow5/` | Spoke: geometry, mass model, reference dimensions and aero model from a flow5 sweep |
 | `Propalyser/` | Spoke: the propulsion system (contract B file of Propalyser) |
 | `CREO/` | Spoke: the CAD link (part meshes, their pose and hinge lines, the fuselage skin) |
@@ -155,10 +155,11 @@ aircraft/<aircraft>/
 | `aeroplan pack <aircraft> --profile P` | Writes `dist/<aircraft>-<version>-<P>.muas` |
 | `aeroplan unpack <file> <folder>` | Checks a package and writes its source tree |
 | `aeroplan verify <file>` | Checks a package: mimetype, every hash, the package hash |
-| `aeroplan generate <spoke> <aircraft>` | Writes the tool input files from the source tree (flow5, OpenVSP) |
+| `aeroplan generate <spoke> <aircraft>` | Writes the tool input files from the source tree (flow5, OpenVSP, AeroSandbox: the model, the jobs and `work/<aircraft>/asb/report.md`) |
 | `aeroplan export <spoke> <aircraft> <out>` | Writes the tool files of a spoke (Aerolink: the `aerolink` package) |
 | `aeroplan spokes <aircraft>` | Lists the spokes and the files in their work folders |
 | `aeroplan setup OpenVSP` | Makes the OpenVSP Python on this machine (`--vsp <folder>` when it does not find OpenVSP) |
+| `aeroplan setup AeroSandbox` | Makes the AeroSandbox Python on this machine (`--proptimiser <checkout>`, or the git source in the settings) |
 | `aeroplan schema --out schema` | Exports the JSON Schema of the MUAS types |
 
 ## Open items
@@ -170,6 +171,15 @@ aircraft/<aircraft>/
   report yet.
 - The MRP is the nominal CG (the T7 CoG). Aerolink needs MRP = CG within 1 mm.
 - The flow5 export does not give the air density, so the initial altitude 0 m is a placeholder.
+- AeroSandbox model: the quadplane retrofit (VTOL rotors on the wings) is the next stage. The worker already takes a
+  list of propulsors in the airplane. The mission and the lift rotors are not in it yet.
+- Battery: contract B gives no internal resistance, so the chain uses the nominal voltage. The energy is the full capacity.
+- Propeller airfoil: the Currawong_V1 blade file does not store it. Proptimiser uses Clark-Y (see Propalyser
+  `components/props/Currawong_V1`). Confirm it with the mould or a stand test at J > 0.
+- Proptimiser commit 3346e66 (Currawong_V1, the motor chain, the CasADi path without JAX) and the Propalyser commit
+  39c770c are local commits. Push them, so `aeroplan setup AeroSandbox` can install Proptimiser from git.
+- Contract B `/motor` has three new optional attributes (`chain_kappa_nd`, `chain_r_tot_ohm`, `chain_q0_Nm`). Record
+  them on the AeroPlan exchange page (section B): AeroPlan owns the contract.
 - ArduPilot spoke: the log is not decoded yet (no normalised flight record).
 - The web editor (glTF and JSON in the browser, HDF5 slices from a backend) is shelved.
 - No dataset has a sigma yet: no source gives an uncertainty estimate.

@@ -186,13 +186,13 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:9793769e78810d3936fa544e4da841eb6e173bffb7cfb816ec9af3fb9a974472",
+        "id": "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d",
         "kind": "file",
         "name": "Propalyser.currawongcustom.v2.h5",
         "role": "contract B file of the propulsion system currawongcustom",
         "tool": "Propalyser",
         "media_type": "application/x-hdf5",
-        "size": 94787,
+        "size": 96255,
         "locations": [
           {
             "repo": "Propalyser/work/currawong/currawongcustom.v2.h5"
@@ -220,7 +220,7 @@
           "asset:sha256:7da60e326b076e7e3db948e3064ee1c1a04ef9243a31fb66b154ead72b3301e5",
           "asset:sha256:7fc7cb5e4e1b4d8532e0269031ffbeb69421757a08e61670f634b511fa480ef7"
         ],
-        "built_against": "currawong@0.2.1",
+        "built_against": "currawong@0.2.2",
         "dataset": {
           "form": "daveml-adh",
           "model_description": {
@@ -414,22 +414,22 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:8fb7ae956a9e6e4497b44380c6caaf4aa59c9ff120a1d1098359e624ec797fbb",
+        "id": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c",
         "kind": "dataset",
         "name": "propulsion.currawongcustom",
         "role": "Ct/Cp table and throttle map",
         "tool": "Propalyser",
         "media_type": "application/json",
-        "size": 3096,
+        "size": 3279,
         "locations": [
           {
             "repo": "aircraft/currawong/datasets/propulsion.currawongcustom.json"
           }
         ],
         "derived_from": [
-          "asset:sha256:9793769e78810d3936fa544e4da841eb6e173bffb7cfb816ec9af3fb9a974472"
+          "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d"
         ],
-        "built_against": "currawong@0.2.1",
+        "built_against": "currawong@0.2.2",
         "dataset": {
           "form": "tables",
           "model_description": {
@@ -437,11 +437,11 @@
             "model_name": "currawongcustom",
             "description": "Currawong V1 (Proptimiser, commit 588118a)"
           },
-          "fidelity": "L3",
+          "fidelity": "L0",
           "units_system": "SI",
-          "placeholder": true,
+          "placeholder": false,
           "notes": [
-            "basis stand"
+            "basis mixed"
           ]
         },
         "dataset_role": "propulsion"

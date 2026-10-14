@@ -1,4 +1,5 @@
-"""AeroSandbox spoke: the initial sizing -> ADH performance record of the air vehicle.
+"""AeroSandbox spoke: the initial sizing -> ADH performance record of the air vehicle, and the ADH aircraft ->
+an AeroSandbox model with the propulsion chain (generate).
 
 Input (git ignores it): AeroSandbox/work/<aircraft>/athena_outputs.txt, the printout of the Athena sizing scripts
 (AeroSandbox). One "Name: value" line for each output. The file gives no units.
@@ -10,16 +11,29 @@ Units: the printout has none. `UNITS` below gives each output a unit and says wh
   - "consistency": a relation between the outputs confirms the unit (for example b^2 / S = AR, or the mass sum).
   - "magnitude":   the value fits only one plausible unit for this aircraft. Not proven.
   - "unknown":     no unit can be given. The value is kept with units "unknown".
+What generate does (after `python -m aeroplan setup AeroSandbox`, once for each computer): spec.py builds a tool-neutral spec
+from the ADH document (wing, tail, fuselage, mass model, propeller installation, motor, ESC, battery). The spec goes to
+AeroSandbox/asb_worker.py in AeroSandbox/.venv. Jobs: geometry (three-view, 3D view), polar (AeroBuildup against the
+flow5 aero model), cruise_trim (one Opti problem: airframe, Proptimiser BEMT and the Propalyser motor and ESC chain) and
+static_check (the chain at full command against the Propalyser table). Files go to work/<aircraft>/asb/. generate
+changes no ADH data.
+
 The sizing stage comes before flow5. Its geometry values do not set the flow5 geometry. The datum report lists the
 differences.
 """
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
+import hashlib
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from aeroplan import adh_doc
+from aeroplan.geometry import planform_reference
 from aeroplan.spokes import Context, set_sources
+
+from . import runner, spec as asb_spec
 
 NAME = "AeroSandbox"
 FILE = "athena_outputs.txt"
@@ -97,3 +111,51 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     air["performance"] = [sizing] + perf
     set_sources(air, NAME, [ctx.source_ref(path, "initial sizing outputs (Athena)")])
     return [f"sizing: {len(outputs)} outputs, {sum(u[1] == 'unknown' for u in UNITS.values())} without a known unit"]
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
+    """Build the AeroSandbox model of the aircraft and run the jobs. Files go to work/<aircraft>/asb/."""
+    st = ctx.settings()
+    spec = asb_spec.spec_from_doc(doc, st, ctx)
+    home = ctx.work / "proptimiser"
+    design = home / "designs" / f"{st['proptimiser_design']}.yaml"
+    state = home / "propellers" / f"{st['proptimiser_design']}.state.json"
+    for f in (design, state):
+        if not f.is_file():
+            raise ValueError(f"{f} is missing: copy the Proptimiser design and state file by hand")
+    spec["propulsion"]["proptimiser_home"] = str(home)
+    out = ctx.work / "asb"
+    out.mkdir(parents=True, exist_ok=True)
+    alphas = st["alpha_deg"]
+    results = {
+        "geometry": runner.run({"job": "geometry", "spec": spec, "out_dir": str(out), "main_wing": st["wings"][0]}),
+        "polar": runner.run({"job": "polar", "spec": spec, "out_dir": str(out), "alpha_deg": alphas,
+                             "reference": asb_spec.flow5_polar(doc, ctx, alphas)}),
+        "cruise_trim": runner.run({"job": "cruise_trim", "spec": spec}),
+        "static_check": runner.run({"job": "static_check", "spec": spec}),
+    }
+    results["polar"]["reference"] = asb_spec.flow5_polar(doc, ctx, alphas)
+    ref = planform_reference(adh_doc.find(doc, st["wings"][0])["muas"]["planform"])
+    g = results["geometry"]["geometry"]
+    for key, name in (("s_m2", "area_m2"), ("b_m", "span_m"), ("mac_m", "mac_m")):
+        print(f"AeroSandbox: {key} {g[key]:.5f} (planform {ref[name]:.5f})")
+    hashes = {design.name: _sha(design), state.name: _sha(state)}
+    results_file = out / "results.json"
+    results_file.write_text(json.dumps({k: {a: b for a, b in v.items() if a != "ok"} for k, v in results.items()},
+                                       indent=1), encoding="utf-8")
+    report = out / "report.md"
+    report.write_text(asb_spec.report(spec, results, hashes, asb_spec.placeholders(spec)), encoding="utf-8")
+    return [report, results_file] + [Path(f) for r in results.values() for f in r.get("files", [])]
+
+
+def setup(ctx: Context, proptimiser: Optional[str] = None) -> Dict[str, str]:
+    """Make the AeroSandbox Python for this machine (see runner.setup)."""
+    return runner.setup(proptimiser, ctx.settings().get("proptimiser_git"))
+
+
+def describe() -> str:
+    return runner.describe()

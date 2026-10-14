@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import sys
 from pathlib import Path
 
@@ -174,7 +175,9 @@ def _setup(args) -> int:
     mod = load(args.spoke)
     if not hasattr(mod, "setup"):
         raise ValueError(f"the spoke {args.spoke} has no setup step")
-    res = mod.setup(context(args.spoke, args.aircraft), vsp=args.vsp)
+    options = {"vsp": args.vsp, "proptimiser": args.proptimiser}
+    accepted = inspect.signature(mod.setup).parameters
+    res = mod.setup(context(args.spoke, args.aircraft), **{k: v for k, v in options.items() if k in accepted})
     print(f"{args.spoke} is ready: {res['version']} ({res['folder']})")
     return 0
 
@@ -232,10 +235,11 @@ def main(argv=None) -> int:
     s = sub.add_parser("spokes", help="list the spokes")
     s.add_argument("aircraft", nargs="?")
     s.set_defaults(fn=_spokes)
-    su = sub.add_parser("setup", help="make the tool runtime of a spoke on this machine (OpenVSP)")
+    su = sub.add_parser("setup", help="make the tool runtime of a spoke on this machine (OpenVSP, AeroSandbox)")
     su.add_argument("spoke")
     su.add_argument("aircraft", nargs="?", default="currawong")
     su.add_argument("--vsp", help="the OpenVSP folder (the folder of vsp.exe), when the search does not find it")
+    su.add_argument("--proptimiser", help="AeroSandbox: a Proptimiser checkout to install, instead of the git source")
     su.set_defaults(fn=_setup)
     sc = sub.add_parser("schema", help="export the JSON Schema of the MUAS types")
     sc.add_argument("--out", default="schema")

@@ -14,3 +14,6 @@ aircraft/*.h5
 
 # the OpenVSP Python of this machine (aeroplan setup OpenVSP)
 OpenVSP/.venv/
+
+# the AeroSandbox Python of this machine (aeroplan setup AeroSandbox)
+AeroSandbox/.venv/

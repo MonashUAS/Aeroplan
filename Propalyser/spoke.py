@@ -43,6 +43,52 @@ def _col(f, group: str, col: str, where: str) -> list:
     return [float(v) for v in np.asarray(f[group][col][()], float)]
 
 
+def _opt(g, key, units, out, name=None):
+    """Put the attribute `key` of group g into out as a quantity, when the file has it."""
+    if key in g.attrs:
+        out[name or key] = {"value": float(_v(g.attrs[key])), "units": units}
+
+
+def _part_blocks(f, where: str) -> Dict[str, Any]:
+    """The motor, ESC and battery blocks (contract B /motor, /esc, /battery). An absent attribute stays absent."""
+    out: Dict[str, Any] = {}
+    if "motor" in f:
+        g, m = f["motor"], {}
+        m["kv"] = {"value": float(_attr(g, "kv_rpm_per_V", where)), "units": "rpm/V"}
+        m["r"] = {"value": float(_attr(g, "r_ohm", where)), "units": "ohm"}
+        m["i0"] = {"value": float(_attr(g, "i0_A", where)), "units": "A"}
+        if "chain_kappa_nd" in g.attrs:
+            m["kappa"] = float(_v(g.attrs["chain_kappa_nd"]))
+        for key, units, name in (("chain_r_tot_ohm", "ohm", "r_tot"), ("chain_q0_Nm", "N*m", "q0"), ("mass_kg", "kg", "mass"),
+                                 ("imax_continuous_A", "A", "imax_continuous"), ("vmax_V", "V", "vmax")):
+            _opt(g, key, units, m, name)
+        if "pole_pairs" in g.attrs:
+            m["pole_pairs"] = int(_v(g.attrs["pole_pairs"]))
+        if "model" in g.attrs:
+            m["model"] = str(_v(g.attrs["model"]))
+        out["motor"] = m
+    if "esc" in f:
+        g, e = f["esc"], {}
+        for key, units, name in (("pwm_low_us", "us", "pwm_low"), ("pwm_high_us", "us", "pwm_high"),
+                                 ("imax_continuous_A", "A", "imax_continuous"), ("vmax_V", "V", "vmax")):
+            _opt(g, key, units, e, name)
+        for key in ("model", "protocol"):
+            if key in g.attrs:
+                e[key] = str(_v(g.attrs[key]))
+        out["esc"] = e
+    if "battery" in f:
+        g, b = f["battery"], {}
+        b["cells_s"], b["cells_p"] = int(_attr(g, "cells_s", where)), int(_attr(g, "cells_p", where))
+        b["v_nominal"] = {"value": float(_attr(g, "v_nominal_V", where)), "units": "V"}
+        for key, units, name in (("capacity_Ah", "A*h", "capacity"), ("cell_v_min_V", "V", "cell_v_min"),
+                                 ("cell_v_max_V", "V", "cell_v_max"), ("mass_kg", "kg", "mass")):
+            _opt(g, key, units, b, name)
+        if "model" in g.attrs:
+            b["model"] = str(_v(g.attrs["model"]))
+        out["battery"] = b
+    return out
+
+
 def read_system(path) -> Dict[str, Any]:
     """The `PropulsionSystemData` fields of a contract B v2 file (without `source`)."""
     where = path.name
@@ -79,7 +125,7 @@ def read_system(path) -> Dict[str, Any]:
             "diameter": {"value": float(_attr(prop, "diameter_m", where)), "units": "m"},
             "blades": int(_attr(prop, "blades", where)),
             "ixx": {"value": float(_attr(prop, "ixx_kgm2", where)), "units": "kg*m^2"},
-            "model": str(_v(prop.attrs.get("model", ""))) or None,
+            "model": str(_v(prop.attrs.get("model", ""))) or None, **_part_blocks(f, where),
             "warnings": warnings, "placeholder": bool(_attr(f, "placeholder", where))}
 
 
