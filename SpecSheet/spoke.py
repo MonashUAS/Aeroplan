@@ -14,7 +14,7 @@ What ingest writes, for each subassembly: `muas.mass_properties` (mass, CG) and 
 (the landing gear is a subcomponent of 1.2.2: no WBS number of its own). On 1.2 AirVehicle: the flat list of all point
 masses, the roll-up (mass, CG, inertia) and the source pointer. `reference` is not changed. The MRP stays the CoG of
 the flow5 T7 analysis, because the aero model is about that point. The datum check warns until a new flow5 sweep
-(`aeroplan generate flow5`) of the new mass model.
+(`aeroplan sweep flow5`) of the new mass model.
 """
 from __future__ import annotations
 
@@ -110,12 +110,27 @@ def read_workbook(path: Path, st: Dict[str, Any]) -> Dict[str, Any]:
     return w
 
 
-def _x(row: Dict[str, float]) -> float:
-    return -row["x_mm"] / 1000.0
+def _x(row: Dict[str, float], datum: float = 0.0) -> float:
+    """Design x (m, aft) of a sheet row. The sheet measures from the wing root leading edge, positive forward, so
+    x = datum - F/1000 with datum = the design x of that leading edge (settings `datum_x_m`)."""
+    return datum - row["x_mm"] / 1000.0
 
 
-def _weighted_x(rows: List[Dict[str, float]]) -> float:
-    return sum(_x(r) * r["mass_g"] for r in rows) / sum(r["mass_g"] for r in rows)
+def _weighted_x(rows: List[Dict[str, float]], datum: float = 0.0) -> float:
+    return sum(_x(r, datum) * r["mass_g"] for r in rows) / sum(r["mass_g"] for r in rows)
+
+
+DATUM_TOL_M = 1e-3
+
+
+def _root_le_x(doc: Dict[str, Any], st: Dict[str, Any]) -> Optional[float]:
+    """Design x of the root leading edge of the wing that the sheet measures from (settings `datum_wing`)."""
+    try:
+        pf = adh_doc.find(doc, st.get("datum_wing", "wing_main"))["muas"]["planform"]
+    except (KeyError, ValueError):
+        return None
+    s0 = pf["sections"][0]
+    return float(pf["position"]["xyz"][0] + s0["x_offset"])
 
 
 def _tag(*parts: str) -> str:
@@ -126,6 +141,7 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
                        planform_of: Callable[[str], Dict[str, Any]]) -> List[Dict[str, Any]]:
     """One entry for each subassembly: {group, cfg, point_masses[{tag, mass_kg, xyz, source, placeholder}]}."""
     ws_name, pos_name = st["weights_sheet"], st["positions_sheet"]
+    datum = float(st["datum_x_m"])
     stands_in: Dict[str, float] = {}
     out = []
     for gname, cfg in st["subassemblies"].items():
@@ -150,7 +166,7 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
             m_g = sum(p["mass_g"] for p in parts)
             used += m_g
             texts = "; ".join(f"row {p['row']} {p['name']} ({p['text'] or 'no source stated'})" for p in parts)
-            pms.append({"tag": _tag(gname, row), "mass_kg": m_g / 1000.0, "xyz": [_x(rows[row]), 0.0, 0.0],
+            pms.append({"tag": _tag(gname, row), "mass_kg": m_g / 1000.0, "xyz": [_x(rows[row], datum), 0.0, 0.0],
                         "placeholder": any(p["placeholder"] for p in parts),
                         "source": f"{ws_name}: {texts}. x: {pos_name} {cfg['cg_group']}/{row}. y = 0, z = 0: "
                                   "not in the sheet (stand-in)"})
@@ -160,7 +176,7 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
         if rest_g > 1e-9:
             free = {k: v for k, v in rows.items() if k not in set(mapped.values())} or rows
             if free:
-                x_rest, x_src = _weighted_x(list(free.values())), f"{pos_name} {cfg['cg_group']}: " + ", ".join(free)
+                x_rest, x_src = _weighted_x(list(free.values()), datum), f"{pos_name} {cfg['cg_group']}: " + ", ".join(free)
             elif cfg.get("position_from") in stands_in:
                 x_rest = stands_in[cfg["position_from"]]
                 x_src = f"stand-in: the x of {cfg['position_from']} (the position sheet has no {gname} rows)"
@@ -184,7 +200,7 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
                 pms.append({"tag": _tag(gname, "REST"), "mass_kg": rest_g / 1000.0, "xyz": [x_rest, 0.0, 0.0],
                             "placeholder": placeholder, "source": f"{what}. y = 0, z = 0: not in the sheet (stand-in)"})
         else:
-            stands_in[gname] = _weighted_x(list(rows.values())) if rows else 0.0
+            stands_in[gname] = _weighted_x(list(rows.values()), datum) if rows else 0.0
         out.append({"group": gname, "cfg": cfg, "point_masses": pms})
     return out
 
@@ -218,6 +234,11 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     data = read_workbook(path, st)
     subs = build_point_masses(data, st, lambda inst: adh_doc.find(doc, inst)["muas"]["planform"])
     changes, flat = [], []
+    le = _root_le_x(doc, st)
+    if le is not None and abs(le - float(st["datum_x_m"])) > DATUM_TOL_M:
+        changes.append(f"WARNING: the sheet datum (wing root leading edge) is x = {float(st['datum_x_m']):+.4f} m in the "
+                       f"settings, but the wing_main root leading edge is at x = {le:+.4f} m in the document. "
+                       "Every sheet position is off by the difference until you change datum_x_m or the wing")
     for s in subs:
         pms = s["point_masses"]
         roll = mass_model.rollup(pms)

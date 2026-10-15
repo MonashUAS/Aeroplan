@@ -103,9 +103,25 @@ class VisualPart(MuasModel):
         return self
 
 
+class BodyFit(MuasModel):
+    """How the ADH `geometry.body` of the item was cut from the skin (aeroplan.skin_body), and how well it fits."""
+
+    method: str = Field(min_length=1, description="The slicer and its version")
+    frames: int = Field(ge=5)
+    points: int = Field(ge=5, description="Points of each right-half frame, top to bottom")
+    cut: Optional[Dict[str, Any]] = Field(None, description="The wing panel that the skin holds and the body leaves out: "
+                                          "x_m [x0, x1] and y_max_m (m)")
+    min_height: Optional[Quantity] = Field(None, description="The body ends where the skin section is this tall. The thin "
+                                           "tail end of the skin (a sheet) is left out")
+    rms_gap: Quantity = Field(description="RMS gap from the skin vertices (the wing panel left out) to the body")
+    largest_gap: Quantity
+    body_volume: Quantity
+    skin_volume: Quantity = Field(description="Includes the wing panel when the skin holds one")
+
+
 class Skin(MuasModel):
     """The outer skin of a part from CAD (for example a Creo shrinkwrap). It is a reference shape for the datum checks
-    and the tool views, not the geometry of the part. The file stays on the user's machine."""
+    and the tool views, and the source of the ADH body when `body_fit` is present. The file stays on the user's machine."""
 
     mesh: SourceRef
     format: Literal["step_faceted", "stl"] = Field(description="step_faceted: a STEP file of flat faces, with its own "
@@ -113,6 +129,7 @@ class Skin(MuasModel):
     units: str = Field("m", description="Units of an STL file. A STEP file gives its own unit")
     transform: Transform
     source: str = Field(min_length=1)
+    body_fit: Optional[BodyFit] = None
 
 
 class Tube(MuasModel):

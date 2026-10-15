@@ -15,6 +15,10 @@ Settings (committed): OpenVSP/settings/<aircraft>.yaml
 What generate writes (work/<aircraft>/generated/): <aircraft>.vsp3 and <skin item>_skin.stl (the skin in the design
 frame, m). It gives the gap from the OpenVSP fuselage surface to the skin.
 
+What sweep writes (`aeroplan sweep OpenVSP <aircraft>`): work/<aircraft>/sweeps/<name>/results.json and the raw VSPAERO
+files. The analysis settings are in the `analysis` block: user sets of components, the CompGeom and parasite drag sets,
+and the VSPAERO runs (thin = VLM set, thick = panel set). The trim point and the ranges come from the flow5 sweep.
+
 What ingest writes, only for the items that differ from the document (the changed file wins):
   - wings: `muas.planform` sections, position and angles, `geometry.lifting_surface`, the foils
   - control surfaces: `muas.control_surface` eta_span and hinge_x_over_c
@@ -26,6 +30,8 @@ the model then holds a change that the ADH form cannot hold.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -146,6 +152,13 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
                    else f"{mesh_name(doc, item['muas']['skin']['mesh'])} is not on this machine (or changed)")
             print(f"OpenVSP: no reference mesh for {st['reference_skin']}: {why}.")
         else:
+            from aeroplan.skin_body import repair_for_panel
+
+            skin, fixed = repair_for_panel(skin)    # the panel solver of VSPAERO needs a manifold mesh
+            if any(fixed.values()):
+                print(f"OpenVSP: skin {st['reference_skin']} repaired for VSPAERO: {fixed['flap_triangles']} flap "
+                      f"triangles removed, {fixed['needles']} needle triangles removed, {fixed['tjunction_splits']} "
+                      "triangles split at T-junctions (volume unchanged).")
             stl = out / f"{st['reference_skin']}_skin.stl"
             stl.write_bytes(write_stl(skin, f"{st['reference_skin']} CAD skin, design frame, m"))
             spec["reference_meshes"].append({"name": f"{st['reference_skin']}_skin", "stl": str(stl)})
@@ -156,6 +169,11 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
     wings = {w["instance"]: (adh_doc.find(doc, w["instance"])["muas"]["planform"],
                              {k: np.asarray(v) for k, v in w["foils"].items()}) for w in spec["wings"]}
     frames = (spec["body"]["instance"], [np.asarray(f) for f in spec["body"]["frames"]]) if spec["body"] else None
+    if frames and len(frames[1]) > 30:          # projecting every point of a dense body takes minutes: sample the frames
+        keep = sorted(set(range(0, len(frames[1]), 4)) | {len(frames[1]) - 1})
+        frames = (frames[0], [frames[1][i] for i in keep])
+        print(f"OpenVSP: shape check of the body on {len(keep)} of {len(spec['body']['frames'])} frames "
+              "(ingest checks all frames).")
     for inst, gap in shape_gaps(path, wings, frames).items():
         print(f"OpenVSP: largest gap from the ADH shape of {inst} to the OpenVSP surface: {gap * 1e6:.2f} um")
     if skin is not None and spec["body"]:
@@ -312,6 +330,203 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         changes.append(f"model {path.name} read: no geometry change (largest shape gap "
                        f"{max(gaps.values()) * 1e6:.2f} um)")
     return changes
+
+
+# ----------------------------------------------------------------------------------------------------- analysis
+ISA_SOUND_SPEED = 340.294      # m/s, ISA 1976 sea level (the speed of sound at 288.15 K)
+ISA_DENSITY = 1.225            # kg/m3, ISA 1976 sea level
+
+
+def _fit(x: np.ndarray, y: np.ndarray) -> Optional[Tuple[float, float]]:
+    """(slope, intercept) of a least squares line, or None when fewer than 3 finite points."""
+    ok = np.isfinite(x) & np.isfinite(y)
+    if ok.sum() < 3:
+        return None
+    s, i = np.polyfit(x[ok], y[ok], 1)
+    return float(s), float(i)
+
+
+def _rows(res: Dict[str, Any], key: str) -> np.ndarray:
+    return np.array([r[key] for r in res["rows"]], float)
+
+
+def summarize(alpha_res: Dict[str, Any], beta_res: Dict[str, Any], alpha_trim: float, x_ref: float, c_ref: float,
+              window_deg: float = 4.0) -> Dict[str, Any]:
+    """Derivatives of one configuration: CLa, Cma, NP_x (alpha sweep, within +-window of the trim alpha) and Cnb, Cyb, Clb
+    (beta sweep). Slopes per radian. VSPAERO moments: CMytot pitch (nose up positive), CMxtot and CMztot (signs flipped)."""
+    out: Dict[str, Any] = {}
+    a = _rows(alpha_res, "AoA")
+    near = np.abs(a - alpha_trim) <= window_deg + 1e-9
+    k = 180.0 / math.pi
+    fits = {}
+    for name, col in (("CL", "CLtot"), ("Cm", "CMytot"), ("CD", "CDtot")):
+        f = _fit(a[near], _rows(alpha_res, col)[near])
+        fits[name] = f
+    if fits["CL"] and fits["Cm"]:
+        cla, cma = fits["CL"][0] * k, fits["Cm"][0] * k
+        out.update({"CLa": cla, "Cma": cma, "CL0": fits["CL"][1], "Cm0": fits["Cm"][1], "NP_x": x_ref - c_ref * cma / cla,
+                    "alpha_window_deg": [alpha_trim - window_deg, alpha_trim + window_deg]})
+        out["CL_at_trim"] = fits["CL"][0] * alpha_trim + fits["CL"][1]
+        out["Cm_at_trim"] = fits["Cm"][0] * alpha_trim + fits["Cm"][1]
+    b = _rows(beta_res, "Beta")
+    # The OpenVSP axes are x aft, y right, z up. A moment about the aft x axis is a roll to the left, and a moment about
+    # the up z axis is a yaw to the left. The aeronautical Cl and Cn are the negative of CMx and CMz.
+    for name, col, sign in (("Cyb", "CStot", 1.0), ("Clb", "CMxtot", -1.0), ("Cnb", "CMztot", -1.0)):
+        f = _fit(b, _rows(beta_res, col))
+        if f:
+            out[name] = sign * f[0] * k
+    return out
+
+
+def _flow5_reference(ctx: Context) -> Dict[str, Any]:
+    """The flow5 trim point (speed, alpha) and the derivatives of the flow5 sweep, from the flow5 settings sweep."""
+    from aeroplan.spokes import context
+
+    c5 = context("flow5", ctx.aircraft)
+    st = c5.settings()
+    f = c5.work / "sweeps" / str(st.get("sweep", "")) / "results.json"
+    if not f.is_file():
+        raise ValueError(f"no flow5 sweep results at {f}: the OpenVSP analysis takes the trim point and the ranges "
+                         "from the flow5 sweep")
+    res = json.loads(f.read_text(encoding="utf-8"))
+    return {"sweep": st["sweep"], "speed_m_s": float(res["speed"]), "alpha_deg": float(res["alpha_deg"]),
+            "ranges": (st.get("sweep_runner") or {}).get("ranges") or {}, "summaries": res.get("summaries") or {},
+            "inputs": res.get("inputs") or {}}
+
+
+def _range(r: List[float]) -> List[float]:
+    start, end, step = float(r[0]), float(r[1]), float(r[2])
+    return [start, end, int(round((end - start) / step)) + 1]
+
+
+def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: Optional[List[str]] = None,
+          dry_run: bool = False, keep: bool = False, timeout: float = 3600, **_ignored) -> Dict[str, Any]:
+    """OpenVSP preliminary analysis of the ADH geometry: CompGeom (wetted area, volume), parasite drag, and the
+    VSPAERO sweeps (alpha, beta) of the wings alone (VLM), the wings with the ADH body, and the wings with the raw
+    CAD skin (panel). The flight condition, the ranges and the moment reference point come from the flow5 sweep of the
+    settings, so the two tools run the same case. Writes work/<aircraft>/sweeps/<name>/results.json."""
+    import datetime
+
+    st = ctx.settings()
+    an = st.get("analysis")
+    if not an:
+        raise ValueError(f"OpenVSP/settings/{ctx.aircraft}.yaml has no `analysis` block")
+    name = name or f"{ctx.aircraft}_{datetime.date.today().isoformat()}"
+    dest = ctx.work / "sweeps" / name
+    air = adh_doc.node(doc, "1.2")
+    ref = air["muas"].get("reference")
+    if not ref:
+        raise ValueError("node 1.2 has no muas.reference: run the flow5 ingest first")
+    s_ref, b_ref, c_ref = (float(ref[k]["value"]) for k in ("s_ref", "b_ref", "c_ref"))
+    mrp = [float(v) for v in ref["mrp"]["point"]["xyz"]]
+    f5 = _flow5_reference(ctx)
+    rg = f5["ranges"]
+    alpha_rng, beta_rng = _range(rg["alpha_deg"]), _range(rg["beta_deg"])
+    mach = f5["speed_m_s"] / ISA_SOUND_SPEED
+    base = {"sref": s_ref, "bref": b_ref, "cref": c_ref, "xcg": mrp[0], "ycg": mrp[1], "zcg": mrp[2], "mach": mach,
+            "vinf": f5["speed_m_s"], "rho": ISA_DENSITY, "wake_iter": int(an.get("wake_iterations", 3)),
+            "fixed_wake": True, "ncpu": an.get("ncpu")}
+    sets = {k: list(v) for k, v in (an.get("sets") or {}).items()}
+    runs = [r for r in an["runs"] if not only or r["name"] in only]
+    model = ctx.work / "generated" / f"{ctx.aircraft}.vsp3"
+    tree = ctx.root / "aircraft" / ctx.aircraft
+    current = (model.is_file() and tree.is_dir()
+               and model.stat().st_mtime > max(f.stat().st_mtime for f in tree.rglob("*") if f.is_file()))
+    if not dry_run and not current:         # generate takes minutes (the shape gate): reuse a model newer than the tree
+        model = generate(doc, ctx)[0]
+    elif not model.is_file():
+        raise ValueError(f"{model} does not exist: run `aeroplan generate OpenVSP {ctx.aircraft}` first")
+    result: Dict[str, Any] = {
+        "name": name, "aircraft": ctx.aircraft, "created_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"), "model": model.name, "model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
+        "aircraft_version": ctx.acft.version if ctx.acft is not None else None, "tool": runner.run({"job": "version"})["version"],
+        "condition": {"speed_m_s": f5["speed_m_s"], "mach": mach, "alpha_trim_deg": f5["alpha_deg"],
+                      "atmosphere": "ISA 1976 sea level", "rho_kg_m3": ISA_DENSITY, "source": f"flow5 sweep {f5['sweep']}"},
+        "reference": {"s_ref_m2": s_ref, "b_ref_m": b_ref, "c_ref_m": c_ref, "mrp_xyz_m": mrp},
+        "ranges": {"alpha_deg": alpha_rng, "beta_deg": beta_rng}, "geometry": {}, "runs": {}, "summaries": {},
+        "failed": {}, "warnings": {}, "notes": list(an.get("notes") or [])}
+    if dry_run:
+        result.update({"dry_run": True, "planned_runs": [r["name"] for r in runs], "sets": sets})
+        return result
+
+    # geometry: wetted area and volume, parasite drag, for each analysis set
+    for label, set_name in (an.get("geometry_sets") or {}).items():
+        if only and label not in only and "geometry" not in only:
+            continue
+        try:
+            result["geometry"][label] = {
+                "set": set_name, "compgeom": runner.run({"job": "compgeom", "path": str(model), "sets": sets,
+                                                          "set": set_name}, timeout=timeout),
+                "parasite_drag": runner.run({"job": "parasite_drag", "path": str(model), "sets": sets, "set": set_name,
+                                             "cond": {"sref": s_ref, "vinf": f5["speed_m_s"],
+                                                      "altitude_m": float(an.get("altitude_m", 0.0))}},
+                                            timeout=timeout)}
+            for k in ("ok",):
+                result["geometry"][label]["compgeom"].pop(k, None)
+                result["geometry"][label]["parasite_drag"].pop(k, None)
+        except runner.OpenVSPError as e:
+            result["failed"][f"geometry:{label}"] = str(e).splitlines()[0]
+
+    # VSPAERO sweeps
+    raw = dest / "raw"
+    for r in runs:
+        got = {}
+        for kind, case in (("alpha", {**base, "alpha": alpha_rng, "beta": [0.0, 0.0, 1]}),
+                           ("beta", {**base, "alpha": [f5["alpha_deg"]] * 2 + [1], "beta": beta_rng})):
+            try:
+                res = runner.run({"job": "vspaero", "path": str(model), "dir": str(raw), "name": f"{r['name']}_{kind}",
+                                  "sets": sets, "thin": r.get("thin"), "thick": r.get("thick"), "case": case},
+                                 timeout=timeout)
+                res.pop("ok", None)
+                got[kind] = res
+            except runner.OpenVSPError as e:
+                (result["warnings"] if r.get("optional") else result["failed"])[f"{r['name']}:{kind}"] = str(e).splitlines()[0]
+        result["runs"][r["name"]] = {k: {kk: v for kk, v in g.items() if kk != "rows"} | {"rows": g["rows"]}
+                                     for k, g in got.items()}
+        if "alpha" in got and "beta" in got:
+            result["summaries"][r["name"]] = summarize(got["alpha"], got["beta"], f5["alpha_deg"], mrp[0], c_ref)
+            if not np.isfinite(_rows(got["alpha"], "CLtot")).all() or not np.isfinite(_rows(got["beta"], "CMztot")).all():
+                (result["warnings"] if r.get("optional") else result["failed"])[r["name"]] = (
+                    "VSPAERO returned NaN: the panel solution did not converge")
+                result["summaries"].pop(r["name"], None)
+    result["flow5"] = {"sweep": f5["sweep"], "alpha": (f5["summaries"].get("alpha") or {}),
+                       "t7": (f5["summaries"].get("t7_reference") or {})}
+    result["validation"] = {"ok": not result["failed"] and bool(result["summaries"]), "failed": result["failed"],
+                            "warnings": result["warnings"]}
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "results.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+    return result
+
+
+def format_sweep(res: Dict[str, Any]) -> str:
+    """A text table of an OpenVSP sweep result."""
+    out = [f"OpenVSP analysis {res['name']} ({res['tool']}), model {res['model']}",
+           f"  condition: V {res['condition']['speed_m_s']:.3f} m/s, Mach {res['condition']['mach']:.4f}, trim alpha "
+           f"{res['condition']['alpha_trim_deg']:.2f} deg, {res['condition']['atmosphere']} ({res['condition']['source']})",
+           f"  MRP x {res['reference']['mrp_xyz_m'][0]:.4f} m, c_ref {res['reference']['c_ref_m']:.3f} m"]
+    if res.get("dry_run"):
+        return "\n".join(out + [f"  dry run: planned runs {', '.join(res['planned_runs'])}"])
+    if res["geometry"]:
+        out.append("  geometry (CompGeom, parasite drag):")
+        for label, g in res["geometry"].items():
+            out.append(f"    {label:12s} Swet {g['compgeom']['total_wet_area_m2']:.4f} m2  volume "
+                       f"{g['compgeom']['total_theo_volume_m3']:.5f} m3  CD0 {g['parasite_drag']['cd0']:.5f}")
+    cols = ("CLa", "Cma", "CL0", "Cm0", "NP_x", "Cnb", "Cyb", "Clb")
+    out.append("  derivatives (per rad):  " + "".join(f"{c:>9s}" for c in cols))
+    for run, s in res["summaries"].items():
+        out.append(f"    {run:20s}   " + "".join(f"{s.get(c, float('nan')):9.4f}" for c in cols))
+    f5 = res.get("flow5", {})
+    if f5.get("alpha"):
+        a, t = f5["alpha"], f5.get("t7") or {}
+        out.append(f"    {'flow5 ' + f5['sweep']:20s}   " + "".join(
+            f"{v:9.4f}" if v is not None else f"{'':>9s}" for v in (a.get("CLa"), a.get("Cma"), None, None,
+                                                                    t.get("NP_x"), t.get("Cnb"), None, None)))
+    for k, v in res.get("failed", {}).items():
+        out.append(f"  FAILED {k}: {v}")
+    for k, v in res.get("warnings", {}).items():
+        out.append(f"  WARNING (optional run) {k}: {v}")
+    out.append("  validation: " + ("PASS" if res["validation"]["ok"] else "FAIL"))
+    return "\n".join(out)
 
 
 def _n_half(doc: Dict[str, Any], st: Dict[str, Any]) -> int:

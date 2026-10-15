@@ -41,6 +41,12 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 - 2026-10-15: Notebooks in `AeroSandbox/notebooks/` run in `AeroSandbox/.venv` (kernel `aeroplan-asb`). They may import
   aerosandbox and aeroplan (`AeroSandbox/lab.py`). They read the source tree and never write it. They are committed with
   empty outputs. Proptimiser is optional in that Python.
+- 2026-10-15: The wing root leading edge sits at x = 0.000 in the design frame, as in the Creo assembly (the shrinkwrap
+  holds the wing panel there). flow5 had it at x = -0.080. The SpecSheet datum (`datum_x_m` = 0.0) is the same point.
+  The spoke warns when the document wing differs. A change of the wing position needs a new flow5 sweep.
+- 2026-10-15: The fuselage body (`geometry.body`) is a fit of the Creo shrinkwrap skin, cut by the CREO spoke
+  (`aeroplan.skin_body`). The skin (`muas.skin`, faceted STEP) stays the exact shape and goes to the OpenVSP analysis
+  (CompGeom, parasite drag, VSPAERO panel). `muas.skin.body_fit` records the method and the fit.
 - The web editor and viewer are shelved for now.
 - The changed file wins (2026-10-08): a geometry spoke writes an item only when its input file differs from the
   asset that the item names. `muas.geometry_tool` names the spoke that wrote the geometry last.
@@ -85,6 +91,7 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 | `geometry.py`, `parts.py`, `visual.py` | ADH shapes <-> tool shapes and meshes |
 | `step_mesh.py` | Triangles of a faceted STEP file (the Creo shrinkwrap skin), no CAD kernel |
 | `aero_buildup.py` | The flow5 aero build-up and its DAVE-ML writer |
+| `skin_body.py` | Body frames from a closed skin mesh (slices, wing panel cut, fit report), mesh repair for VSPAERO |
 | `mass_model.py` | Point masses to mass, CG and inertia (parallel axis). Strip distribution of a mass over a planform |
 
 ## Commands
@@ -99,6 +106,8 @@ python -m aeroplan pack currawong --profile aerolink review archive
 python -m aeroplan unpack dist/currawong-<version>-archive.muas <folder>
 python -m aeroplan verify dist/currawong-<version>-aerolink.muas
 python -m aeroplan generate flow5 currawong
+python -m aeroplan sweep flow5 currawong     # flow5 headless: T7, alpha, beta, controls (about 11 min)
+python -m aeroplan sweep OpenVSP currawong   # CompGeom, parasite drag, VSPAERO (about 15 min after generate)
 python -m aeroplan setup OpenVSP             # once per computer
 python -m aeroplan setup AeroSandbox         # once per computer: Python, JupyterLab, kernel aeroplan-asb
 python -m aeroplan build currawong --author "Liam M." --consumers review archive   # after a sheet change

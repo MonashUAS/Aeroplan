@@ -7,7 +7,8 @@
     aeroplan unpack <file.muas> <folder>       check a package and write its source tree into <folder>
     aeroplan verify <file.muas>                check a package: mimetype, every hash, the package hash
     aeroplan generate <spoke> <aircraft>       write the tool input files of a spoke from the source tree
-    aeroplan export <spoke> <aircraft> <out>   write the tool files of a spoke (Aerolink: the aerolink package)
+    aeroplan sweep <spoke> <aircraft>          run the tool sweep of a spoke (flow5: writes work/<aircraft>/sweeps/<name>)
+    aeroplan export <spoke> <aircraft> <out>  write the tool files of a spoke (Aerolink: the aerolink package)
     aeroplan spokes [<aircraft>]               list the spokes and the input in their work folders
     aeroplan setup <spoke> [<aircraft>]        make the tool runtime of a spoke on this machine (OpenVSP)
     aeroplan schema --out schema               export the JSON Schema of the MUAS types
@@ -144,6 +145,20 @@ def _generate(args) -> int:
     return 0
 
 
+def _sweep(args) -> int:
+    from .build import sweep
+    from .spokes import load
+
+    res = sweep(args.spoke, args.aircraft, name=args.name, only=args.only, dry_run=args.dry_run, keep=args.keep,
+                timeout=args.timeout, flow5=args.flow5)
+    fmt = getattr(load(args.spoke), "format_sweep", None)
+    print(fmt(res) if fmt else res)
+    if not res.get("dry_run") and args.spoke == "flow5":
+        print(f"\nNext: set `sweep: {res['name']}` and `sweep_date: '{res['created_utc'][:10]}'` in "
+              f"{args.spoke}/settings/{args.aircraft}.yaml, then run `aeroplan build {args.aircraft} --author NAME`.")
+    return 0 if res.get("dry_run") or (res.get("validation") or {}).get("ok") else 1
+
+
 def _export(args) -> int:
     from .build import export
 
@@ -227,6 +242,16 @@ def main(argv=None) -> int:
     g.add_argument("spoke")
     g.add_argument("aircraft")
     g.set_defaults(fn=_generate)
+    sw = sub.add_parser("sweep", help="run the tool sweep of a spoke (flow5: T7, alpha, beta and control runs)")
+    sw.add_argument("spoke")
+    sw.add_argument("aircraft")
+    sw.add_argument("--name", help="the sweep folder name (default <aircraft>_<date>)")
+    sw.add_argument("--only", nargs="+", help="run only these runs")
+    sw.add_argument("--dry-run", action="store_true", help="write the XML files, do not start the tool")
+    sw.add_argument("--keep", action="store_true", help="keep the tool output of the passes")
+    sw.add_argument("--timeout", type=float, default=3600.0, help="seconds for each pass")
+    sw.add_argument("--flow5", help="the path of flow5.exe, when the search does not find it")
+    sw.set_defaults(fn=_sweep)
     e = sub.add_parser("export", help="write the tool files of a spoke into a folder")
     e.add_argument("spoke")
     e.add_argument("aircraft")

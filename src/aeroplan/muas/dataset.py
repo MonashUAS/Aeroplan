@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import Field, field_validator
 
 from .base import MuasModel
+from .mass import MassProperties
 from .reference import Position
 
 
@@ -49,6 +50,9 @@ class DatasetMeta(MuasModel):
     sigma: Optional[Dict[str, Any]] = Field(None, description="ADH Uncertainty form. None: no uncertainty estimate "
                                             "exists in the source")
     mrp: Optional[Position] = Field(None, description="Moment reference point of the moments, design frame")
+    analysis_mass_model: Optional[MassProperties] = Field(
+        None, description="The mass model (mass, CG, inertia) that the source analysis flew. The aero model belongs to "
+        "this mass model. The mass model of the air vehicle can differ from it after a later change")
     units_system: Literal["SI", "as-source"] = Field(
         "SI", description="as-source: a published reference model kept in its own units. Each variable names its units")
     placeholder: bool = False

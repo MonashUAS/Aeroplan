@@ -3,25 +3,40 @@
 # frame (x aft, y right, z up, m, flow5 origin). Source of the transforms: the retired hand config (AeroPlan package
 # 0.1.0, visual.parts). They were fitted to the flow5 surfaces:
 #   assembly axes [-z, -x, y], no shift (the CAD assembly frame: z forward, y up): 4 to 7 mm median.
-#   wing frame (wing, aileron_r): axes [z, x, y], origin_m 0.0744: 4.8 mm median, 9.9 mm max.
-#   aileron_l: the wing frame turned 180 deg about y: axes [-z, -x, y], same shift: 5.0 mm median.
+#   wing frame (wing, aileron_r): axes [z, x, y], origin_m 0.0 (2026-10-15; was 0.0744, a fit to the flow5 wing at x = -0.080).
+#     The Creo assembly puts the wing root leading edge at x = 0.000, and the shrinkwrap holds the wing panel there
+#     (the skin panel to the CAD wing: see tests of 2026-10-15). User decision: the CAD position is true.
+#   aileron_l: the wing frame turned 180 deg about y: axes [-z, -x, y], same origin.
 # elevator.stl holds both elevator halves. elevator_l/r.stl and fuseskinshrinkwrap.stl are not parts of the view.
 # skins: the outer skin of the fuselage, the Creo shrinkwrap fuseskinshrinkwrap.stp (written 2026-10-04, faceted,
-#   unit INCH). Same assembly frame as fuselage.stl, so the same axes. A reference shape, not the fuselage geometry.
+#   unit INCH). Same assembly frame as fuselage.stl, so the same axes. The skin is the reference shape (datum checks,
+#   OpenVSP view, OpenVSP panel analysis).
+#   body: the spoke slices the skin into the ADH body of the fuselage (aeroplan.skin_body). 41 frames, 37 points each
+#   (5 deg ray steps): RMS gap to the skin 0.86 mm, largest 6.5 mm outside the wing panel (scan of y_max_m 0.118 to 0.13
+#   and 25 or 37 points, 2026-10-15). The shrinkwrap also holds the centre panel of the CAD wing (x 0.000 to 0.370,
+#   |y| to 0.252, z -0.015 to +0.040). cut.x_m is the range of the pod stations that the panel crosses (the skin
+#   stations from the wing root leading edge to 80 mm ahead of it and beyond the pod taper start), and cut.y_max_m
+#   (0.12 m) is the half width above which a hit is a wing hit. The pod half width is 0.115 m.
+#   min_height_m: the last 23 mm of the skin (x 0.552 to 0.575) is a corrugated sheet 3 mm thick. No frame can hold it.
+#   The body closes at the aft station that is 4 mm tall (measured on the skin), plus 5 mm.
 # instance: the ADH item (muas.instance) that the part belongs to.
 units: mm
 parts:
   fuselage: {file: fuselage.stl, instance: fuselage, axes: [-z, -x, y]}
-  wing: {file: wing.stl, instance: wing_main, axes: [z, x, y], origin_m: [0.0744, 0.0, 0.0]}
-  aileron_r: {file: aileron_r.stl, instance: aileron_r, axes: [z, x, y], origin_m: [0.0744, 0.0, 0.0]}
-  aileron_l: {file: aileron_l.stl, instance: aileron_l, axes: [-z, -x, y], origin_m: [0.0744, 0.0, 0.0]}
+  wing: {file: wing.stl, instance: wing_main, axes: [z, x, y], origin_m: [0.0, 0.0, 0.0]}
+  aileron_r: {file: aileron_r.stl, instance: aileron_r, axes: [z, x, y], origin_m: [0.0, 0.0, 0.0]}
+  aileron_l: {file: aileron_l.stl, instance: aileron_l, axes: [-z, -x, y], origin_m: [0.0, 0.0, 0.0]}
   htail: {file: hstab.stl, instance: htail, axes: [-z, -x, y]}
   elevator: {file: elevator.stl, instance: elevator, axes: [-z, -x, y]}
   rudder: {file: rudder.stl, instance: rudder, axes: [-z, -x, y]}
   gear: {file: gear.stl, instance: airframe, axes: [-z, -x, y]}
   propeller: {file: propeller.stl, instance: prop_cruise, axes: [-z, -x, y]}
 skins:
-  fuselage: {file: fuseskinshrinkwrap.stp, instance: fuselage, axes: [-z, -x, y]}
+  fuselage:
+    file: fuseskinshrinkwrap.stp
+    instance: fuselage
+    axes: [-z, -x, y]
+    body: {frames: 41, points: 37, cut: {x_m: [-0.13, 0.45], y_max_m: 0.12}, min_height_m: 0.004}
 # tubes: round tube bodies that the CAD does not hold yet. The tail boom: a subcomponent of 1.2.2.4 Empennage (ADH has
 #   no WBS number for a boom; the sheet books its mass under Tail). It runs from the aft end of the fuselage body to the
 #   root quarter chord of the horizontal tail, the rule of the visual boom. Radius: measured on the mesh of the retired

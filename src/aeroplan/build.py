@@ -129,6 +129,15 @@ def generate(spoke_name: str, aircraft: str) -> List[Path]:
     return spoke.generate(acft.doc, context(spoke_name, aircraft, acft))
 
 
+def sweep(spoke_name: str, aircraft: str, **options: Any) -> Dict[str, Any]:
+    """Run the tool sweep of a spoke on the source tree (flow5: the flow5 runner). Returns the spoke result."""
+    spoke = load(spoke_name)
+    if not hasattr(spoke, "sweep"):
+        raise ValueError(f"the spoke {spoke_name} has no sweep step")
+    acft = load_aircraft(aircraft)
+    return spoke.sweep(acft.doc, context(spoke_name, aircraft, acft), **options)
+
+
 def export(spoke_name: str, aircraft: str, out: Path) -> List[Path]:
     """Write the tool files of a spoke (for example the Aerolink package) into `out`."""
     spoke = load(spoke_name)

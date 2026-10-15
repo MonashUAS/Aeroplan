@@ -15,7 +15,7 @@ sheet = load("SpecSheet")
 OVERRIDE = "Subassembly weight override"
 
 SETTINGS = {
-    "workbook": "sheet.xlsx", "weights_sheet": "W", "positions_sheet": "P", "configuration": "test",
+    "workbook": "sheet.xlsx", "weights_sheet": "W", "positions_sheet": "P", "configuration": "test", "datum_x_m": 0.0,
     "strips_per_side": 4,
     "subassemblies": {
         "Body": {"node": "1.2.2.2", "instance": "fuselage", "cg_group": "body", "exclude_rows": ["tanks"],
@@ -163,3 +163,31 @@ def test_the_mrp_gap_is_a_warning_and_stops_aerolink(tmp_path):
     air["reference"]["mrp"]["point"]["xyz"] = list(air["mass_properties"]["cg"]["xyz"])
     air["reference"]["nominal_cg"] = {"xyz": list(air["mass_properties"]["cg"]["xyz"])}
     assert not any("muas.reference mrp" in m for m in missing_for_flight(doc))
+
+
+def test_the_datum_shifts_every_position(tmp_path):
+    write_book(tmp_path / "sheet.xlsx")
+    doc = make_full_doc()
+    d = sheet.read_workbook(tmp_path / "sheet.xlsx", SETTINGS)
+    moved = {**SETTINGS, "datum_x_m": -0.08}
+    base = {s["group"]: s["point_masses"] for s in sheet.build_point_masses(d, SETTINGS, planform_of(doc))}
+    shifted = {s["group"]: s["point_masses"] for s in sheet.build_point_masses(d, moved, planform_of(doc))}
+    for group in base:
+        for a, b in zip(base[group], shifted[group]):
+            assert b["xyz"][0] == pytest.approx(a["xyz"][0] - 0.08)
+
+
+def test_a_datum_that_differs_from_the_wing_root_is_a_warning(tmp_path):
+    doc, changes = ingest(tmp_path)           # the synthetic wing root leading edge is at x = 0.1, the datum at 0.0
+    assert sheet._root_le_x(doc, SETTINGS) == pytest.approx(0.1)
+    assert any(c.startswith("WARNING: the sheet datum") for c in changes)
+
+
+def test_a_matching_datum_gives_no_warning(tmp_path):
+    write_book(tmp_path / "sheet.xlsx")
+    (tmp_path / "SpecSheet" / "settings").mkdir(parents=True)
+    (tmp_path / "SpecSheet" / "settings" / "test.yaml").write_text(yaml.safe_dump({**SETTINGS, "datum_x_m": 0.1}),
+                                                                   encoding="utf-8")
+    doc = make_full_doc()
+    changes = sheet.ingest(doc, Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc)))
+    assert not any(c.startswith("WARNING") for c in changes)

@@ -57,9 +57,9 @@
       "nominal_cg": {
         "frame": "design",
         "xyz": [
-          0.129092,
-          0.0,
-          -0.00907274
+          0.10975047713991941,
+          -2.6133775863324925e-17,
+          0.0019974675702611007
         ],
         "units": "m"
       },
@@ -69,9 +69,9 @@
         "point": {
           "frame": "design",
           "xyz": [
-            0.129092,
-            0.0,
-            -0.00907274
+            0.10975047713991941,
+            -2.6133775863324925e-17,
+            0.0019974675702611007
           ],
           "units": "m"
         }
@@ -97,7 +97,7 @@
       "attitude_sequence": "3-2-1",
       "units": "SI",
       "values": {
-        "speed_mps": 12.0958,
+        "speed_mps": 15.1247,
         "altitude_m": 0.0
       },
       "placeholder": true
@@ -105,7 +105,7 @@
     "datasets": [
       {
         "role": "aero",
-        "ref": "asset:sha256:04085caf84514f034e4a5d8649b22041ad2422d2df0583e07004a7a9ab23b6e8"
+        "ref": "asset:sha256:89a60d27505c57fa772641e45949ae53eb69de8cabf5a74b438de8484fe5e1fc"
       }
     ],
     "aero_settings": {
@@ -730,44 +730,44 @@
     ],
     "sources": [
       {
-        "tool": "OpenVSP",
-        "asset": "asset:sha256:5fc8d9283fc82fac91d9fb870a7e5c1fe29c04b322f3e16930b38134ee8f5fef",
-        "role": "OpenVSP model (the member's changed copy)"
-      },
-      {
         "tool": "AeroSandbox",
         "asset": "asset:sha256:69c089c2a8211b6152006f1d9fcd4b4e84701fe55ff92854a40d73716155bc3a",
         "role": "initial sizing outputs (Athena)"
       },
       {
         "tool": "flow5",
-        "asset": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+        "asset": "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
         "role": "plane definition of the sweep (wings, body, point masses)"
       },
       {
         "tool": "flow5",
-        "asset": "asset:sha256:7da60e326b076e7e3db948e3064ee1c1a04ef9243a31fb66b154ead72b3301e5",
+        "asset": "asset:sha256:d7783e7858d33d2443bc5f4c7cde22f0cb43f3bfc1a3d46be85bce8a3ec32674",
         "role": "T7 analysis: reference dimensions and the custom mass model"
       },
       {
         "tool": "flow5",
-        "asset": "asset:sha256:7fc7cb5e4e1b4d8532e0269031ffbeb69421757a08e61670f634b511fa480ef7",
+        "asset": "asset:sha256:f8a9889894e4559ef0768594468a6f15f763fc847a081501246d060403b32d58",
         "role": "T7 point: stability derivatives and trim"
       },
       {
         "tool": "flow5",
-        "asset": "asset:sha256:539af3bd4ab7bc637d3b448ab7b37776998b29edca0025a8cbfa44f258daa7a5",
+        "asset": "asset:sha256:3e6bb531f1818e3e1653b20d79f0e63fdfedbecabe78e02d2f6ba45c63cfa656",
         "role": "viscous alpha polar: CD0 and K"
       },
       {
         "tool": "flow5",
-        "asset": "asset:sha256:57e996d516e7798020b3fb459f9a1bbec6ce3599223ac7b7a7693815c1fa277a",
+        "asset": "asset:sha256:fd4550861e1ca71c13f3778373fffe6dfbcc0bb2dc1b548da4ab77624dc1a69b",
         "role": "sweep results: control derivatives and validation"
       },
       {
         "tool": "SpecSheet",
         "asset": "asset:sha256:3ba315fff0db39889ef0f36ca25eb62523e7ab4f73bf58c97e6e7618da370a78",
         "role": "mass model: weight log and CG sheet"
+      },
+      {
+        "tool": "OpenVSP",
+        "asset": "asset:sha256:1f0b4d4ebd6b8cfa66c0e80b28c17c1eb02d87df48a507ac6345db50040e48e0",
+        "role": "OpenVSP model (the member's changed copy)"
       }
     ]
   },

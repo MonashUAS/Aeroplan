@@ -316,24 +316,22 @@ def foil_polar(foil_name: str, coords, re: float, alphas_deg) -> Dict[str, np.nd
 
 
 # --------------------------------------------------------------------------------------------- the flow5 T7 reference
-T7_COMMIT = "96d1cda"      # the AeroPlan commit before the SpecSheet mass model: it holds the mass model of the flow5 T7 analysis
-
-
 def t7_reference(lab: Lab) -> Dict[str, Any]:
-    """The flow5 T7 trim point: mass, CG, inertia from the committed source tree of T7_COMMIT, and the speed and angle
-    of attack from the description of the aero dataset."""
-    import json
+    """The flow5 T7 trim point. Mass, CG and inertia: the mass model that the sweep flew (`analysis_mass_model` of the
+    aero dataset, written by the flow5 spoke). Speed and angle of attack: the description of the aero dataset. After a
+    sheet change the air vehicle mass model can differ from this one until the next flow5 sweep."""
     import re
-    import subprocess
+    from aeroplan import adh_doc, assets
 
     out: Dict[str, Any] = {}
-    try:
-        txt = subprocess.run(["git", "show", f"{T7_COMMIT}:aircraft/{lab.aircraft}/adh/1.2.air_vehicle.json"], cwd=ROOT,
-                             capture_output=True, text=True, check=True).stdout
-        mp = json.loads(txt)["muas"]["mass_properties"]
+    air = adh_doc.node(lab.acft.doc, "1.2")["muas"]
+    ref_id = next((d["ref"] for d in air.get("datasets", []) if d["role"] == "aero"), None)
+    entry = next((e for e in assets.register(lab.acft.doc, create=False) if e["id"] == ref_id), {})
+    mp = (entry.get("dataset") or {}).get("analysis_mass_model")
+    if mp:
         out.update(mass_kg=mp["mass"]["value"], cg=mp["cg"]["xyz"], inertia=mp["inertia"])
-    except Exception as e:                       # no git history on this machine
-        out["error"] = f"{type(e).__name__}: {e}"
+    else:
+        out["error"] = "the aero dataset holds no analysis_mass_model: run a new flow5 sweep and build"
     desc = ((lab.flow5_data or {}).get("file_header", {}).get("description") or {}).get("value", "")
     m = re.search(r"V (\d+\.?\d*) m/s, alpha (-?\d+\.?\d*) deg, CL (\d+\.?\d*)", desc)
     if m:

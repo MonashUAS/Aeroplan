@@ -58,7 +58,7 @@
             "value": 0.6,
             "units": "kg"
           },
-          "source": "flow5 plane Currawongv5_n0012-3, sweep currawongv5_testfuse",
+          "source": "flow5 plane currawong_aeroplan, sweep currawong_sheetcg",
           "placeholder": false
         },
         "visual": [
@@ -89,7 +89,7 @@
         "sources": [
           {
             "tool": "flow5",
-            "asset": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+            "asset": "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
             "role": "plane definition of the sweep (wings, body, point masses)"
           },
           {
@@ -3285,7 +3285,7 @@
             "value": 0.2,
             "units": "kg"
           },
-          "source": "flow5 plane Currawongv5_n0012-3, sweep currawongv5_testfuse",
+          "source": "flow5 plane currawong_aeroplan, sweep currawong_sheetcg",
           "placeholder": false
         },
         "visual": [
@@ -3301,7 +3301,7 @@
         "sources": [
           {
             "tool": "flow5",
-            "asset": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+            "asset": "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
             "role": "plane definition of the sweep (wings, body, point masses)"
           },
           {

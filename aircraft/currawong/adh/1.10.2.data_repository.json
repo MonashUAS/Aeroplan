@@ -171,13 +171,13 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:5fc8d9283fc82fac91d9fb870a7e5c1fe29c04b322f3e16930b38134ee8f5fef",
+        "id": "asset:sha256:1f0b4d4ebd6b8cfa66c0e80b28c17c1eb02d87df48a507ac6345db50040e48e0",
         "kind": "file",
         "name": "OpenVSP.currawong.vsp3",
         "role": "OpenVSP model (the member's changed copy)",
         "tool": "OpenVSP",
         "media_type": "application/octet-stream",
-        "size": 801292,
+        "size": 5575288,
         "locations": [
           {
             "repo": "OpenVSP/work/currawong/currawong.vsp3"
@@ -216,48 +216,83 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:04085caf84514f034e4a5d8649b22041ad2422d2df0583e07004a7a9ab23b6e8",
+        "id": "asset:sha256:89a60d27505c57fa772641e45949ae53eb69de8cabf5a74b438de8484fe5e1fc",
         "kind": "dataset",
         "name": "aero.currawong",
         "role": "aero model (DAVE-ML in ADH form)",
         "tool": "flow5",
         "media_type": "application/json",
-        "size": 16341,
+        "size": 16222,
         "locations": [
           {
             "repo": "aircraft/currawong/datasets/aero.currawong.json"
           }
         ],
         "derived_from": [
-          "asset:sha256:539af3bd4ab7bc637d3b448ab7b37776998b29edca0025a8cbfa44f258daa7a5",
-          "asset:sha256:57e996d516e7798020b3fb459f9a1bbec6ce3599223ac7b7a7693815c1fa277a",
-          "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
-          "asset:sha256:7da60e326b076e7e3db948e3064ee1c1a04ef9243a31fb66b154ead72b3301e5",
-          "asset:sha256:7fc7cb5e4e1b4d8532e0269031ffbeb69421757a08e61670f634b511fa480ef7"
+          "asset:sha256:3e6bb531f1818e3e1653b20d79f0e63fdfedbecabe78e02d2f6ba45c63cfa656",
+          "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
+          "asset:sha256:d7783e7858d33d2443bc5f4c7cde22f0cb43f3bfc1a3d46be85bce8a3ec32674",
+          "asset:sha256:f8a9889894e4559ef0768594468a6f15f763fc847a081501246d060403b32d58",
+          "asset:sha256:fd4550861e1ca71c13f3778373fffe6dfbcc0bb2dc1b548da4ab77624dc1a69b"
         ],
-        "built_against": "currawong@0.2.2",
+        "built_against": "currawong@0.2.15",
         "dataset": {
           "form": "daveml-adh",
           "model_description": {
             "generation_tool": "flow5 7.57 + AeroPlan aero build-up",
             "model_name": "currawong aero build-up",
-            "description": "flow5 sweep currawongv5_testfuse (2026-10-04)"
+            "description": "flow5 sweep currawong_sheetcg (2026-10-15)"
           },
           "fidelity": "L2",
           "mrp": {
             "frame": "design",
             "xyz": [
-              0.129092,
-              0.0,
-              -0.00907274
+              0.10975047713991941,
+              -2.6133775863324925e-17,
+              0.0019974675702611007
             ],
             "units": "m"
+          },
+          "analysis_mass_model": {
+            "mass": {
+              "value": 10.753333332999999,
+              "units": "kg"
+            },
+            "cg": {
+              "frame": "design",
+              "xyz": [
+                0.10975047713991941,
+                -2.6133775863324925e-17,
+                0.0019974675702611007
+              ],
+              "units": "m"
+            },
+            "inertia": {
+              "axes": "parallel_to_design",
+              "products_convention": "+integral(xy dm)",
+              "ixx": 2.4118630076363874,
+              "iyy": 2.6045261047172974,
+              "izz": 5.006821939803849,
+              "ixy": 0.0,
+              "ixz": -0.05674465091158301,
+              "iyz": 0.0,
+              "units": "kg*m^2",
+              "unverified_products": [
+                "ixz"
+              ]
+            },
+            "source": "estimate",
+            "placeholder": true,
+            "notes": [
+              "The custom inertia of the flow5 T7 analysis t7_reference.xml (sweep currawong_sheetcg). It is a typed mass model, not a weighing or a CAD mass report.",
+              "flow5 does not document its Ixz sign convention in the export: Ixz is not verified."
+            ]
           },
           "units_system": "SI",
           "placeholder": true,
           "notes": [
             "No uncertainty estimate exists in the source (sigma not given).",
-            "Trim point of the T7 analysis: V 12.0958 m/s, alpha 4.8134 deg, CL 0.840284.",
+            "Trim point of the T7 analysis: V 15.1247 m/s, alpha 3.10014 deg, CL 0.698823.",
             "The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."
           ]
         },
@@ -354,76 +389,76 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:539af3bd4ab7bc637d3b448ab7b37776998b29edca0025a8cbfa44f258daa7a5",
+        "id": "asset:sha256:3e6bb531f1818e3e1653b20d79f0e63fdfedbecabe78e02d2f6ba45c63cfa656",
         "kind": "file",
         "name": "flow5.alpha_viscous.csv",
         "role": "viscous alpha polar: CD0 and K",
         "tool": "flow5",
         "media_type": "application/vnd.ms-excel",
-        "size": 6088,
+        "size": 6131,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawongv5_testfuse/alpha_viscous.csv"
+            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/alpha_viscous.csv"
           }
         ],
         "derived_from": []
       },
       {
-        "id": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+        "id": "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
         "kind": "file",
         "name": "flow5.plane_with_body.xml",
         "role": "plane definition of the sweep (wings, body, point masses)",
         "tool": "flow5",
         "media_type": "text/xml",
-        "size": 38419,
+        "size": 42381,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawongv5_testfuse/plane_with_body.xml"
+            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/plane_with_body.xml"
           }
         ],
         "derived_from": []
       },
       {
-        "id": "asset:sha256:57e996d516e7798020b3fb459f9a1bbec6ce3599223ac7b7a7693815c1fa277a",
+        "id": "asset:sha256:fd4550861e1ca71c13f3778373fffe6dfbcc0bb2dc1b548da4ab77624dc1a69b",
         "kind": "file",
         "name": "flow5.results.json",
         "role": "sweep results: control derivatives and validation",
         "tool": "flow5",
         "media_type": "application/json",
-        "size": 3957,
+        "size": 4292,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawongv5_testfuse/results.json"
+            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/results.json"
           }
         ],
         "derived_from": []
       },
       {
-        "id": "asset:sha256:7da60e326b076e7e3db948e3064ee1c1a04ef9243a31fb66b154ead72b3301e5",
+        "id": "asset:sha256:d7783e7858d33d2443bc5f4c7cde22f0cb43f3bfc1a3d46be85bce8a3ec32674",
         "kind": "file",
         "name": "flow5.t7_reference.xml",
         "role": "T7 analysis: reference dimensions and the custom mass model",
         "tool": "flow5",
         "media_type": "text/xml",
-        "size": 1465,
+        "size": 1587,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawongv5_testfuse/t7_reference.xml"
+            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/t7_reference.xml"
           }
         ],
         "derived_from": []
       },
       {
-        "id": "asset:sha256:7fc7cb5e4e1b4d8532e0269031ffbeb69421757a08e61670f634b511fa480ef7",
+        "id": "asset:sha256:f8a9889894e4559ef0768594468a6f15f763fc847a081501246d060403b32d58",
         "kind": "file",
         "name": "flow5.t7_reference_opoint.txt",
         "role": "T7 point: stability derivatives and trim",
         "tool": "flow5",
         "media_type": "text/plain",
-        "size": 158811,
+        "size": 159284,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawongv5_testfuse/t7_reference_opoint.txt"
+            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/t7_reference_opoint.txt"
           }
         ],
         "derived_from": []
@@ -444,7 +479,7 @@
         "derived_from": [
           "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d"
         ],
-        "built_against": "currawong@0.2.2",
+        "built_against": "currawong@0.2.15",
         "dataset": {
           "form": "tables",
           "model_description": {

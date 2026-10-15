@@ -5,6 +5,10 @@
 # positions_sheet: the CG calculation sheet. Column F is the distance of the CG from the wing root leading edge in mm,
 #   positive forward, so x_design = -F / 1000 (design frame x aft). The nose sheet "1 forward tank" is the layout of
 #   the ADH fuselage (nose at x = -0.586 m).
+# datum_x_m: the design x of the sheet datum, the wing root leading edge (the sheet measures from it, positive forward).
+#   0.000 m: the Creo assembly puts the wing root leading edge at x = 0.000 (the shrinkwrap holds the wing panel there,
+#   user decision 2026-10-15). `aeroplan build` warns when the wing_main root leading edge of the document differs.
+# datum_wing: the ADH item whose root leading edge is the datum.
 # configuration: the nominal mass model. Payload and water tanks are not in it (the weight log has none).
 # subassemblies: sheet group -> ADH node.
 #   node, instance:  the WBS number and the muas.instance of the item that gets the subassembly mass.
@@ -18,6 +22,8 @@ strips_per_side: 6
 workbook: Currawong Master Specification Sheet.xlsx
 weights_sheet: 1st Airframe
 positions_sheet: CG Calcs 1 forward tank
+datum_x_m: 0.0
+datum_wing: wing_main
 configuration: measured_no_payload
 subassemblies:
   Fuselage:

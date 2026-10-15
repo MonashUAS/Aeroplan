@@ -27,11 +27,12 @@ What ingest writes:
 """
 from __future__ import annotations
 
+import copy
 import json
 import math
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -45,6 +46,7 @@ from aeroplan.geometry import body_adh, body_frames, lifting_surface_adh
 from aeroplan.spokes import Context, set_sources
 
 from .plane_xml import read_body_and_masses, read_wing_masses, write_foil, write_plane
+from .sweep import format_result as format_sweep  # noqa: F401  (the CLI prints the sweep with it)
 
 NAME = "flow5"
 
@@ -158,7 +160,8 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     op = read_t7_scalars(t7_txt)
     for k, v in (("mass", op["mass"]), ("cog_x", op["CoG_x"]), ("cog_z", op["CoG_z"])):
         ref_v = t7["mass"] if k == "mass" else t7["cog"][0 if k == "cog_x" else 2]
-        if not math.isclose(v, ref_v, rel_tol=1e-6, abs_tol=1e-9):
+        # the op-point text file prints 6 significant digits, so a value with more digits differs by up to 5e-6
+        if not math.isclose(v, ref_v, rel_tol=1e-5, abs_tol=1e-9):
             raise ValueError(f"T7 point {k} {v} differs from the T7 analysis {ref_v}")
     t7_src = ctx.source_ref(t7_xml, "T7 analysis: reference dimensions and the custom mass model")
     air["muas"]["mass_properties"] = {
@@ -192,7 +195,7 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     bu = from_flow5(sweep, viscous, stall)
     res = json.loads(results.read_text(encoding="utf-8"))
     xml = to_daveml(bu, name=f"{ctx.aircraft.capitalize()} aerodynamic model", author="AeroPlan flow5 spoke", org="MUAS",
-                    created=str(st["sweep_date"]),
+                    created=str(st.get("sweep_date") or res["created_utc"][:10]),
                     description=f"{ctx.aircraft} aero build-up from the flow5 sweep {res.get('name')} (plane "
                                 f"{res.get('plane')}). Moments about the MRP (the T7 CoG). " + " ".join(bu.notes))
     errors = validate_dml(xml)
@@ -208,7 +211,8 @@ def ingest(doc: Dict[str, Any], ctx: Context):
               "model_description": {"generation_tool": "flow5 7.57 + AeroPlan aero build-up",
                                     "model_name": f"{ctx.aircraft} aero build-up",
                                     "description": f"flow5 sweep {st['sweep']} ({st['sweep_date']})"},
-              "mrp": {"xyz": t7["cog"]}, "placeholder": bool(stall["placeholder"]),
+              "mrp": {"xyz": t7["cog"]}, "analysis_mass_model": copy.deepcopy(air["muas"]["mass_properties"]),
+              "placeholder": bool(stall["placeholder"]),
               "notes": ["No uncertainty estimate exists in the source (sigma not given)."] + list(bu.notes)})
     changes.append(f"aero model: {len(bu.coefs)} coefficients, CL table of {len(bu.cl_table)} points")
 
@@ -220,6 +224,53 @@ def ingest(doc: Dict[str, Any], ctx: Context):
                    "flow5 export does not give the air density)")
     set_sources(air, NAME, air_sources)
     return changes
+
+
+def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: Optional[List[str]] = None,
+          dry_run: bool = False, keep: bool = False, timeout: float = 3600.0, flow5: Optional[str] = None) -> Dict[str, Any]:
+    """Run the flow5 sweep of the document: plane from the ADH geometry, mass model and reference from node 1.2.
+
+    Writes work/<aircraft>/sweeps/<name>/ (the layout `ingest` reads). Settings block `sweep_runner`: runs, ranges,
+    polar options, the `.fl5` project. The sweep that the settings name as `sweep` (the ground truth) is not overwritten.
+    """
+    from datetime import date
+
+    from .sweep import Flow5Error, find_flow5, run
+
+    st = ctx.settings()
+    sr = st.get("sweep_runner")
+    if not sr:
+        raise ValueError(f"flow5/settings/{ctx.aircraft}.yaml has no sweep_runner block")
+    name = name or f"{ctx.aircraft}_{date.today().isoformat()}"
+    if name == st.get("sweep"):
+        raise ValueError(f"{name!r} is the sweep that the settings use as ground truth: give another --name")
+    plane_xml = generate(doc, ctx)[0]
+    air = adh_doc.node(doc, "1.2")
+    ref = (air.get("muas") or {}).get("reference")
+    mp = (air.get("muas") or {}).get("mass_properties")
+    if not ref or not mp or "inertia" not in mp:
+        raise ValueError("node 1.2 needs muas.reference and muas.mass_properties with inertia (run the SpecSheet spoke)")
+    i = mp["inertia"]
+    inputs = {"S": ref["s_ref"]["value"], "b": ref["b_ref"]["value"], "cbar": ref["c_ref"]["value"],
+              "mass": mp["mass"]["value"], "cg": mp["cg"]["xyz"], "inertia": [i["ixx"], i["iyy"], i["izz"], i["ixz"]]}
+    project = ctx.work / sr["project"] if sr.get("project") else None
+    if project is not None and not project.is_file():
+        raise ValueError(f"project file not found: {project}")
+    hint = None
+    old = ctx.work / "sweeps" / str(st.get("sweep", "")) / "results.json"
+    if dry_run and old.is_file():
+        r = json.loads(old.read_text(encoding="utf-8"))
+        hint = (r["speed"], r["alpha_deg"])         # dry run only: the trim of the settings sweep
+    exe = None
+    if not dry_run:
+        exe = find_flow5(flow5 or st.get("flow5_exe"))
+    try:
+        return run(plane_xml=plane_xml, inputs=inputs, sr=sr, name=name, dest=ctx.work / "sweeps" / name,
+                   work_root=ctx.work / "runs" / name, project=project, only=only, exe=exe, timeout=timeout,
+                   dry_run=dry_run, keep=keep, trim_hint=hint,
+                   extra={"aircraft_version": getattr(ctx.acft, "version", None), "mass_model_source": mp.get("source")})
+    except Flow5Error as err:
+        raise RuntimeError(str(err)) from err
 
 
 def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:

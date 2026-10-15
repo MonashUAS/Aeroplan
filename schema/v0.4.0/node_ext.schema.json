@@ -398,6 +398,80 @@
       "title": "BatteryData",
       "type": "object"
     },
+    "BodyFit": {
+      "additionalProperties": false,
+      "description": "How the ADH `geometry.body` of the item was cut from the skin (aeroplan.skin_body), and how well it fits.",
+      "properties": {
+        "body_volume": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "cut": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The wing panel that the skin holds and the body leaves out: x_m [x0, x1] and y_max_m (m)",
+          "title": "Cut"
+        },
+        "frames": {
+          "minimum": 5,
+          "title": "Frames",
+          "type": "integer"
+        },
+        "largest_gap": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "method": {
+          "description": "The slicer and its version",
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        },
+        "min_height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The body ends where the skin section is this tall. The thin tail end of the skin (a sheet) is left out"
+        },
+        "points": {
+          "description": "Points of each right-half frame, top to bottom",
+          "minimum": 5,
+          "title": "Points",
+          "type": "integer"
+        },
+        "rms_gap": {
+          "$ref": "#/$defs/Quantity",
+          "description": "RMS gap from the skin vertices (the wing panel left out) to the body"
+        },
+        "skin_volume": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Includes the wing panel when the skin holds one"
+        }
+      },
+      "required": [
+        "method",
+        "frames",
+        "points",
+        "rms_gap",
+        "largest_gap",
+        "body_volume",
+        "skin_volume"
+      ],
+      "title": "BodyFit",
+      "type": "object"
+    },
     "BuildRecord": {
       "additionalProperties": false,
       "description": "Who built the file, with which AeroPlan commit, and which spokes gave data.",
@@ -566,6 +640,18 @@
       "additionalProperties": false,
       "description": "The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables).",
       "properties": {
+        "analysis_mass_model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MassProperties"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The mass model (mass, CG, inertia) that the source analysis flew. The aero model belongs to this mass model. The mass model of the air vehicle can differ from it after a later change"
+        },
         "fidelity": {
           "$ref": "#/$defs/Fidelity"
         },
@@ -2054,8 +2140,19 @@
     },
     "Skin": {
       "additionalProperties": false,
-      "description": "The outer skin of a part from CAD (for example a Creo shrinkwrap). It is a reference shape for the datum checks\nand the tool views, not the geometry of the part. The file stays on the user's machine.",
+      "description": "The outer skin of a part from CAD (for example a Creo shrinkwrap). It is a reference shape for the datum checks\nand the tool views, and the source of the ADH body when `body_fit` is present. The file stays on the user's machine.",
       "properties": {
+        "body_fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BodyFit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "format": {
           "description": "step_faceted: a STEP file of flat faces, with its own length unit. stl: an STL file in `units`",
           "enum": [

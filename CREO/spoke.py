@@ -4,8 +4,11 @@ Input (git ignores it): CREO/work/<aircraft>/cad/*.stl, exported from the Creo a
 Settings (committed): CREO/settings/<aircraft>.yaml
     units           units of the STL files
     parts           part name -> {file, instance (the ADH item), axes, origin_m}
-    skins           skin name -> {file, instance, axes, origin_m}: an outer skin (a faceted STEP file, for example
-                    the shrinkwrap of the fuselage). It is a reference shape for the datum checks and the OpenVSP view.
+    skins           skin name -> {file, instance, axes, origin_m, body}: an outer skin (a faceted STEP file, for example
+                    the shrinkwrap of the fuselage). It is a reference shape for the datum checks, the OpenVSP view and
+                    the OpenVSP panel analysis. With `body: {frames, points, cut}` the spoke also slices the skin into
+                    the ADH body of the item (aeroplan.skin_body): `frames` frames of `points` points each, and `cut`
+                    {x_m: [x0, x1], y_max_m} removes the wing centre panel that the shrinkwrap holds.
     tubes           instance -> {node, name, description, radius_m, from_instance, to_instance, source, placeholder}:
                     a round tube body (the tail boom) until the CAD has the part. It goes into the ADH as a
                     subcomponent of `node` with `geometry.body` (ADH Body) and `muas.tube` (inputs, source). It runs
@@ -26,7 +29,7 @@ import numpy as np
 
 from aeroplan import MUAS_SCHEMA_VERSION, adh_doc
 from aeroplan.geometry import body_adh, body_frames, planform_wing
-from aeroplan.spokes import Context
+from aeroplan.spokes import Context, set_sources
 from aeroplan.visual import MOVABLE, PIVOT, front_edge_axis, read_stl, to_design
 
 NAME = "CREO"
@@ -89,15 +92,58 @@ def write_tubes(doc: Dict[str, Any], tubes: Dict[str, Dict[str, Any]]) -> List[s
     return changes
 
 
+def _min_height(want: Dict[str, Any]):
+    return {"value": float(want["min_height_m"]), "units": "m"} if want.get("min_height_m") else None
+
+
+def _skin_body(item: Dict[str, Any], name: str, spec: Dict[str, Any], tri: np.ndarray, ref: Dict[str, Any]) -> List[str]:
+    """Slice the skin into the ADH body of the item and record the fit in `muas.skin.body_fit`. The changed file wins:
+    nothing happens when the skin is the recorded one and the recorded fit has the same method and settings."""
+    from aeroplan.skin_body import METHOD, fit_report, slice_frames
+
+    want = spec["body"]
+    cut = want.get("cut")
+    old_fit = (item["muas"].get("skin") or {}).get("body_fit") or {}
+    recorded = any(r["tool"] == NAME and r["asset"] == ref["asset"] for r in item["muas"].get("sources") or [])
+    if (recorded and (item.get("geometry") or {}).get("body") is not None and item["muas"].get("geometry_tool") == NAME
+            and (old_fit.get("method"), old_fit.get("frames"), old_fit.get("points"), old_fit.get("cut"),
+             old_fit.get("min_height")) == (METHOD, int(want["frames"]), int(want["points"]), cut,
+                                            _min_height(want))):
+        return []
+    frames = slice_frames(tri, int(want["frames"]), int(want["points"]), cut, float(want.get("min_height_m", 0.0)))
+    rep = fit_report(frames, tri, cut)
+    item.setdefault("geometry", {})["body"] = body_adh(frames)
+    item["muas"]["geometry_tool"] = NAME
+    set_sources(item, NAME, [ref])
+    q = lambda v, u: {"value": round(float(v), 9), "units": u}   # noqa: E731
+    item["muas"]["skin"]["body_fit"] = {
+        "method": METHOD, "frames": int(want["frames"]), "points": int(want["points"]), "cut": cut,
+        "min_height": _min_height(want),
+        "rms_gap": q(rep["rms_gap_m"], "m"), "largest_gap": q(rep["largest_gap_m"], "m"),
+        "body_volume": q(rep["body_volume_m3"], "m^3"), "skin_volume": q(rep["skin_volume_m3"], "m^3")}
+    return [f"{spec['instance']}: body of {len(frames)} frames x {want['points']} points from the skin {name}: gap to "
+            f"the skin RMS {rep['rms_gap_m'] * 1e3:.2f} mm, largest {rep['largest_gap_m'] * 1e3:.1f} mm "
+            f"(wing panel excluded), volume {rep['body_volume_m3']:.5f} m3 (skin {rep['skin_volume_m3']:.5f} m3 with "
+            "the wing panel)"]
+
+
 def ingest(doc: Dict[str, Any], ctx: Context):
     st = ctx.settings()
     if not st:
         return None
-    tube_changes = write_tubes(doc, st.get("tubes") or {})
     cad = ctx.work / "cad"
+    changes: List[str] = []
+    if cad.is_dir():
+        changes += _ingest_cad(doc, ctx, st, cad)
+    # the tubes follow the body, so they come after the skins
+    tube_changes = write_tubes(doc, st.get("tubes") or {})
     if not cad.is_dir():
         return tube_changes if st.get("tubes") else None
-    changes = tube_changes
+    return changes + tube_changes
+
+
+def _ingest_cad(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any], cad) -> List[str]:
+    changes: List[str] = []
     by_item: Dict[str, list] = {}
     for part, spec in st["parts"].items():
         path = cad / spec["file"]
@@ -124,15 +170,22 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         if fmt == "step_faceted":
             from aeroplan.step_mesh import read_step_faceted
 
-            tri, unit = read_step_faceted(path)
-            note = f"{len(tri)} triangles, file unit {unit}"
+            raw, unit = read_step_faceted(path)
+            note = f"{len(raw)} triangles, file unit {unit}"
+            units = "m"
         else:
+            raw = read_stl(path.read_bytes(), path.name)
             note = f"units {st['units']}"
+            units = st["units"]
         item = adh_doc.find(doc, spec["instance"])
+        transform = {"axes": spec["axes"], "origin_m": spec.get("origin_m", [0.0, 0.0, 0.0])}
+        ref = ctx.source_ref(path, f"outer skin {name} ({'faceted STEP' if fmt == 'step_faceted' else 'STL'})")
+        fit = (item["muas"].get("skin") or {}).get("body_fit") if spec.get("body") else None
         item["muas"]["skin"] = {
-            "mesh": ctx.source_ref(path, f"outer skin {name} ({'faceted STEP' if fmt == 'step_faceted' else 'STL'})"),
-            "format": fmt, "units": "m" if fmt == "step_faceted" else st["units"],
-            "transform": {"axes": spec["axes"], "origin_m": spec.get("origin_m", [0.0, 0.0, 0.0])},
-            "source": f"Creo export {spec['file']} with the CREO settings transform ({note})"}
+            "mesh": ref, "format": fmt, "units": units, "transform": transform,
+            "source": f"Creo export {spec['file']} with the CREO settings transform ({note})",
+            **({"body_fit": fit} if fit else {})}
         changes.append(f"{spec['instance']}: outer skin {spec['file']} ({note})")
+        if spec.get("body"):
+            changes += _skin_body(item, name, spec, to_design(raw, units, transform), ref)
     return changes

@@ -64,3 +64,28 @@ The build refuses a model that the ADH form cannot hold. Examples: a new compone
 
 The CAD skin (`muas.skin` of the fuselage, from the CREO spoke) goes into the model as the mesh
 `fuselage_skin (reference)`. The build ignores it. `generate` gives the gap from the OpenVSP fuselage to the skin.
+
+## Preliminary analysis (`aeroplan sweep OpenVSP <aircraft>`)
+
+Runs OpenVSP analyses on the model that `generate` writes from the ADH document. The settings block `analysis` names the
+user sets, the CompGeom and parasite drag sets, and the VSPAERO runs. The flight condition (speed, trim alpha), the
+alpha and beta ranges come from the flow5 sweep of the flow5 settings. The moment reference point is the MRP of node 1.2.
+The atmosphere is ISA 1976 at `altitude_m`, because the flow5 results record no air properties.
+
+| Result | Meaning |
+|---|---|
+| `geometry.<set>.compgeom` | Wetted area and volume of each component. The `skin` set is the raw CAD mesh |
+| `geometry.<set>.parasite_drag` | OpenVSP parasite drag build-up: Swet, Re, Cf, form factor, CD0 of each component |
+| `runs.<run>` | The rows of the VSPAERO alpha sweep (beta 0) and beta sweep (alpha = trim) |
+| `summaries.<run>` | CLa, Cma, CL0, Cm0, NP_x (alpha window +-4 deg around the trim), Cnb, Cyb, Clb. Per rad |
+
+VSPAERO runs (thin = VLM, thick = panel): `wings` (thin wings only), `body` (wings + the ADH body), `skin` (wings + the raw
+CAD skin), `body_alone`, `skin_alone`. The wake is fixed. A relaxed wake gave a pitching moment that was not linear in
+alpha for the wings alone.
+
+- VSPAERO needs every edge of a thick mesh to have 1 or 2 triangles. The Creo shrinkwrap holds 9 edges with 4 triangles
+  (flaps of zero-area triangles). `generate` removes them (`skin_body.drop_slivers`: 100 triangles, volume unchanged).
+- The thick body is not reliable for the induced drag: a closed body alone shows a large CDi, from the wake that VSPAERO
+  sheds at its sharp edges. Use CL and Cm of the runs, not CDi.
+- The skin holds the CAD wing panel. The ADH wing must sit on it (same x), or the thin wing and the panel overlap.
+

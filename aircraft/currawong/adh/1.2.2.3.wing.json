@@ -30,13 +30,13 @@
       "position": {
         "frame": "design",
         "xyz": [
-          -0.08,
+          0.0,
           0.0,
           0.0
         ],
         "units": "m"
       },
-      "rx_deg": 0.0,
+      "rx_deg": -0.0,
       "ry_deg": 0.0,
       "symmetric": true,
       "two_sided": true,
@@ -86,7 +86,7 @@
         "value": 1.4,
         "units": "kg"
       },
-      "source": "flow5 plane Currawongv5_n0012-3, sweep currawongv5_testfuse",
+      "source": "OpenVSP model currawong.vsp3",
       "placeholder": false
     },
     "point_masses": [
@@ -323,7 +323,7 @@
             "y"
           ],
           "origin_m": [
-            0.0744,
+            0.0,
             0.0,
             0.0
           ]
@@ -335,7 +335,7 @@
     "sources": [
       {
         "tool": "flow5",
-        "asset": "asset:sha256:5aee7b84488f56966525c06fe84e29567a6c80ae0ca81ed74ff9f03ec25dee63",
+        "asset": "asset:sha256:4d9cd92b156c3ad0dad8c87c778d884bc678a365a31ce472bd4205545db33a2e",
         "role": "plane definition of the sweep (wings, body, point masses)"
       },
       {
@@ -357,36 +357,41 @@
         "tool": "flow5",
         "asset": "asset:sha256:00280e628435eeb24f4e213c57bc9cc9c98315e042d4f96ecacd756723941889",
         "role": "foil NACA 3410"
+      },
+      {
+        "tool": "OpenVSP",
+        "asset": "asset:sha256:1f0b4d4ebd6b8cfa66c0e80b28c17c1eb02d87df48a507ac6345db50040e48e0",
+        "role": "OpenVSP model (the member's changed copy)"
       }
     ],
-    "geometry_tool": "flow5"
+    "geometry_tool": "OpenVSP"
   },
   "geometry": {
     "lifting_surface": {
       "leading_edge_spline": {
         "points": [
           {
-            "x": -0.07976249490033287,
+            "x": 0.00023750509966713462,
             "y": 0.0,
             "z": 0.006801256190052217
           },
           {
-            "x": -0.07997224332302014,
+            "x": 2.7756676979864836e-05,
             "y": 0.85,
             "z": 0.0318029868809233
           },
           {
-            "x": -0.07998368958385067,
+            "x": 1.631041614932882e-05,
             "y": 0.963,
             "z": 0.03522884767188562
           },
           {
-            "x": -0.07999970016163312,
+            "x": 2.998383668850746e-07,
             "y": 1.417,
             "z": 0.04927821298111526
           },
           {
-            "x": -0.07999281982314045,
+            "x": 7.180176859550302e-06,
             "y": 1.65,
             "z": 0.05665130193194622
           }
@@ -396,27 +401,27 @@
       "trailing_edge_spline": {
         "points": [
           {
-            "x": 0.3092874847009986,
+            "x": 0.3892874847009986,
             "y": 0.0,
             "z": -0.02040376857015665
           },
           {
-            "x": 0.2439167299690604,
+            "x": 0.3239167299690604,
             "y": 0.85,
             "z": 0.023321655629172395
           },
           {
-            "x": 0.23395106875155197,
+            "x": 0.313951068751552,
             "y": 0.963,
             "z": 0.0288282610665554
           },
           {
-            "x": 0.19899910048489938,
+            "x": 0.2789991004848994,
             "y": 1.417,
             "z": 0.05009628253588036
           },
           {
-            "x": 0.18097845946942132,
+            "x": 0.26097845946942133,
             "y": 1.65,
             "z": 0.06052317284969635
           }

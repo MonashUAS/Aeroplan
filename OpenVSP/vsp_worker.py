@@ -14,6 +14,13 @@ the result. Jobs:
     {"job": "eta_to_u", "path": P, "geom", "eta": [...]}         -> {"u": [...]} (u in 0..1)
     {"job": "edit", "path": P, "out": P2, "set": [{"geom", "parm", "group", "value", "subsurf"?}]} -> {"path": P2}
     {"job": "get", "path": P, "get": [{"geom", "parm", "group"}]}                       -> {"values": [...]}
+    {"job": "compgeom", "path": P, "sets": SETS, "set": NAME}    -> wetted area and volume of each component
+    {"job": "parasite_drag", "path": P, "sets": SETS, "set": NAME, "cond": COND}          -> CD0 build-up
+    {"job": "vspaero", "path": P, "dir": D, "name": N, "sets": SETS, "thin": NAME, "thick": NAME|null, "case": CASE}
+                                                                 -> the polar rows of one VSPAERO sweep
+SETS = {name: [geometry names]}: user sets, made in the model before the analysis. COND = {sref, vinf, altitude_m}.
+CASE = {sref, bref, cref, xcg, ycg, zcg, mach, vinf, rho, alpha: [start, end, n], beta: [start, end, n], wake_iter,
+        fixed_wake, ncpu}. Metres, degrees, SI.
 
 SPEC (design frame: x aft, y right, z up, metres, degrees):
     {"wings": [{"instance", "position": [x, y, z], "rx_deg", "ry_deg", "mirror": bool,
@@ -400,6 +407,149 @@ def job_get(path: str, items: list) -> dict:
     return {"values": [_get(geoms[c["geom"]], c["parm"], c["group"]) for c in items]}
 
 
+# ----------------------------------------------------------------------------------------------------- analyses
+def _user_sets(geoms: dict, sets: dict) -> dict:
+    """Make the user sets {name: [geometry names]}. Returns {name: set index}."""
+    n = len(sets)
+    index = {}
+    for g in geoms.values():
+        for i in range(vsp.SET_FIRST_USER, vsp.SET_FIRST_USER + n):
+            vsp.SetSetFlag(g, i, False)
+    for k, (name, members) in enumerate(sets.items()):
+        index[name] = vsp.SET_FIRST_USER + k
+        for m in members:
+            if m not in geoms:
+                raise ValueError(f"the model has no component {m!r} (set {name})")
+            vsp.SetSetFlag(geoms[m], index[name], True)
+    vsp.Update()
+    return index
+
+
+def _results(rid: str) -> dict:
+    out = {}
+    for n in vsp.GetAllDataNames(rid):
+        ty = vsp.GetResultsType(rid, n)
+        out[n] = list(vsp.GetStringResults(rid, n, 0) if ty == 3 else vsp.GetIntResults(rid, n, 0) if ty == 1
+                      else vsp.GetDoubleResults(rid, n, 0) if ty == 2 else [])
+    return out
+
+
+def job_compgeom(path: str, sets: dict, set_name: str) -> dict:
+    """Wetted area and volume of each component of a set. A mesh component (the CAD skin) is one entry."""
+    geoms = _open(path)
+    idx = _user_sets(geoms, sets)[set_name]
+    a = "CompGeom"
+    vsp.SetAnalysisInputDefaults(a)
+    vsp.SetIntAnalysisInput(a, "Set", [idx])
+    vsp.SetIntAnalysisInput(a, "WriteCSVFlag", [0])
+    vsp.SetIntAnalysisInput(a, "WriteTXTFlag", [0])
+    r = _results(vsp.ExecAnalysis(a))
+    _check_errors("compgeom")
+    comps = [{"name": n, "wet_area_m2": r["Wet_Area"][i], "theo_area_m2": r["Theo_Area"][i],
+              "wet_volume_m3": r["Wet_Vol"][i], "theo_volume_m3": r["Theo_Vol"][i]}
+             for i, n in enumerate(r["Comp_Name"][: len(r["Wet_Area"])])]
+    return {"components": comps, "total_wet_area_m2": r["Total_Wet_Area"][0], "total_theo_area_m2": r["Total_Theo_Area"][0],
+            "total_theo_volume_m3": r["Total_Theo_Vol"][0], "num_tris": r["Total_Num_Tris"][0]}
+
+
+def job_parasite_drag(path: str, sets: dict, set_name: str, cond: dict) -> dict:
+    """The OpenVSP parasite drag build-up (form factors, Reynolds numbers, flat plate Cf) at ISA altitude."""
+    geoms = _open(path)
+    idx = _user_sets(geoms, sets)[set_name]
+    a = "ParasiteDrag"
+    vsp.SetAnalysisInputDefaults(a)
+    vsp.SetIntAnalysisInput(a, "GeomSet", [idx])
+    for k, v in (("LengthUnit", vsp.LEN_M), ("VelocityUnit", 1), ("AltLengthUnit", 1), ("RefFlag", 0), ("RecomputeGeom", 1),
+                 ("FreestreamPropChoice", vsp.ATMOS_TYPE_US_STANDARD_1976)):
+        vsp.SetIntAnalysisInput(a, k, [v])
+    for k, v in (("Sref", cond["sref"]), ("Vinf", cond["vinf"]), ("Altitude", cond["altitude_m"]), ("DeltaTemp", 0.0)):
+        vsp.SetDoubleAnalysisInput(a, k, [float(v)])
+    r = _results(vsp.ExecAnalysis(a))
+    _check_errors("parasite drag")
+    n = int(r["Num_Comp"][0])
+    comps = []
+    for i in range(n):
+        row = {"name": r["Comp_Label"][i]}
+        for key, val in r.items():
+            if key.startswith("Comp_") and key not in ("Comp_Label", "Comp_SurfNum") and len(val) == n:
+                row[key[len("Comp_"):]] = val[i]
+        comps.append(row)
+    return {"components": comps, "cd0": r["Total_CD_Total"][0], "f_total_m2": r["Total_f_Total"][0],
+            "condition": {k: r[k][0] for k in ("FC_Alt", "FC_Mach", "FC_Rho", "FC_Sref", "FC_Vinf") if k in r}}
+
+
+def _read_polar(path: str) -> list:
+    lines = [ln for ln in open(path, encoding="utf-8", errors="replace").read().splitlines() if ln.strip()]
+    hdr = next(i for i, ln in enumerate(lines) if ln.split()[:2] == ["Beta", "Mach"])
+    cols = lines[hdr].split()
+    rows = []
+    for ln in lines[hdr + 1:]:
+        vals = ln.split()
+        if len(vals) != len(cols):
+            continue
+        row = {}
+        for c, v in zip(cols, vals):
+            try:
+                row[c] = float(v)
+            except ValueError:
+                row[c] = float("nan")
+        rows.append(row)
+    return rows
+
+
+def job_vspaero(path: str, dir: str, name: str, sets: dict, thin, thick, case: dict) -> dict:
+    """One VSPAERO sweep: thin surfaces (VLM) and thick surfaces (panel). Writes <dir>/<name>.* and the log."""
+    import re
+    import time
+
+    geoms = _open(path)
+    idx = _user_sets(geoms, sets)
+    os.makedirs(dir, exist_ok=True)
+    model = os.path.join(dir, name + ".vsp3")
+    vsp.SetVSP3FileName(model)
+    vsp.WriteVSPFile(model, vsp.SET_ALL)
+    thin_i = idx[thin] if thin else -1
+    thick_i = idx[thick] if thick else -1
+    c = "VSPAEROComputeGeometry"
+    vsp.SetAnalysisInputDefaults(c)
+    vsp.SetIntAnalysisInput(c, "GeomSet", [thick_i])
+    vsp.SetIntAnalysisInput(c, "ThinGeomSet", [thin_i])
+    vsp.ExecAnalysis(c)
+    _check_errors("vspaero geometry")
+    a = "VSPAEROSweep"
+    vsp.SetAnalysisInputDefaults(a)
+    vsp.SetIntAnalysisInput(a, "GeomSet", [thick_i])
+    vsp.SetIntAnalysisInput(a, "ThinGeomSet", [thin_i])
+    for k, v in (("Sref", case["sref"]), ("bref", case["bref"]), ("cref", case["cref"]), ("Xcg", case["xcg"]),
+                 ("Ycg", case["ycg"]), ("Zcg", case["zcg"]), ("Machref", case["mach"]), ("MachStart", case["mach"]),
+                 ("MachEnd", case["mach"]), ("Vinf", case["vinf"]), ("Vref", case["vinf"]), ("Rho", case["rho"]),
+                 ("AlphaStart", case["alpha"][0]), ("AlphaEnd", case["alpha"][1]),
+                 ("BetaStart", case["beta"][0]), ("BetaEnd", case["beta"][1])):
+        vsp.SetDoubleAnalysisInput(a, k, [float(v)])
+    for k, v in (("AlphaNpts", case["alpha"][2]), ("BetaNpts", case["beta"][2]), ("MachNpts", 1), ("RefFlag", 0),
+                 ("MACFlag", 0), ("NCPU", case.get("ncpu") or os.cpu_count() or 4), ("WakeNumIter", case["wake_iter"]),
+                 ("FixedWakeFlag", 1 if case.get("fixed_wake", True) else 0)):
+        vsp.SetIntAnalysisInput(a, k, [int(v)])
+    log = os.path.join(dir, name + ".log")
+    vsp.SetStringAnalysisInput(a, "RedirectFile", [log])
+    t0 = time.time()
+    vsp.ExecAnalysis(a)
+    seconds = time.time() - t0
+    text = open(log, encoding="utf-8", errors="replace").read()
+    if "Mesh is not logically valid" in text:
+        raise RuntimeError(f"VSPAERO {name}: the mesh is not logically valid (an edge with more than 2 triangles). "
+                           f"See {log}")
+    polar = model[: -len(".vsp3")] + ".polar"
+    if not os.path.isfile(polar):
+        raise RuntimeError(f"VSPAERO {name}: no polar file. See {log}")
+    tris = {}
+    for k in ("thin", "thick"):
+        m = re.search(rf"Number of {k} +tris: +(\d+)", text)
+        if m:
+            tris[k] = int(m.group(1))
+    return {"rows": _read_polar(polar), "seconds": seconds, "log": log, "polar": polar, "triangles": tris}
+
+
 def main(argv: list) -> int:
     job_file, result_file = argv[1], argv[2]
     job = json.loads(open(job_file, encoding="utf-8").read())
@@ -423,6 +573,13 @@ def main(argv: list) -> int:
             res = job_edit(job["path"], job["out"], job["set"])
         elif kind == "get":
             res = job_get(job["path"], job["get"])
+        elif kind == "compgeom":
+            res = job_compgeom(job["path"], job["sets"], job["set"])
+        elif kind == "parasite_drag":
+            res = job_parasite_drag(job["path"], job["sets"], job["set"], job["cond"])
+        elif kind == "vspaero":
+            res = job_vspaero(job["path"], job["dir"], job["name"], job["sets"], job.get("thin"), job.get("thick"),
+                              job["case"])
         else:
             raise ValueError(f"unknown job {kind!r}")
         out = {"ok": True, **res}

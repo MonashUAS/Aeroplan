@@ -358,3 +358,67 @@ def test_ingest_refuses_a_shape_the_adh_form_cannot_hold(written, tmp_path):
         {"geom": "wing_main", "parm": "Twist_Location", "group": "XSec_1", "value": 0.5}]})
     with pytest.raises(runner.OpenVSPError, match="Twist_Location"):
         vsp.ingest(copy.deepcopy(doc), ctx)
+
+
+# ------------------------------------------------------------------------------------------------------- analysis
+def _rows(col_values, key, alphas=None, betas=None):
+    n = len(col_values)
+    return {"rows": [{"AoA": (alphas or [0.0] * n)[i], "Beta": (betas or [0.0] * n)[i], key: col_values[i]} for i in range(n)]}
+
+
+def test_summary_recovers_known_slopes_and_the_neutral_point():
+    k = math.pi / 180.0
+    a = [-4.0, -2.0, 0.0, 2.0, 4.0, 6.0, 8.0]
+    cla, cma, cl0, cm0 = 5.0, -0.6, 0.1, 0.02          # per rad
+    alpha = {"rows": [{"AoA": x, "Beta": 0.0, "CLtot": cl0 + cla * x * k, "CMytot": cm0 + cma * x * k, "CDtot": 0.02}
+                      for x in a]}
+    b = [-6.0, -3.0, 0.0, 3.0, 6.0]
+    beta = {"rows": [{"AoA": 3.0, "Beta": x, "CStot": -0.3 * x * k, "CMxtot": 0.1 * x * k, "CMztot": -0.07 * x * k}
+                     for x in b]}
+    s = vsp.summarize(alpha, beta, alpha_trim=2.0, x_ref=0.1, c_ref=0.3)
+    assert s["CLa"] == pytest.approx(cla) and s["Cma"] == pytest.approx(cma)
+    assert s["CL0"] == pytest.approx(cl0) and s["Cm0"] == pytest.approx(cm0)
+    assert s["NP_x"] == pytest.approx(0.1 - 0.3 * cma / cla)
+    assert (s["Cyb"], s["Clb"], s["Cnb"]) == pytest.approx((-0.3, -0.1, 0.07))
+    assert s["alpha_window_deg"] == [-2.0, 6.0]
+
+
+def test_summary_drops_a_slope_with_fewer_than_three_points():
+    alpha = {"rows": [{"AoA": 0.0, "Beta": 0.0, "CLtot": 0.1, "CMytot": 0.0, "CDtot": 0.0},
+                      {"AoA": 2.0, "Beta": 0.0, "CLtot": float("nan"), "CMytot": 0.0, "CDtot": 0.0},
+                      {"AoA": 4.0, "Beta": 0.0, "CLtot": 0.3, "CMytot": 0.0, "CDtot": 0.0}]}
+    beta = {"rows": [{"AoA": 0.0, "Beta": 0.0, "CStot": 0.0, "CMxtot": 0.0, "CMztot": 0.0}]}
+    assert "CLa" not in vsp.summarize(alpha, beta, alpha_trim=2.0, x_ref=0.0, c_ref=0.3)
+
+
+def test_range_gives_the_number_of_points():
+    assert vsp._range([-4, 12, 2]) == [-4.0, 12.0, 9]
+    assert vsp._range([-8, 8, 4]) == [-8.0, 8.0, 5]
+
+
+@needs_openvsp
+def test_compgeom_gives_area_and_volume(written):
+    _, spec, path = written
+    sets = {"wings": ["wing_main", "htail", "fin"], "body": ["fuselage"]}
+    r = runner.run({"job": "compgeom", "path": str(path), "sets": sets, "set": "body"})
+    assert r["total_theo_volume_m3"] > 0 and r["total_wet_area_m2"] > 0
+    from aeroplan.geometry import body_mesh
+    from aeroplan.skin_body import mesh_volume
+
+    vol = mesh_volume(body_mesh({"cross_sections": [
+        {"upper_curve": {"points": [dict(zip("xyz", p)) for p in f[: int(np.argmax(f[:, 1])) + 1]]},
+         "lower_curve": {"points": [dict(zip("xyz", p)) for p in f[int(np.argmax(f[:, 1])):]]}} for f in
+        [np.asarray(f) for f in spec["body"]["frames"]]]}))
+    assert r["total_theo_volume_m3"] == pytest.approx(vol, rel=0.08)
+
+
+@needs_openvsp
+def test_vspaero_vlm_lift_rises_with_alpha(written, tmp_path):
+    _, _, path = written
+    sets = {"wings": ["wing_main", "htail", "fin"]}
+    case = {"sref": 1.0, "bref": 2.8, "cref": 0.3, "xcg": 0.2, "ycg": 0.0, "zcg": 0.0, "mach": 0.04, "vinf": 14.0,
+            "rho": 1.225, "alpha": [0.0, 4.0, 3], "beta": [0.0, 0.0, 1], "wake_iter": 3, "fixed_wake": True, "ncpu": 2}
+    r = runner.run({"job": "vspaero", "path": str(path), "dir": str(tmp_path), "name": "t", "sets": sets, "thin": "wings",
+                    "thick": None, "case": case}, timeout=600)
+    cl = [row["CLtot"] for row in r["rows"]]
+    assert len(cl) == 3 and all(np.isfinite(cl)) and cl[0] < cl[1] < cl[2]
