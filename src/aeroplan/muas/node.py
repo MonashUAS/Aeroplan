@@ -9,7 +9,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
-from .aircraft import AeroSettings, BuildRecord, Planform, PointMass, PropulsionSystemData, Skin, SourceRef, VisualPart
+from .aircraft import (AeroSettings, BuildRecord, Planform, PointMass, PropulsionSystemData, Skin, SourceRef, Tube,
+                       VisualPart)
 from .assets import Asset
 from .base import MuasModel
 from .control_surface import ControlSurface
@@ -44,6 +45,8 @@ class MuasNodeExt(MuasModel):
     point_masses: Optional[List[PointMass]] = None
     visual: Optional[List[VisualPart]] = None
     skin: Optional[Skin] = None
+    tube: Optional[Tube] = Field(None, description="The inputs, source and placeholder flag of a tube body "
+                                 "(geometry.body of the same item)")
     propulsion_system: Optional[PropulsionSystemData] = None
     sources: Optional[List[SourceRef]] = None
     geometry_tool: Optional[str] = Field(None, description="The spoke that wrote the geometry of this item last "

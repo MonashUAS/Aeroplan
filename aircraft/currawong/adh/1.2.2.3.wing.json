@@ -4,6 +4,26 @@
   "muas": {
     "ext_version": "0.4.0",
     "instance": "wing_main",
+    "mass_properties": {
+      "mass": {
+        "value": 2.9,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.13939610714888415,
+          -9.570888143320316e-17,
+          0.0241639510816591
+        ],
+        "units": "m"
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Mass: the weighed subassembly total of the sheet (Wings). CG: the x of the position sheet, y = 0 and z = 0 are stand-ins."
+      ]
+    },
     "planform": {
       "surface_name": "Main Wing",
       "kind": "MAINWING",
@@ -69,6 +89,224 @@
       "source": "flow5 plane Currawongv5_n0012-3, sweep currawongv5_testfuse",
       "placeholder": false
     },
+    "point_masses": [
+      {
+        "tag": "WINGS-S1",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.16414070766519667,
+            0.13750332045837782,
+            -0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S2",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.15353184067567652,
+            0.4125099613751334,
+            0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S3",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.14292297368615636,
+            0.6875166022918892,
+            0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S4",
+        "mass": {
+          "value": 0.23325503192502126,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.131687516785586,
+            0.9625202123533719,
+            0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S5",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.12109452348637068,
+            1.2375141680322757,
+            0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S6",
+        "mass": {
+          "value": 0.20174372921196532,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.11049045210694171,
+            1.5125060290475028,
+            0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S7",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.16414070766519667,
+            -0.13750332045837782,
+            -0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S8",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.15353184067567652,
+            -0.4125099613751334,
+            0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S9",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.14292297368615636,
+            -0.6875166022918892,
+            0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S10",
+        "mass": {
+          "value": 0.23325503192502126,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.131687516785586,
+            -0.9625202123533719,
+            0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S11",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.12109452348637068,
+            -1.2375141680322757,
+            0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S12",
+        "mass": {
+          "value": 0.20174372921196532,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.11049045210694171,
+            -1.5125060290475028,
+            0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      }
+    ],
     "visual": [
       {
         "part": "wing",

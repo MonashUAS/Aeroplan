@@ -9,9 +9,9 @@ Each tool has a **spoke**: a folder that moves data between the tool and the sou
 tool, then runs `aeroplan build`. AeroPlan reads the tool output, checks it and writes the source tree.
 
 ```
-      AeroSandbox/  flow5/  Propalyser/  CREO/  OpenVSP/  DAVEML/  ArduPilot/
-            |          |         |         |        |        |         |
-            +----------+---------+----+----+--------+--------+---------+
+      AeroSandbox/  flow5/  SpecSheet/  Propalyser/  CREO/  OpenVSP/  DAVEML/  ArduPilot/
+            |          |         |           |         |        |        |         |
+            +----------+---------+-----+-----+---------+--------+--------+---------+
                                       |  aeroplan build
                                       v
                        aircraft/currawong/   (ADH source tree, committed)
@@ -70,6 +70,7 @@ surfaces). They then look simpler, but they move the same.
 | `aircraft/<aircraft>/` | The source tree of each aircraft (the SSOT): `aircraft.yaml`, `adh/`, `datasets/` |
 | `AeroSandbox/` | Spoke: initial sizing (the first source of a new aircraft), and the AeroSandbox model with the propulsion chain (`aeroplan setup AeroSandbox` first) |
 | `flow5/` | Spoke: geometry, mass model, reference dimensions and aero model from a flow5 sweep |
+| `SpecSheet/` | Spoke: the Master Specification Sheet (weight log and CG sheet) to the mass model of the ADH. Runs after flow5, so it owns the mass |
 | `Propalyser/` | Spoke: the propulsion system (contract B file of Propalyser) |
 | `CREO/` | Spoke: the CAD link (part meshes, their pose and hinge lines, the fuselage skin) |
 | `OpenVSP/` | Spoke: the ADH geometry to an OpenVSP model and back (`aeroplan setup OpenVSP` first) |
@@ -167,9 +168,23 @@ aircraft/<aircraft>/
 - The flow5 sweep runner is not in AeroPlan yet. A member runs the sweep in flow5 by hand.
 - OpenVSP spoke: no VSPAERO runs yet. The fuselage is not fitted to the CAD skin (the body frames are up to 43 mm
   wider than the skin at the wing root, x = -0.08 to 0.35 m).
-- Mass: the mass model is the custom inertia of the flow5 T7 analysis (placeholder). The CREO spoke reads no mass
-  report yet.
-- The MRP is the nominal CG (the T7 CoG). Aerolink needs MRP = CG within 1 mm.
+- Mass: the `SpecSheet` spoke writes the mass model from the Master Specification Sheet (weighed subassembly totals, x
+  positions of the CG sheet). y and z are zero, because the sheet has none (stand-ins). The CREO spoke reads no mass
+  report yet. The sheet is an xlsx in the repository. A link to the Google Sheet (download of
+  `export?format=xlsx` into `SpecSheet/work/<aircraft>/`, the URL in the asset entry) is not done.
+- The MRP is the CoG of the flow5 T7 analysis. The mass CG moved 22 mm forward of it. Run `aeroplan generate flow5
+  currawong`, run a new flow5 sweep of that plane, copy the sweep and build again. Until then the datum check warns,
+  `aerolink` is not a consumer of Currawong (put it back in `aircraft.yaml` with `--consumers aerolink review archive`),
+  and Aerolink needs MRP = CG within 1 mm.
+- flow5 and AeroSandbox disagree on the lift slope and the neutral point. The gap study
+  (`AeroSandbox/notebooks/03_gap_study.ipynb`, report `AeroSandbox/docs/methods_report.md`) finds: the VLM and the
+  textbook build-up put the neutral point at x 0.11 to 0.13 m, near the sheet CG (x 0.110 m). flow5 puts it at
+  x 0.223 m. AeroBuildup agrees with flow5 only because NeuralFoil gives the NACA 0012 tail a 2D slope of about 8 per
+  rad at Re 2e5. Open: ask for a flow5 T7 run of the wing alone, the tail alone and wing plus tail, and copy the sweep
+  folder to `flow5/work/currawong/sweeps/`. Do not fly at the T7 CoG on the strength of the flow5 margin until then.
+- The tail boom is a CREO spoke tube (`tail_boom` under 1.2.2.4, radius 0.0175 m, placeholder). Replace it with a Creo
+  export of the boom. The flow5 plane XML and the OpenVSP model do not have it yet: put it in the flow5 plane for the
+  new sweep (confirm that flow5 takes a second body).
 - The flow5 export does not give the air density, so the initial altitude 0 m is a placeholder.
 - AeroSandbox model: the quadplane retrofit (VTOL rotors on the wings) is the next stage. The worker already takes a
   list of propulsors in the airplane. The mission and the lift rotors are not in it yet.

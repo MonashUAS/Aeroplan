@@ -1,0 +1,60 @@
+# SpecSheet spoke settings for the Currawong (tool settings, not aircraft data).
+# workbook: the Master Specification Sheet, a path from the repository root.
+# weights_sheet: the weight log. A sheet group (column A) is one subassembly. Its row with the text "Subassembly weight
+#   override" in column F is the weighed mass of the whole subassembly (the sheet rule).
+# positions_sheet: the CG calculation sheet. Column F is the distance of the CG from the wing root leading edge in mm,
+#   positive forward, so x_design = -F / 1000 (design frame x aft). The nose sheet "1 forward tank" is the layout of
+#   the ADH fuselage (nose at x = -0.586 m).
+# configuration: the nominal mass model. Payload and water tanks are not in it (the weight log has none).
+# subassemblies: sheet group -> ADH node.
+#   node, instance:  the WBS number and the muas.instance of the item that gets the subassembly mass.
+#   subcomponent:    {instance, name}: the part has no WBS number of its own, so it is a subcomponent of `node`.
+#   cg_group:        the group of the position sheet (column A) that gives the x positions.
+#   exclude_rows:    position rows that are not in the nominal configuration (tanks).
+#   components:      weight log row -> position row of cg_group. A mapped row gets its own point mass.
+#   distribute:      muas.instance of a lifting surface. The rest of the subassembly is spread over its planform.
+#   position_from:   a group without position rows takes the x of another group (a stand-in).
+strips_per_side: 6
+workbook: Currawong Master Specification Sheet.xlsx
+weights_sheet: 1st Airframe
+positions_sheet: CG Calcs 1 forward tank
+configuration: measured_no_payload
+subassemblies:
+  Fuselage:
+    node: "1.2.2.2"
+    instance: fuselage
+    cg_group: fuse
+    exclude_rows: [tanks]
+  Wings:
+    node: "1.2.2.3"
+    instance: wing_main
+    cg_group: wing
+    distribute: wing_main
+  Landing Gear:
+    node: "1.2.2"
+    subcomponent: {instance: landing_gear, name: Landing gear}
+    cg_group: lg
+    components:
+      MLG Composite Part: main
+      MLG Mounting Hardware: main
+      FLG Tube: front
+  Tail:
+    node: "1.2.2.4"
+    instance: empennage
+    cg_group: tail
+    components:
+      Tail Boom: boom
+    distribute: htail
+  Avionics:
+    node: "1.2.5"
+    instance: avionics
+    position_from: Fuselage
+  Propulsion:
+    node: "1.2.3"
+    instance: propulsion
+    cg_group: prop
+    components:
+      Cruise Motor + ally mount: motor
+      Cruise ESC: esc
+      Battery: bat
+      Propellor: prop

@@ -3,6 +3,7 @@ of an aircraft (`aircraft/<aircraft>/`).
 
     AeroSandbox/   initial sizing (the first source of a new aircraft)
     flow5/         geometry and aero analysis
+    SpecSheet/     the Master Specification Sheet: weight log and CG sheet -> the mass model
     Propalyser/    the propulsion system
     CREO/          the CAD link (part meshes and their pose)
     OpenVSP/       geometry to and from an OpenVSP model
@@ -33,7 +34,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from .assets import sha256_file  # noqa: F401  (spokes use it)
 
-SPOKES = ("AeroSandbox", "flow5", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "Aerolink")
+SPOKES = ("AeroSandbox", "flow5", "SpecSheet", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "Aerolink")
 
 
 def repo_root() -> Path:

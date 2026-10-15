@@ -16,10 +16,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+import numpy as np
+
 from . import adh_doc, assets
 
 PROFILES = ("aerolink", "review", "flight-record", "archive")
 INLINE_MAX = 4096
+MRP_CG_TOL_M = 1e-3          # Aerolink needs MRP = nominal CG within 1 mm
 PREVIEW = {"aerolink": "required", "review": "optional", "archive": "optional", "flight-record": None}
 
 #: what Aerolink needs to fly (muas key on an item -> what gives it)
@@ -72,6 +75,14 @@ def missing_for_flight(doc: Dict[str, Any]) -> List[str]:
     out += [f"dataset {k}: {why}" for k, why in FLIGHT_DATASETS.items() if not roles.get(k)]
     if have.get("control_surface", 0) and have["control_surface"] < 4:
         out.append(f"control_surface: {have['control_surface']} of 4 surfaces")
+    if adh_doc.has_node(doc, "1.2"):
+        m = adh_doc.node(doc, "1.2").get("muas") or {}
+        if m.get("reference") and m.get("mass_properties"):
+            gap = float(np.linalg.norm(np.array(m["reference"]["mrp"]["point"]["xyz"], float)
+                                       - np.array(m["mass_properties"]["cg"]["xyz"], float)))
+            if gap > MRP_CG_TOL_M:
+                out.append(f"muas.reference mrp: {gap * 1000:.1f} mm from the mass CG (Aerolink needs {MRP_CG_TOL_M * 1000:g} mm). "
+                           "Run a new flow5 sweep of the mass model")
     return out
 
 

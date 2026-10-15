@@ -1,6 +1,7 @@
 # AeroSandbox spoke settings for the Currawong (tool settings, not aircraft data).
 # wings: the ADH items (muas.instance) with a planform that go into the AeroSandbox airplane.
-# body: the ADH item with the fuselage body.
+# bodies: the ADH items with a body (geometry.body) that go into the AeroSandbox airplane: the fuselage and the
+#   tail boom (a CREO spoke tube, placeholder).
 # propeller: the ADH item (muas.instance) of the propeller installation. Its muas.propulsion_system gives the motor,
 #   ESC and battery.
 # proptimiser_design: the Proptimiser design of the propeller (designs/<name>.yaml and propellers/<name>.state.json).
@@ -11,7 +12,7 @@
 # cruise_speed_output: the name of the sizing output (node 1.2 performance "sizing") that gives the cruise speed.
 # alpha_deg: the angles of attack of the polar job.
 wings: [wing_main, htail, fin]
-body: fuselage
+bodies: [fuselage, tail_boom]
 propeller: prop_cruise
 proptimiser_design: Currawong_V1
 proptimiser_git:

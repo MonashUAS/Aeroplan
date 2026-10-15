@@ -22,3 +22,18 @@ parts:
   propeller: {file: propeller.stl, instance: prop_cruise, axes: [-z, -x, y]}
 skins:
   fuselage: {file: fuseskinshrinkwrap.stp, instance: fuselage, axes: [-z, -x, y]}
+# tubes: round tube bodies that the CAD does not hold yet. The tail boom: a subcomponent of 1.2.2.4 Empennage (ADH has
+#   no WBS number for a boom; the sheet books its mass under Tail). It runs from the aft end of the fuselage body to the
+#   root quarter chord of the horizontal tail, the rule of the visual boom. Radius: measured on the mesh of the retired
+#   AeroPlan package aeroplan.currawong.nominal.0.1.0 (the visual boom of the fuselage, a placeholder). Replace it with
+#   a Creo export of the boom when there is one.
+tubes:
+  tail_boom:
+    node: "1.2.2.4"
+    name: Tail boom
+    description: Currawong tail boom (round tube from the fuselage to the horizontal tail)
+    radius_m: 0.0175
+    from_instance: fuselage
+    to_instance: htail
+    source: "Radius 0.0175 m measured on the mesh of AeroPlan package aeroplan.currawong.nominal.0.1.0 (visual boom). Ends: the aft end of the fuselage body and the root quarter chord of htail (the visual boom rule). Not from CAD"
+    placeholder: true

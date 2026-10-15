@@ -6,37 +6,36 @@
     "instance": "currawong_airvehicle",
     "mass_properties": {
       "mass": {
-        "value": 8.28,
+        "value": 10.753333332999999,
         "units": "kg"
       },
       "cg": {
         "frame": "design",
         "xyz": [
-          0.129092,
-          0.0,
-          -0.00907274
+          0.10975047713991941,
+          -2.6133775863324925e-17,
+          0.0019974675702611007
         ],
         "units": "m"
       },
       "inertia": {
         "axes": "parallel_to_design",
         "products_convention": "+integral(xy dm)",
-        "ixx": 1.46096,
-        "iyy": 1.52318,
-        "izz": 2.90882,
-        "ixy": 0.0,
-        "ixz": 0.131289,
-        "iyz": 0.0,
+        "ixx": 2.4118630076363874,
+        "iyy": 2.6045261047172974,
+        "izz": 5.006821939803849,
+        "ixy": 2.9697809213096523e-18,
+        "ixz": -0.05674465091158301,
+        "iyz": -1.1693106814043488e-20,
         "units": "kg*m^2",
-        "unverified_products": [
-          "ixz"
-        ]
+        "unverified_products": []
       },
       "source": "estimate",
       "placeholder": true,
       "notes": [
-        "The custom inertia of the flow5 T7 analysis t7_reference.xml (sweep currawongv5_testfuse). It is a typed mass model, not a weighing or a CAD mass report.",
-        "flow5 does not document its Ixz sign convention in the export: Ixz is not verified."
+        "Configuration measured_no_payload: the weight log of the Master Specification Sheet (1st Airframe), positions from CG Calcs 1 forward tank. No payload and no water tanks.",
+        "The mass is the sum of the weighed subassembly totals. The CG x comes from the position sheet. y = 0 and z = 0 for every point mass: the sheet has no vertical positions (stand-in).",
+        "The inertia is the parallel-axis sum of the point masses. A part has no inertia of its own in it."
       ]
     },
     "reference": {
@@ -117,9 +116,243 @@
     },
     "point_masses": [
       {
-        "tag": "LG-MAIN",
+        "tag": "FUSELAGE-REST",
         "mass": {
-          "value": 0.6,
+          "value": 2.814,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0443695617230324,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Fuselage weighed total (row 26) less the mapped parts. Itemised in the rest: Tail Pin, Spine, LG Plate, LG Plate Supports, Motor Plate, Crux Plates, Fuse Hatch, Tail Clamps (all 3 clamps), Backbone, Battery Cage, Bottom Fuse Skin, Top Fuse Skin, Crux Booms, Glue Epoxy, Hardware. Not weighed: none. x: mass-weighted mean of CG Calcs 1 forward tank fuse: skin, spine, crux aly, crux tube, motor plate, motor bracket, tail mount. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "WINGS-S1",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.16414070766519667,
+            0.13750332045837782,
+            -0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S2",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.15353184067567652,
+            0.4125099613751334,
+            0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S3",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.14292297368615636,
+            0.6875166022918892,
+            0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S4",
+        "mass": {
+          "value": 0.23325503192502126,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.131687516785586,
+            0.9625202123533719,
+            0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S5",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.12109452348637068,
+            1.2375141680322757,
+            0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S6",
+        "mass": {
+          "value": 0.20174372921196532,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.11049045210694171,
+            1.5125060290475028,
+            0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S7",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.16414070766519667,
+            -0.13750332045837782,
+            -0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S8",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.15353184067567652,
+            -0.4125099613751334,
+            0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S9",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.14292297368615636,
+            -0.6875166022918892,
+            0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S10",
+        "mass": {
+          "value": 0.23325503192502126,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.131687516785586,
+            -0.9625202123533719,
+            0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S11",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.12109452348637068,
+            -1.2375141680322757,
+            0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S12",
+        "mass": {
+          "value": 0.20174372921196532,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.11049045210694171,
+            -1.5125060290475028,
+            0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "LANDING_GEAR-MAIN",
+        "mass": {
+          "value": 1.056,
           "units": "kg"
         },
         "position": {
@@ -131,133 +364,367 @@
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass LG-MAIN",
-        "placeholder": true
+        "source": "1st Airframe: row 41 MLG Composite Part (Weighed the physical item); row 42 MLG Mounting Hardware (Weighed the physical item). x: CG Calcs 1 forward tank lg/main. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
       },
       {
-        "tag": "LG-FRONT",
+        "tag": "LANDING_GEAR-FRONT",
         "mass": {
-          "value": 0.25,
+          "value": 0.264,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.627,
+            -0.626922,
             0.0,
             0.0
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass LG-FRONT",
+        "source": "1st Airframe: row 44 FLG Tube (Not Weighed). x: CG Calcs 1 forward tank lg/front. y = 0, z = 0: not in the sheet (stand-in)",
         "placeholder": true
       },
       {
-        "tag": "MOTOR",
+        "tag": "TAIL-BOOM",
         "mass": {
-          "value": 0.5,
+          "value": 0.20347,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.617,
+            0.792321,
             0.0,
             0.0
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass MOTOR",
+        "source": "1st Airframe: row 51 Tail Boom (Not Weighed). x: CG Calcs 1 forward tank tail/boom. y = 0, z = 0: not in the sheet (stand-in)",
         "placeholder": true
       },
       {
-        "tag": "PROP",
+        "tag": "TAIL-S1",
         "mass": {
-          "value": 0.075,
+          "value": 0.10055981223664391,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.643,
-            0.0,
-            0.0
+            1.2900134975318478,
+            0.03108380519945251,
+            -0.044370977425871955
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass PROP",
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
         "placeholder": true
       },
       {
-        "tag": "ESC",
+        "tag": "TAIL-S2",
         "mass": {
-          "value": 0.21,
+          "value": 0.09722263092996836,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.51,
-            0.0,
-            0.0
+            1.2941860840425619,
+            0.09325141559835753,
+            -0.04418150138115377
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass ESC",
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
         "placeholder": true
       },
       {
-        "tag": "BATTERY",
+        "tag": "TAIL-S3",
         "mass": {
-          "value": 0.85,
+          "value": 0.09388544962329268,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.51,
-            0.0,
-            0.0
+            1.298358670553276,
+            0.15541902599726254,
+            -0.043992025336435606
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass BATTERY",
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
         "placeholder": true
       },
       {
-        "tag": "TANK",
+        "tag": "TAIL-S4",
         "mass": {
-          "value": 1.3,
+          "value": 0.09054826831661712,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            0.053,
-            0.0,
-            0.0
+            1.3025312570639902,
+            0.21758663639616757,
+            -0.043802549291717424
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass TANK",
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
         "placeholder": true
       },
       {
-        "tag": "Ballast",
+        "tag": "TAIL-S5",
         "mass": {
-          "value": 1.0,
+          "value": 0.08721108700994146,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            0.2,
+            1.3067038435747043,
+            0.27975424679507255,
+            -0.04361307324699925
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S6",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.3108510965767843,
+            0.34191951536530224,
+            -0.04342474759017656
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S7",
+        "mass": {
+          "value": 0.10055981223664391,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.2900134975318478,
+            -0.03108380519945251,
+            -0.044370977425871955
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S8",
+        "mass": {
+          "value": 0.09722263092996836,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.2941860840425619,
+            -0.09325141559835753,
+            -0.04418150138115377
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S9",
+        "mass": {
+          "value": 0.09388544962329268,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.298358670553276,
+            -0.15541902599726254,
+            -0.043992025336435606
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S10",
+        "mass": {
+          "value": 0.09054826831661712,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.3025312570639902,
+            -0.21758663639616757,
+            -0.043802549291717424
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S11",
+        "mass": {
+          "value": 0.08721108700994146,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.3067038435747043,
+            -0.27975424679507255,
+            -0.04361307324699925
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S12",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            1.3108510965767843,
+            -0.34191951536530224,
+            -0.04342474759017656
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "AVIONICS-REST",
+        "mass": {
+          "value": 0.609,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0443695617230324,
             0.0,
             0.0
           ],
           "units": "m"
         },
-        "source": "flow5 plane Currawongv5_n0012-3 point mass Ballast",
+        "source": "1st Airframe: Avionics weighed total (row 64) less the mapped parts. Itemised in the rest: Servo, PDB + bms + mnt, Cube + herelink + here4 + wires + mnts. Not weighed: none. x: mass-weighted mean of stand-in: the x of Fuselage (the position sheet has no Avionics rows). y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "PROPULSION-MOTOR",
+        "mass": {
+          "value": 0.44,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.617672,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 65 Cruise Motor + ally mount (Weighed from unfinished physical item). x: CG Calcs 1 forward tank prop/motor. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-ESC",
+        "mass": {
+          "value": 0.208,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.5104392,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 66 Cruise ESC (Weighed from unfinished physical item). x: CG Calcs 1 forward tank prop/esc. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-BAT",
+        "mass": {
+          "value": 0.9283333333,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.5104392,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 67 Battery (no source stated). x: CG Calcs 1 forward tank prop/bat. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "PROPULSION-PROP",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.643422,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 69 Propellor (Weighed the physical item). x: CG Calcs 1 forward tank prop/prop. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-REST",
+        "mass": {
+          "value": 0.1789999997,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.549377959889289,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Propulsion weighed total (row 74) less the mapped parts. Itemised in the rest: Estop, Propellor Mount. Not weighed: none. x: mass-weighted mean of CG Calcs 1 forward tank prop: motor, esc, bat, prop. y = 0, z = 0: not in the sheet (stand-in)",
         "placeholder": true
       }
     ],
@@ -296,6 +763,11 @@
         "tool": "flow5",
         "asset": "asset:sha256:57e996d516e7798020b3fb459f9a1bbec6ce3599223ac7b7a7693815c1fa277a",
         "role": "sweep results: control derivatives and validation"
+      },
+      {
+        "tool": "SpecSheet",
+        "asset": "asset:sha256:3ba315fff0db39889ef0f36ca25eb62523e7ab4f73bf58c97e6e7618da370a78",
+        "role": "mass model: weight log and CG sheet"
       }
     ]
   },

@@ -1,6 +1,5 @@
 name: currawong
 kind: aircraft
 consumers:
-- aerolink
 - review
 - archive

@@ -2252,6 +2252,45 @@
       "title": "Transform",
       "type": "object"
     },
+    "Tube": {
+      "additionalProperties": false,
+      "description": "A round tube between two items (for example the tail boom). The ADH `geometry.body` of the same item holds the\nshape. This record gives the inputs of that shape, its source and its placeholder flag.",
+      "properties": {
+        "from_instance": {
+          "description": "The tube starts at the aft end of the body of this item",
+          "minLength": 1,
+          "title": "From Instance",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "radius": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "to_instance": {
+          "description": "The tube ends at the root quarter chord of the planform of this item",
+          "minLength": 1,
+          "title": "To Instance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "radius",
+        "from_instance",
+        "to_instance",
+        "source"
+      ],
+      "title": "Tube",
+      "type": "object"
+    },
     "Uncertainty": {
       "additionalProperties": false,
       "properties": {
@@ -2873,6 +2912,18 @@
       ],
       "default": null,
       "title": "Sources"
+    },
+    "tube": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Tube"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The inputs, source and placeholder flag of a tube body (geometry.body of the same item)"
     },
     "visual": {
       "anyOf": [

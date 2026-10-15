@@ -27,7 +27,7 @@ The three propulsion models of the team now use one set of equations.
 
 | Part | Model in the AeroSandbox worker | Source |
 |---|---|---|
-| Airframe | `asb.AeroBuildup` on the wing, tail and fuselage of the ADH. Control surfaces split the sections at their ends | `spec.py` |
+| Airframe | `asb.AeroBuildup` on the wing, tail, fuselage and tail boom of the ADH (settings `bodies`). Control surfaces split the sections at their ends | `spec.py` |
 | Propeller | Proptimiser BEMT (Nahon 2015, NeuralFoil sections) as constraints of the `asb.Opti` problem. Axial flow, `n_psi = 1` | `proptimiser.casadi_prop` |
 | Motor and ESC | Drela first-order motor behind an ESC chopper: `d*V_bus = omega/(kappa*Kv) + R_tot*I`, `I = I0 + (Q + Q0)*Kv`, `I_bat = d*I` | Propalyser `estimate/chain.py`, constants in contract B `/motor` |
 | Battery | Nominal voltage. No internal resistance (no sourced value) | contract B `/battery` |
@@ -48,9 +48,34 @@ efficiency. The worker does not use the actuator disc. At kappa = 1 and Q0 = 0 t
 
 `report.md` lists every placeholder that the results use. The SHA-256 of the Proptimiser files go in it.
 
+## Notebooks
+
+`AeroSandbox/notebooks/` holds the notebooks. They use `AeroSandbox/lab.py`. They read the source tree and write nothing
+to it (plots go to `work/<aircraft>/lab/`). They are committed with empty outputs (a test enforces it).
+
+```
+python -m aeroplan setup AeroSandbox                         # once: Python, JupyterLab, kernel "AeroPlan AeroSandbox"
+AeroSandbox/.venv/bin/jupyter lab AeroSandbox/notebooks      # or pick the kernel in VS Code
+```
+
+| Notebook | What it shows |
+|---|---|
+| `01_geometry_and_mass.ipynb` | Three-view, 3D view with the point masses, top view with the CG and MRP, mass by subassembly and source, inertia against flow5 T7, static margin of each configuration |
+| `02_flow5_vs_aerosandbox.ipynb` | The gap ladder: inputs, slopes at the T7 point (VLM, AeroBuildup, flow5), what flow5 implies for wing and tail, sections (NeuralFoil), trim, drag build-up, power budget |
+| `03_gap_study.ipynb` | The causes of the gap: method matrix (VLM mesh and wake, LiftingLine, NonlinearLiftingLine, AeroBuildup, with and without the boom), downwash at the tail against DATCOM, the tail alone against lifting-line theory, neutral point build-up, drag at the same CL. The numbers of `docs/methods_report.md` |
+
+`lab.load()` gives the airplane, the spec, the point masses, the flow5 DAVE-ML model and the mass configurations. The notebooks do
+not need Proptimiser. Proptimiser is optional in the venv: without it `cruise_trim` and `static_check` say what is missing.
+
 ## Known limits
 
 - The propeller sees axial inflow V cos(alpha). The in-plane inflow is not in the model.
 - A control surface section that the spoke inserts takes the foil of the inner section.
-- The ADH fuselage ends before the tail (no boom), so the body drag is the drag of that shape.
+- AeroSandbox ignores the trailing edge point of a section. The spec carries the pitch incidence of a surface (`ry_deg`, the
+  tail has -2.6 deg) in the section twist (before 2026-10-15 it was lost).
+- AeroBuildup has no interference between components (no wing downwash on the tail) and the VLM has no fuselage.
+- AeroBuildup and LiftingLine take the section lift from NeuralFoil. At Re 2e5 it gives the NACA 0012 tail a 2D slope
+  of about 8 per rad near zero alpha, so these two methods give too much tail and too much static margin. Use the VLM
+  for the neutral point (`docs/methods_report.md`).
+- The tail boom (`tail_boom`) is a placeholder tube of the CREO spoke. It adds CD 0.0005 and almost no lift or moment.
 - The sizing printout gives no units: see `UNITS` in `spoke.py` and `units_basis`.

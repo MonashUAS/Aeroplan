@@ -17,3 +17,6 @@ OpenVSP/.venv/
 
 # the AeroSandbox Python of this machine (aeroplan setup AeroSandbox)
 AeroSandbox/.venv/
+
+# the AeroPlan Python of a checkout (uv venv .venv)
+.venv/

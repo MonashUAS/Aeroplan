@@ -8,7 +8,7 @@ The spoke (AeroSandbox/spoke.py) builds the spec from the ADH document. The work
 Spec (tool-neutral JSON, SI units, angles in degrees where the name says deg, design frame x aft, y right, z up):
     reference    s_m2, b_m, c_m, xyz_ref (the MRP)
     surfaces     name, mirror, sections [xyz_le, chord, twist_deg, foil, controls], foils {name: [[x, z], ...]}
-    fuselage     frames: [[x, y, z] of the right half, top to bottom]
+    fuselages    [{name, frames: [[x, y, z] of the right half, top to bottom]}]: the fuselage and the tail boom
     mass         mass_kg, cg, inertia, point_masses
     propulsion   hub, thrust_axis, diameter_m, motor, esc, battery, tables, proptimiser_home, design
     flight       speed_m_s, altitude_m, weight_n
@@ -65,15 +65,15 @@ def build_airplane(spec):
                                       airfoil=foils[name], control_surfaces=controls))
         surfaces.append(asb.Wing(name=s["name"], symmetric=bool(s["mirror"]), xsecs=xsecs))
     fuselages = []
-    if spec.get("fuselage"):
+    for body in spec.get("fuselages") or []:
         xsecs = []
-        for f in spec["fuselage"]["frames"]:
+        for f in body["frames"]:
             f = np.asarray(f, float)
             zmin, zmax = f[:, 2].min(), f[:, 2].max()
             xsecs.append(asb.FuselageXSec(xyz_c=[float(f[0, 0]), 0.0, float(0.5 * (zmin + zmax))],
                                           width=float(2.0 * np.abs(f[:, 1]).max()), height=float(zmax - zmin),
                                           shape=2.0))
-        fuselages.append(asb.Fuselage(name="fuselage", xsecs=xsecs))
+        fuselages.append(asb.Fuselage(name=body["name"], xsecs=xsecs))
     prop = spec["propulsion"]
     propulsors = [asb.Propulsor(name="propeller", xyz_c=prop["hub"], xyz_normal=prop["thrust_axis"],
                                 radius=0.5 * prop["diameter_m"])]
@@ -116,7 +116,19 @@ def _motor_chain(spec):
     return chain, float(b["v_nominal_V"])
 
 
+def _installed(name):
+    import importlib.metadata as md
+    try:
+        md.version(name)
+        return True
+    except md.PackageNotFoundError:
+        return False
+
+
 def _prop_model(spec):
+    if not _installed("proptimiser"):
+        raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
+                           "`python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
     os.environ["PROPTIMISER_HOME"] = spec["propulsion"]["proptimiser_home"]
     from proptimiser.casadi_prop import PropellerModel
     from proptimiser.init import Propeller
@@ -129,12 +141,9 @@ def job_version(job):
     import importlib.metadata as md
     import aerosandbox
     import casadi
-    try:
-        jax = "jax " + md.version("jax")
-    except md.PackageNotFoundError:
-        jax = "no jax"
-    return {"version": f"aerosandbox {aerosandbox.__version__}, casadi {casadi.__version__}, "
-                       f"proptimiser {md.version('proptimiser')}, {jax}"}
+    have = lambda name: f"{name} {md.version(name)}" if _installed(name) else f"no {name}"
+    return {"version": f"aerosandbox {aerosandbox.__version__}, casadi {casadi.__version__}, {have('proptimiser')}, "
+                       f"{have('jax')}"}
 
 
 def job_chain(job):

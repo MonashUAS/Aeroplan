@@ -20,7 +20,7 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
   Storage tiers inline, embedded, linked. Packing profiles `aerolink`, `review`, `flight-record`, `archive`
   (`consumers.py`). Flight events on 1.8.1.4 FlightTests, firmware on 1.2.9 AirVehicleSoftwareRelease.
 - Aerolink packaging uses glTF (`preview/aircraft.glb`) for the 3D parts. No STL output (2026-10-10).
-- One folder for each tool: `AeroSandbox/` (initial sizing), `flow5/`, `Propalyser/`, `CREO/` (CAD link), `OpenVSP/`,
+- One folder for each tool: `AeroSandbox/` (initial sizing), `flow5/`, `SpecSheet/` (the weight sheet), `Propalyser/`, `CREO/` (CAD link), `OpenVSP/`,
   `DAVEML/` (published DAVE-ML models), `ArduPilot/` (flight events), `Aerolink/`. A new tool gets a new folder
   with `spoke.py`, `README.md`, `settings/`, `work/`.
 - A new aircraft starts from the AeroSandbox sizing output, then moves forward to flow5. A published reference
@@ -29,6 +29,18 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 - 2026-10-14: AeroSandbox runs in its own Python (`AeroSandbox/.venv`, made by `aeroplan setup AeroSandbox` with uv).
   The spoke sends jobs to `AeroSandbox/asb_worker.py`, which imports aerosandbox and proptimiser (CasADi path, no JAX).
   Only that worker file imports them. Tests that need it skip without it.
+- 2026-10-15: The Master Specification Sheet (`Currawong Master Specification Sheet.xlsx`) owns the mass model. The
+  `SpecSheet/` spoke writes the subassembly masses and the 1.2 roll-up (mass, CG, inertia, point masses) from it. It runs
+  after flow5, so flow5 ingest cannot keep its own mass model. The nominal configuration is the measured aircraft with no
+  payload. Payload layouts are named configurations in the notebooks only. The sheet is an xlsx in the repository today.
+  A link to the Google Sheet comes later.
+- 2026-10-15: The MRP stays the CoG of the flow5 T7 analysis until a new flow5 sweep of the sheet mass model. The aero
+  model is about that point. `reference.nominal_cg` and `mrp` do not move with the mass model. The datum check warns when
+  the mass CG differs from the MRP, and `pack --profile aerolink` refuses (MRP = CG within 1 mm). Currawong lists no
+  `aerolink` consumer until the re-sweep.
+- 2026-10-15: Notebooks in `AeroSandbox/notebooks/` run in `AeroSandbox/.venv` (kernel `aeroplan-asb`). They may import
+  aerosandbox and aeroplan (`AeroSandbox/lab.py`). They read the source tree and never write it. They are committed with
+  empty outputs. Proptimiser is optional in that Python.
 - The web editor and viewer are shelved for now.
 - The changed file wins (2026-10-08): a geometry spoke writes an item only when its input file differs from the
   asset that the item names. `muas.geometry_tool` names the spoke that wrote the geometry last.
@@ -73,6 +85,7 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 | `geometry.py`, `parts.py`, `visual.py` | ADH shapes <-> tool shapes and meshes |
 | `step_mesh.py` | Triangles of a faceted STEP file (the Creo shrinkwrap skin), no CAD kernel |
 | `aero_buildup.py` | The flow5 aero build-up and its DAVE-ML writer |
+| `mass_model.py` | Point masses to mass, CG and inertia (parallel axis). Strip distribution of a mass over a planform |
 
 ## Commands
 
@@ -87,6 +100,9 @@ python -m aeroplan unpack dist/currawong-<version>-archive.muas <folder>
 python -m aeroplan verify dist/currawong-<version>-aerolink.muas
 python -m aeroplan generate flow5 currawong
 python -m aeroplan setup OpenVSP             # once per computer
+python -m aeroplan setup AeroSandbox         # once per computer: Python, JupyterLab, kernel aeroplan-asb
+python -m aeroplan build currawong --author "Liam M." --consumers review archive   # after a sheet change
+AeroSandbox/.venv/bin/jupyter lab AeroSandbox/notebooks   # the notebooks
 python -m aeroplan generate OpenVSP currawong
 python -m aeroplan export Aerolink currawong <out>
 python -m aeroplan build f16 --author "Liam M."   # the NASA F-16 (DAVEML spoke, downloads when needed)

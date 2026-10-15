@@ -17,6 +17,17 @@ asb_spoke = load("AeroSandbox")
 runner, asb_spec = asb_spoke.runner, asb_spoke.asb_spec
 needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
 
+
+
+def _has_proptimiser():
+    if not runner.available():
+        return False
+    return "no proptimiser" not in runner.run({"job": "version"})["version"]
+
+
+needs_prop = pytest.mark.skipif(not _has_proptimiser(), reason="no Proptimiser in the AeroSandbox Python: "
+                                "run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+
 STAND_IN = {"wings": ["wing_main", "htail", "fin"], "body": "fuselage", "propeller": "prop_cruise",
             "proptimiser_design": "synthetic", "cruise_speed_output": "Cruise speed", "altitude_m": 0.0}
 KV_RAD = 22.0                                       # rad/s per volt, a test value
@@ -71,6 +82,22 @@ def test_the_spec_inserts_sections_at_the_control_surface_ends():
     assert fin["mirror"] is False and fin["sections"][-1]["xyz_le"][2] > fin["sections"][0]["xyz_le"][2]
 
 
+def test_the_spec_twist_holds_the_pitch_incidence_of_the_surface():
+    """AeroSandbox ignores the trailing edge point, so the ry_deg of a surface must be in the section twist."""
+    doc = make_full_doc()
+    spec = asb_spec.spec_from_doc(doc, STAND_IN, Ctx())
+    for inst in ("wing_main", "htail", "fin"):
+        pf = adh_doc.find(doc, inst)["muas"]["planform"]
+        got = next(s for s in spec["surfaces"] if s["name"] == inst)
+        for sec in got["sections"]:
+            if pf["kind"] == "FIN":
+                assert sec["twist_deg"] == pytest.approx(0.0, abs=1e-9)
+        if pf["kind"] != "FIN":
+            first, last = pf["sections"][0], pf["sections"][-1]
+            assert got["sections"][0]["twist_deg"] == pytest.approx(first["twist_deg"] + pf["ry_deg"], abs=1e-6)
+            assert got["sections"][-1]["twist_deg"] == pytest.approx(last["twist_deg"] + pf["ry_deg"], abs=1e-6)
+
+
 def test_the_spec_keeps_the_si_values_and_the_placeholder_flags():
     spec = asb_spec.spec_from_doc(make_full_doc(), STAND_IN, Ctx())
     assert spec["flight"]["weight_N"] == pytest.approx(2.0 * 9.80665) and spec["flight"]["speed_m_s"] == 15.0
@@ -79,6 +106,15 @@ def test_the_spec_keeps_the_si_values_and_the_placeholder_flags():
     assert spec["propulsion"]["motor"]["r_tot_ohm"] == 0.14
     text = " ".join(asb_spec.placeholders(spec))
     assert "mass model" in text and "point mass A" in text and "cruise speed" in text
+
+
+def test_the_spec_has_every_body_of_the_settings():
+    doc = make_full_doc()
+    load("CREO").write_tubes(doc, {"tail_boom": {"node": "1.2.2.4", "name": "Tail boom", "radius_m": 0.02,
+                                                 "from_instance": "fuselage", "to_instance": "htail", "source": "test"}})
+    spec = asb_spec.spec_from_doc(doc, dict(STAND_IN, bodies=["fuselage", "tail_boom"]), Ctx())
+    assert [b["name"] for b in spec["fuselages"]] == ["fuselage", "tail_boom"]
+    assert [b["name"] for b in asb_spec.spec_from_doc(doc, STAND_IN, Ctx())["fuselages"]] == ["fuselage"]   # old key
 
 
 def test_the_spec_needs_the_chain_constants():
@@ -126,7 +162,7 @@ def test_the_airplane_has_the_planform_area_of_the_adh(tmp_path):
     assert (tmp_path / "three_view.png").is_file()
 
 
-@needs_asb
+@needs_prop
 def test_cruise_trim_balances_forces_moment_and_the_chain(tmp_path):
     spec = asb_spec.spec_from_doc(make_full_doc(), STAND_IN, Ctx())
     home = tmp_path / "home"
@@ -138,3 +174,33 @@ def test_cruise_trim_balances_forces_moment_and_the_chain(tmp_path):
     assert t["lift_N"] + t["thrust_N"] * math.sin(math.radians(t["alpha_deg"])) == pytest.approx(spec["flight"]["weight_N"], rel=1e-6)
     assert abs(t["residual_V"]) < 1e-6 and 0.0 < t["duty"] <= 1.0
     assert t["p_bat_W"] > t["p_shaft_W"] > 0.0
+
+
+# ---------------------------------------------------------------------------------------------------- the notebooks
+NOTEBOOKS = sorted((runner.HERE / "notebooks").glob("*.ipynb"))
+
+
+def test_the_notebooks_are_committed_without_outputs():
+    """A notebook in git holds code only: outputs are big and change on every run."""
+    import json
+
+    assert NOTEBOOKS, "AeroSandbox/notebooks has no notebook"
+    for nb in NOTEBOOKS:
+        cells = json.loads(nb.read_text(encoding="utf-8"))["cells"]
+        for i, c in enumerate(cells):
+            if c["cell_type"] == "code":
+                assert not c.get("outputs") and c.get("execution_count") is None, f"{nb.name} cell {i} has output"
+
+
+@needs_asb
+def test_lab_loads_the_committed_aircraft():
+    """lab.load in the AeroSandbox Python: the airplane, the flow5 model and the mass configurations of Currawong."""
+    import subprocess
+
+    code = ("import sys; sys.path.insert(0, %r); import lab; L = lab.load('currawong'); "
+            "r = lab.rollup(L.masses); print(round(r['mass_kg'], 3), len(L.airplane.wings), len(L.configs), "
+            "L.flow5_eval(0.0)['CL'] > 0)" % str(runner.HERE))
+    p = subprocess.run([str(runner.python()), "-I", "-c", code], capture_output=True, text=True, cwd=runner.HERE)
+    assert p.returncode == 0, p.stderr[-1500:]
+    mass, wings, configs, flow5 = p.stdout.split()
+    assert float(mass) > 1.0 and int(wings) == 3 and int(configs) >= 1 and flow5 == "True"

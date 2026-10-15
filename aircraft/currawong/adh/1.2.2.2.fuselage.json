@@ -4,6 +4,46 @@
   "muas": {
     "ext_version": "0.4.0",
     "instance": "fuselage",
+    "mass_properties": {
+      "mass": {
+        "value": 2.814,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.0443695617230324,
+          0.0,
+          0.0
+        ],
+        "units": "m"
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Mass: the weighed subassembly total of the sheet (Fuselage). CG: the x of the position sheet, y = 0 and z = 0 are stand-ins."
+      ]
+    },
+    "point_masses": [
+      {
+        "tag": "FUSELAGE-REST",
+        "mass": {
+          "value": 2.814,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0443695617230324,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Fuselage weighed total (row 26) less the mapped parts. Itemised in the rest: Tail Pin, Spine, LG Plate, LG Plate Supports, Motor Plate, Crux Plates, Fuse Hatch, Tail Clamps (all 3 clamps), Backbone, Battery Cage, Bottom Fuse Skin, Top Fuse Skin, Crux Booms, Glue Epoxy, Hardware. Not weighed: none. x: mass-weighted mean of CG Calcs 1 forward tank fuse: skin, spine, crux aly, crux tube, motor plate, motor bracket, tail mount. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      }
+    ],
     "visual": [
       {
         "part": "fuselage",

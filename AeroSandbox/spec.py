@@ -68,8 +68,11 @@ def _surface_spec(doc: Dict[str, Any], inst: str) -> Dict[str, Any]:
     for sec, a, b in zip(pf2["sections"], le, te):
         here = [{"name": c["name"], "symmetric": c["symmetric"], "hinge_x_over_c": c["hinge_x_over_c"]}
                 for c in controls if c["eta"][0] * tip - 1e-9 <= sec["y"] < c["eta"][1] * tip - 1e-9]
+        # AeroSandbox ignores the trailing edge point: the angle of the chord line (section twist and the pitch
+        # incidence ry_deg of the surface) must go in as the twist. A fin has its span along z: its twist stays.
+        twist = float(sec["twist_deg"]) if pf["kind"] == "FIN" else math.degrees(math.atan2(a[2] - b[2], b[0] - a[0]))
         sections.append({"xyz_le": [float(v) for v in a], "chord": float(np.linalg.norm(b - a)),
-                         "twist_deg": float(sec["twist_deg"]), "foil": sec["foil"], "controls": here})
+                         "twist_deg": twist, "foil": sec["foil"], "controls": here})
     mirror = pf.get("symmetric", True) and (pf["kind"] != "FIN" or pf.get("two_sided", True))
     return {"name": inst, "mirror": bool(mirror), "sections": sections,
             "foils": {k: v.tolist() for k, v in foils_of(item).items()}}
@@ -88,6 +91,13 @@ def _sizing_output(doc: Dict[str, Any], name: str) -> Dict[str, Any]:
                     if o["name"] == name:
                         return o
     raise ValueError(f"the sizing record of node 1.2 has no output {name!r}")
+
+
+def bodies_of(st: Dict[str, Any]) -> List[str]:
+    """The ADH items with a body that go into the airplane: `bodies` of the settings, or the older single `body`."""
+    if st.get("bodies") is not None:
+        return list(st["bodies"])
+    return [st["body"]] if st.get("body") else []
 
 
 def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context) -> Dict[str, Any]:
@@ -117,7 +127,8 @@ def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context) -> Dict
         "reference": {"s_m2": ref["s_ref"]["value"], "b_m": ref["b_ref"]["value"], "c_m": ref["c_ref"]["value"],
                       "xyz_ref": list(ref["mrp"]["point"]["xyz"])},
         "surfaces": [_surface_spec(doc, w) for w in st["wings"]],
-        "fuselage": {"frames": [f.tolist() for f in body_frames(adh_doc.find(doc, st["body"])["geometry"]["body"])]},
+        "fuselages": [{"name": b, "frames": [f.tolist() for f in body_frames(adh_doc.find(doc, b)["geometry"]["body"])]}
+                      for b in bodies_of(st)],
         "mass": mass,
         "propulsion": {
             "hub": list(inst["hub"]["xyz"]), "thrust_axis": list(inst["thrust_axis"]),

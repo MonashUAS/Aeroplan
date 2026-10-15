@@ -133,7 +133,7 @@ def _surface_checks(rep: DatumReport, air: Dict, pf: Optional[Dict]) -> None:
         rep.add("wing span: initial sizing (Athena) less flow5", outs["Wing span"] - pr["span_m"], None, None, "m",
                 "sizing output Wing span, wing_main planform")
         if "mass_properties" in am:
-            rep.add("mass: initial sizing (Athena) less the flow5 mass model",
+            rep.add("mass: initial sizing (Athena) less the mass model",
                     outs["m_total"] - am["mass_properties"]["mass"]["value"], None, None, "kg",
                     "sizing output m_total, muas.mass_properties")
 
@@ -153,8 +153,23 @@ def datum_checks(doc: Dict, root) -> DatumReport:
     mp = am.get("mass_properties")
     if ref and mp:
         cg = np.array(mp["cg"]["xyz"], float)
-        rep.add("MRP against the mass CG (distance)", float(np.linalg.norm(np.array(ref["mrp"]["point"]["xyz"]) - cg)),
-                0.0, 1e-6, "m", "muas.reference mrp, muas.mass_properties cg")
+        gap = float(np.linalg.norm(np.array(ref["mrp"]["point"]["xyz"]) - cg))
+        if any(r.get("tool") == "SpecSheet" for r in am.get("sources") or []) and gap > 1e-6:
+            rep.warn("MRP differs from the mass CG by %.1f mm: the aero model is about the old MRP" % (gap * 1000),
+                     "run `aeroplan generate flow5` for the mass model of the SpecSheet spoke, run a new flow5 sweep, "
+                     "then build")
+        else:
+            rep.add("MRP against the mass CG (distance)", gap, 0.0, 1e-6, "m", "muas.reference mrp, muas.mass_properties cg")
+        if pf:
+            x_le = pf["position"]["xyz"][0] + pf["sections"][0]["x_offset"]
+            rep.add("mass CG: x behind the main wing root leading edge, in % c_ref",
+                    (cg[0] - x_le) / ref["c_ref"]["value"] * 100.0, None, None, "%",
+                    "muas.mass_properties cg, wing_main planform, muas.reference c_ref")
+        parts = [item["muas"]["mass_properties"]["mass"]["value"] for _, item, _ in adh_doc.iter_nodes(doc)
+                 if (item.get("muas") or {}).get("mass_properties") and item["muas"].get("instance") != am.get("instance")]
+        if parts:
+            rep.add("mass: sum of the subassembly masses less the air vehicle mass", sum(parts) - mp["mass"]["value"],
+                    0.0, 1e-6, "kg", "muas.mass_properties of the subassemblies, node 1.2")
 
     ps = part_meshes(doc, root)
     for n in ps.notes:

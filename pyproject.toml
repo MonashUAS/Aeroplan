@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "ADH-based single source of truth (SSOT) for aircraft data: one .muas file per aircraft"
 requires-python = ">=3.10"
 # graphviz, tabulate and IPython: the vendored ADH package imports them when it loads
-dependencies = ["pydantic>=2", "pyyaml", "pint", "numpy", "pandas", "pyarrow", "h5py", "lxml", "graphviz", "tabulate", "IPython"]
+dependencies = ["pydantic>=2", "pyyaml", "pint", "numpy", "pandas", "pyarrow", "h5py", "lxml", "graphviz", "tabulate", "IPython", "openpyxl"]
 
 [project.optional-dependencies]
 test = ["pytest"]

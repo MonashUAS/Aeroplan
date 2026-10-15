@@ -201,6 +201,21 @@
         "derived_from": []
       },
       {
+        "id": "asset:sha256:3ba315fff0db39889ef0f36ca25eb62523e7ab4f73bf58c97e6e7618da370a78",
+        "kind": "file",
+        "name": "SpecSheet.Currawong_Master_Specification_Sheet.xlsx",
+        "role": "mass model: weight log and CG sheet",
+        "tool": "SpecSheet",
+        "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "size": 342216,
+        "locations": [
+          {
+            "repo": "Currawong Master Specification Sheet.xlsx"
+          }
+        ],
+        "derived_from": []
+      },
+      {
         "id": "asset:sha256:04085caf84514f034e4a5d8649b22041ad2422d2df0583e07004a7a9ab23b6e8",
         "kind": "dataset",
         "name": "aero.currawong",

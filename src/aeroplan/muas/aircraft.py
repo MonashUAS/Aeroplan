@@ -115,6 +115,18 @@ class Skin(MuasModel):
     source: str = Field(min_length=1)
 
 
+class Tube(MuasModel):
+    """A round tube between two items (for example the tail boom). The ADH `geometry.body` of the same item holds the
+    shape. This record gives the inputs of that shape, its source and its placeholder flag."""
+
+    radius: Quantity
+    from_instance: str = Field(min_length=1, description="The tube starts at the aft end of the body of this item")
+    to_instance: str = Field(min_length=1, description="The tube ends at the root quarter chord of the planform of "
+                             "this item")
+    source: str = Field(min_length=1)
+    placeholder: bool = False
+
+
 class Table(MuasModel):
     """Columns of a lookup table. Every column has the same length. `units` maps each column to its units."""
 
