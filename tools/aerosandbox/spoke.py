@@ -26,7 +26,10 @@ block of the settings (aeroplan.multirotor.seed: reference, four lift rotors, mo
 shapes) and reads `work/<aircraft>/asb/multirotor_results.json`, when it exists, into the body-drag aero dataset
 (src/aeroplan/multirotor_aero.py) and the `sizing` performance record of node 1.2 (the EMST results). `generate` runs the
 worker jobs multirotor_drag, emst_segments, emst_endurance and emst_sensitivity (the EMST jobs need the propulsion
-system of the Propalyser spoke) and writes that file and `report.md`. Order: build, generate, build.
+system of the Propalyser spoke) and writes that file and `report.md`. With `proptimiser_design` in the settings it also runs
+emst_live: hover and climb with the live Proptimiser BEMT (`static_and_axial`, one Propeller for each rotor) for that design
+and for each design of `proptimiser_compare`. The Proptimiser design and state files come from
+work/<aircraft>/proptimiser/ (copy them by hand). Their sha256 go into the results file. Order: build, generate, build.
 """
 from __future__ import annotations
 
@@ -119,6 +122,12 @@ def _emst_outputs(res: Dict[str, Any]) -> List[Dict[str, Any]]:
         f = seg["full_throttle"]
         out += [_output("full_throttle_thrust_total_N", f["thrust_total_N"], "N"),
                 _output("thrust_to_weight", f["thrust_to_weight"], "nd")]
+    lv = res.get("emst_live")
+    if lv:
+        keys = (("rpm", "rpm"), ("thrust_each_N", "N"), ("p_shaft_each_W", "W"), ("p_battery_W", "W"), ("i_total_A", "A"),
+                ("endurance_min", "min"))
+        for design, segs in lv["designs"].items():
+            out += [_output(f"{name}_live_{design}_{k}", segs[name][k], u) for name in ("hover", "climb") for k, u in keys]
     sc = res.get("emst_endurance")
     if sc:
         out += [_output("best_endurance_speed_m_s", sc["best_endurance"]["speed_m_s"], "m/s"),
@@ -248,10 +257,22 @@ def _generate_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]) 
     else:
         for job in ("emst_segments", "emst_endurance", "emst_sensitivity"):
             results[job] = runner.run({"job": job, "spec": spec})[job]
+    files = {}
+    if spec["propulsion"] is not None and st.get("proptimiser_design"):
+        names = [st["proptimiser_design"]] + list(st.get("proptimiser_compare") or [])
+        home = ctx.work / "proptimiser"
+        for name in names:
+            for f in (home / "designs" / f"{name}.yaml", home / "propellers" / f"{name}.state.json"):
+                if not f.is_file():
+                    raise ValueError(f"{f} is missing: copy the Proptimiser design and state file by hand")
+                files[f.name] = _sha(f)
+        spec["live"] = {"home": str(home), "designs": names}
+        results["emst_live"] = runner.run({"job": "emst_live", "spec": spec})["emst_live"]
     ph = asb_spec.multirotor_placeholders(st, spec)
     results["inputs"] = {"s_ref_m2": spec["reference"]["s_m2"], "mass_kg": spec["mass"]["mass_kg"],
                          "date": date.today().isoformat(), "placeholders": ph,
-                         "propulsion_system": (spec["propulsion"] or {}).get("system_id")}
+                         "propulsion_system": (spec["propulsion"] or {}).get("system_id"),
+                         "proptimiser_files_sha256": files}
     res_file = out / RESULTS
     res_file.write_text(json.dumps(results, indent=1), encoding="utf-8")
     report = out / "report.md"
@@ -261,6 +282,10 @@ def _generate_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]) 
         h = seg["segments"][0]
         print(f"AeroSandbox: hover {h['rpm']:.0f} rpm, {h['p_battery_W']:.0f} W, {h['i_total_A']:.1f} A, "
               f"endurance {h['endurance_min']:.1f} min")
+    for design, segs in (results.get("emst_live") or {}).get("designs", {}).items():
+        h = segs["hover"]
+        print(f"AeroSandbox: live {design} hover {h['rpm']:.0f} rpm, {h['p_shaft_each_W']:.0f} W shaft each, "
+              f"{h['p_battery_W']:.0f} W, {h['i_total_A']:.1f} A, endurance {h['endurance_min']:.1f} min")
     print(f"AeroSandbox: CDx {drag['CD']['CDx']:.3f}, CDy {drag['CD']['CDy']:.3f}, CDz {drag['CD']['CDz']:.3f}")
     return [report, res_file]
 

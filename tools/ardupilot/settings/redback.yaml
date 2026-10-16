@@ -1,35 +1,43 @@
 # ArduPilot spoke settings for the Redback (tool settings, not aircraft data). One file for the flight events (`releases`,
 # `flights`) and the flight files (`flight_files`).
-# This file is a stub for the Redback flight log. No log exists yet. `wait_for_log: true` makes the build skip the flight
-# with a note until the file is in work/ardupilot/redback/.
-#
-# When the user has the log:
-#   1. Copy the DataFlash log into work/ardupilot/redback/ and name it in `log` (and the .parm in `params`).
-#   2. Fill in every value that says FILL_IN. A FILL_IN value stops the build on purpose.
-#   3. Add the firmware release to `releases` (release_id, firmware ArduCopter, version, git_hash, board, source).
-#   4. Build: python -m aeroplan build redback --author "Name"
+# The values come from the DataFlash log 00000171.BIN (sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d)
+# and from the parameter pull (sha256 a484d212d4bd0302027bf498e96984af67c951388378da6981127f24722577e2).
+# Log facts (read with pymavlink): MSG and VER "ArduCopter V4.7.0 (1511f271)", git hash 0x1511F271 (VER GH 353497713),
+# board CubeOrangePlus (MSG), "Frame: QUAD/X" (MSG), PARM FRAME_CLASS 1 and FRAME_TYPE 1, GPS week 2436 and GMS 230064600 give
+# 2026-09-15 15:54:24 GPS time at the first GPS fix, log length 1197.4 s (TimeUS 461.3 s to 1658.7 s since boot).
+# Two parameter files. The flight (`params`) uses 00000171_log.parm: the first value of each name in the PARM messages of the
+# log (1184 parameters, sha256 3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13, written by a script with no
+# value changed). The aircraft (`flight_files.parameters`) uses the Mission Planner pull of 2026-10-02. AeroPlan registers one
+# dataset for each file hash, so the two roles need two files.
+# The parameter pull was saved on 2026-10-02, 17 days after the flight. It differs from the PARM block of the log in 40 values
+# (compass, gyro offsets, barometer ground pressure, MAVLink stream rates, learned MOT_THST_HOVER 0.2118 in the log against
+# 0.2516 in the file, and the flight statistics). The attitude and rate gains are equal.
 # mass_kg and cg_m: `document` takes the mass model of node 1.2 (the weight sheet, 9.134 kg). Replace them when the aircraft
 # was weighed for the flight, and say who weighed it in `source`.
-releases: []
+releases:
+  - release_id: arducopter-4.7.0-1511f271
+    firmware: ArduCopter
+    version: "4.7.0"
+    git_hash: "1511f271"
+    board: CubeOrangePlus
+    source: "DataFlash log 00000171.BIN, sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d: MSG and VER 'ArduCopter V4.7.0 (1511f271)', MSG 'CubeOrangePlus 003E0036 3032510B 33383839', ChibiOS 4f34e217."
 flights:
   - event_id: redback_flight_1
-    wait_for_log: true
-    date: FILL_IN                    # the flight date, YYYY-MM-DD
-    log: FILL_IN.BIN                 # file name in work/ardupilot/redback/
-    params: FILL_IN.parm             # optional: the parameter file of the flight (NAME,VALUE lines)
-    firmware: FILL_IN                # release_id of an entry in `releases`
-    aircraft_version: FILL_IN        # the AeroPlan version that flew, for example 0.1.0
+    date: "2026-09-15"               # GPS time of the first fix in the log (UTC date, GPS week 2436)
+    log: 00000171.BIN
+    params: 00000171_log.parm        # PARM messages of the log
+    firmware: arducopter-4.7.0-1511f271
+    aircraft_version: "0.1.1"        # the AeroPlan version when the log was added. No package of the aircraft flew.
     mass_kg: document
     cg_m: document
     segments: []
-    source: "FILL_IN: who flew, where, and how the mass was found (the weight sheet total is 9.134 kg)"
+    source: "Log 00000171.BIN (sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d), 1197.4 s. AUTO mission with takeoff from 466.7 s, RTL from 1193.7 s, disarm at 1328.3 s (boot time), then two short arm periods of 19 s and 16 s. Parameters: the PARM messages of the log (00000171_log.parm, sha256 3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13). Pilot: not stated by the user. Site: not stated by the user. Mass and CG: the weight sheet total 9.134 kg and the mass model of node 1.2, not weighed for this flight."
 
 # flight_files: the files of the aircraft that go into the autopilot node 1.2.5.10 (datasets parameters, waypoints, geofence).
-# optional: the parameter file is not here yet. The build skips it with a note until the file is in
-#   work/ardupilot/redback/. Save it in Mission Planner (Config > Full Parameter List > Save) and copy it by hand.
+# optional: a missing file is skipped with a note.
 # firmware: the firmware that the parameters belong to.
 # parameters: the file name of the .parm.
 flight_files:
   optional: true
-  firmware: ArduCopter
-  parameters: redback.parm
+  firmware: ArduCopter 4.7.0
+  parameters: "2026-10-02 Param Pull After Regaining MAVLink Access to Cube.param"

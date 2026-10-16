@@ -15,13 +15,14 @@ Spec (tool-neutral JSON, SI units, angles in degrees where the name says deg, de
 
 Jobs: version, chain, geometry, polar, cruise_trim, static_check.
 
-Multirotor mode (spec["kind"] == "multirotor"), jobs multirotor_drag, emst_segments, emst_endurance, emst_sensitivity:
+Multirotor mode (spec["kind"] == "multirotor"), jobs multirotor_drag, emst_segments, emst_endurance, emst_sensitivity, emst_live:
     rotors       [{motor, instance, hub, thrust_axis, spin, diameter_m}]
     body         {box: {centre, size}, arms: [{p0, p1, radius_m}]}
     propulsion   diameter_m, p_max_W, motor, battery {v_nominal_V, capacity_As, cells_s}, tables {J, CT, CP}, throttle_map
     electrical   rb_ohm, rw_ohm, re_ohm, ia_A, ip_A, eta_e, discharge_fraction
     drag         S_ref_m2, CDx, CDy, CDz, k_rotor_drag_kg (the body drag of the aero dataset)
     analysis     altitude_m, climb_rate_m_s, forward_speeds_m_s, scan_max_m_s, scan_step_m_s, sensitivity_step
+    live         home (a Proptimiser home folder), designs [design names] (job emst_live only)
 The EMST functions (the section "EMST" below) use numpy only, so tests can import this file in any Python.
 """
 from __future__ import annotations
@@ -180,6 +181,8 @@ def rotor_coeffs(tab, j):
 
 def rotor_load(n_rev_s, v_ax, m):
     """Thrust (N), shaft torque (N m), shaft power (W) and J of one rotor at n (rev/s) and axial inflow v_ax (m/s)."""
+    if m.get("live") is not None:                  # a live propeller model (emst_live): see live_rotor
+        return m["live"](n_rev_s, v_ax)
     d, rho = m["diameter_m"], m["rho"]
     j = v_ax / (n_rev_s * d)
     ct, cp = rotor_coeffs(m["tab"], j)
@@ -191,7 +194,10 @@ def rotor_load(n_rev_s, v_ax, m):
 
 def solve_speed(thrust_N, v_ax, m, n_max=500.0):
     """The rotor speed (rev/s) at which one rotor gives `thrust_N` at the axial inflow v_ax. Bisection on the first
-    crossing of the thrust curve. Raises ValueError when the table cannot give that thrust below n_max."""
+    crossing of the thrust curve. Raises ValueError when the table cannot give that thrust below n_max.
+    With a live model in m["live"] the secant method runs on the live thrust (each call is slow, so the loop is short)."""
+    if m.get("live") is not None:
+        return _solve_speed_live(thrust_N, v_ax, m)
     f = lambda n: rotor_load(n, v_ax, m)["thrust_N"] - thrust_N
     grid = np.geomspace(0.5, n_max, 600)
     lo = grid[0]
@@ -205,6 +211,56 @@ def solve_speed(thrust_N, v_ax, m, n_max=500.0):
             return 0.5 * (lo + hi)
         lo = hi
     raise ValueError(f"the CT table gives no thrust of {thrust_N:.3f} N below {n_max:g} rev/s at an inflow of {v_ax:.3f} m/s")
+
+
+def _solve_speed_live(thrust_N, v_ax, m, rtol=1e-7, max_iter=30):
+    """The rotor speed (rev/s) at which the live model gives `thrust_N`. Secant method. The first guess is the table
+    solution, or momentum-free scaling T = 0.05 rho n^2 D^4 when the table cannot give the thrust."""
+    f = lambda n: m["live"](n, v_ax)["thrust_N"] - thrust_N
+    try:
+        x0 = solve_speed(thrust_N, v_ax, {**m, "live": None})
+    except ValueError:
+        x0 = math.sqrt(thrust_N / (0.05 * m["rho"] * m["diameter_m"] ** 4))
+    f0 = f(x0)
+    x1 = x0 * math.sqrt(thrust_N / (thrust_N + f0)) if thrust_N + f0 > 0.0 else 1.1 * x0
+    for _ in range(max_iter):
+        f1 = f(x1)
+        if abs(f1) <= rtol * thrust_N:
+            return x1
+        if f1 == f0:
+            break
+        x0, f0, x1 = x1, f1, x1 - f1 * (x1 - x0) / (f1 - f0)
+    raise ValueError(f"the live propeller model gives no thrust of {thrust_N:.3f} N at an inflow of {v_ax:.3f} m/s (secant method did not converge)")
+
+
+def live_rotor(prop, rho):
+    """A function (n rev/s, axial inflow m/s) -> rotor_load dict from the Proptimiser BEMT of one Propeller `prop`.
+    Each call solves the BEMT (about 0.8 s). The model of a Propeller is built once and kept by Proptimiser."""
+    from proptimiser.casadi_prop import static_and_axial
+
+    def fn(n_rev_s, v_ax):
+        r = static_and_axial(prop, n_rev_s * 60.0, v_ax, rho=rho)
+        return {"thrust_N": r.thrust_N, "torque_Nm": r.torque_Nm, "p_shaft_W": r.shaft_power_W, "J": r.J, "CT": r.CT,
+                "CP": r.CP}
+    return fn
+
+
+def live_segment(name, climb, thrust_total, fns, m):
+    """One vertical segment (hover or climb) with one live model for each rotor. The rotor speed is solved with the first
+    model. Every rotor is then evaluated at that speed and inflow. The electrical state uses the mean torque."""
+    N = m["n_rotors"]
+    if len(fns) != N:
+        raise ValueError(f"{len(fns)} live rotor models for {N} rotors")
+    seg = _segment(name, 0.0, climb, 0.0, thrust_total, climb, {**m, "live": fns[0]})
+    loads = [fn(seg["rev_s"], climb) for fn in fns]
+    mean_q = sum(r["torque_Nm"] for r in loads) / N
+    el = electric_state(seg["rev_s"], mean_q, m)
+    seg.update(el)
+    seg["endurance_min"] = m["electrical"]["discharge_fraction"] * m["capacity_As"] / el["i_total_A"] / 60.0
+    seg["rotors"] = [{"thrust_N": r["thrust_N"], "p_shaft_W": r["p_shaft_W"], "torque_Nm": r["torque_Nm"]} for r in loads]
+    seg["thrust_each_N"] = sum(r["thrust_N"] for r in loads) / N
+    seg["p_shaft_each_W"] = sum(r["p_shaft_W"] for r in loads) / N
+    return seg
 
 
 def electric_state(n_rev_s, torque_Nm, m):
@@ -673,6 +729,32 @@ def job_emst_segments(job):
                               "n_rotors": m["n_rotors"], "segments": segs, "full_throttle": emst_full_throttle(m)}}
 
 
+def job_emst_live(job):
+    """Hover and vertical climb with the live Proptimiser BEMT in place of the CT/CP table. One Propeller for each rotor
+    (reused for both segments). The designs are spec["live"]["designs"] (the first one is the main case). Fit C is the
+    main case and Fit B a comparison. The table result of the same segments comes back as the maker check."""
+    spec = job["spec"]
+    live = spec["live"]
+    if not _installed("proptimiser"):
+        raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
+                           "`python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+    os.environ["PROPTIMISER_HOME"] = live["home"]
+    from proptimiser.init import Propeller
+    a = spec["analysis"]
+    m = emst_model(spec, _rho_of(job))
+    W = m["mass_kg"] * G0
+    table = {"hover": emst_hover(m), "climb": emst_climb(m, a["climb_rate_m_s"])}
+    out = {"rho_kg_m3": m["rho"], "n_rotors": m["n_rotors"], "table": table, "designs": {}}
+    for design in live["designs"]:
+        props = [Propeller.load(design) for _ in range(m["n_rotors"])]
+        fns = [live_rotor(p, m["rho"]) for p in props]
+        fz = body_force(0.0, 0.0, -a["climb_rate_m_s"], 0.0, m)[2]
+        out["designs"][design] = {
+            "hover": live_segment("hover", 0.0, W, fns, m),
+            "climb": live_segment("climb", a["climb_rate_m_s"], W + fz, fns, m)}
+    return {"emst_live": out}
+
+
 def job_emst_endurance(job):
     """Endurance and range against the airspeed, with the best speeds (paper section III.A.4)."""
     a = job["spec"]["analysis"]
@@ -691,7 +773,7 @@ JOBS = {"version": job_version, "chain": job_chain, "library_check": job_library
         "synthetic_design": job_synthetic_design, "geometry": job_geometry, "polar": job_polar,
         "cruise_trim": job_cruise_trim, "static_check": job_static_check,
         "multirotor_drag": job_multirotor_drag, "emst_segments": job_emst_segments, "emst_endurance": job_emst_endurance,
-        "emst_sensitivity": job_emst_sensitivity}
+        "emst_sensitivity": job_emst_sensitivity, "emst_live": job_emst_live}
 
 
 def main(argv):

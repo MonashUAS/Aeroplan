@@ -472,6 +472,100 @@ def test_emst_scan_and_sensitivity_signs():
     assert set(se) == {"kv_rpm_per_V", "diameter_m", "mass_kg", "capacity_As"}
 
 
+def fake_live(m, ct_factor=1.0, cp_factor=1.0):
+    """A live rotor function (n, v_ax) that copies the constant table of emst_model(), scaled. It stands for the BEMT."""
+    def fn(n, v_ax):
+        ct, cp = worker.rotor_coeffs(m["tab"], v_ax / (n * m["diameter_m"]))
+        ct, cp = ct * ct_factor, cp * cp_factor
+        p = cp * m["rho"] * n ** 3 * m["diameter_m"] ** 5
+        return {"thrust_N": ct * m["rho"] * n ** 2 * m["diameter_m"] ** 4, "torque_Nm": p / (2.0 * math.pi * n),
+                "p_shaft_W": p, "J": v_ax / (n * m["diameter_m"]), "CT": ct, "CP": cp}
+    return fn
+
+
+def test_emst_live_model_equal_to_the_table_gives_the_table_result():
+    m = emst_model()
+    live = worker.live_segment("hover", 0.0, m["mass_kg"] * worker.G0, [fake_live(m)] * 4, m)
+    ref = worker.emst_hover(m)
+    for k in ("rpm", "p_shaft_each_W", "p_battery_W", "i_total_A", "endurance_min", "duty"):
+        assert live[k] == pytest.approx(ref[k], rel=1e-6)
+    assert len(live["rotors"]) == 4 and all(r["thrust_N"] == pytest.approx(m["mass_kg"] * worker.G0 / 4, rel=1e-6) for r in live["rotors"])
+
+
+def test_emst_live_model_with_less_thrust_turns_faster_and_uses_more_power():
+    m = emst_model()
+    ref = worker.emst_hover(m)
+    live = worker.live_segment("hover", 0.0, m["mass_kg"] * worker.G0, [fake_live(m, ct_factor=0.9)] * 4, m)
+    assert live["rpm"] == pytest.approx(ref["rpm"] / math.sqrt(0.9), rel=1e-5)         # T ~ CT n^2 at the same weight
+    assert live["p_shaft_each_W"] > ref["p_shaft_each_W"] and live["p_battery_W"] > ref["p_battery_W"]
+    assert live["endurance_min"] < ref["endurance_min"]
+
+
+def test_emst_live_climb_carries_the_body_drag_and_refuses_a_wrong_rotor_count():
+    m = emst_model()
+    c = worker.live_segment("climb", 2.0, m["mass_kg"] * worker.G0 + worker.body_force(0.0, 0.0, -2.0, 0.0, m)[2], [fake_live(m)] * 4, m)
+    assert c["thrust_total_N"] > m["mass_kg"] * worker.G0 and c["axial_inflow_m_s"] == 2.0
+    with pytest.raises(ValueError, match="live rotor models"):
+        worker.live_segment("hover", 0.0, 10.0, [fake_live(m)] * 3, m)
+
+
+def test_emst_live_secant_refuses_a_thrust_that_it_cannot_reach():
+    m = emst_model()
+    dead = lambda n, v: {"thrust_N": 1.0, "torque_Nm": 0.1, "p_shaft_W": 1.0, "J": 0.0, "CT": 0.0, "CP": 0.0}
+    with pytest.raises(ValueError, match="live propeller model"):
+        worker.solve_speed(20.0, 0.0, {**m, "live": dead})
+
+
+def _has_proptimiser():
+    return runner.available() and "no proptimiser" not in runner.run({"job": "version"})["version"]
+
+
+needs_prop = pytest.mark.skipif(not _has_proptimiser(), reason="no Proptimiser in the AeroSandbox Python: "
+                                "run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+
+
+@needs_prop
+def test_the_emst_live_job_runs_the_bemt_for_each_rotor(tmp_path):
+    home = tmp_path / "home"
+    runner.run({"job": "synthetic_design", "home": str(home), "name": "synthetic", "V_x": 0.0, "chord_m": 0.04, "beta_deg": 18.0})
+    m = emst_model(diameter_m=0.55, mass_kg=6.0)   # the synthetic blade has R_tip 0.275 m
+    spec = {"kind": "multirotor", "rotors": [{}, {}], "mass": {"mass_kg": 6.0}, "electrical": dict(ELEC_VALUES),
+            "analysis": {"climb_rate_m_s": 1.0, "altitude_m": 0.0},
+            "drag": m["drag"],
+            "propulsion": {"diameter_m": 0.55, "p_max_W": None, "motor": {k: m["motor"][k] for k in ("kv_rad_s_V", "i0_A", "kappa", "r_tot_ohm")},
+                           "battery": {"v_nominal_V": 22.2, "cells_s": 6, "capacity_As": 18000.0},
+                           "tables": m["tab"], "throttle_map": None},
+            "live": {"home": str(home), "designs": ["synthetic"]}}
+    r = runner.run({"job": "emst_live", "spec": spec})["emst_live"]
+    h = r["designs"]["synthetic"]["hover"]
+    weight = 6.0 * worker.G0
+    assert h["thrust_total_N"] == pytest.approx(weight, rel=1e-9) and len(h["rotors"]) == 2
+    assert all(x["thrust_N"] == pytest.approx(weight / 2, rel=1e-5) for x in h["rotors"])
+    assert h["p_shaft_each_W"] > 0.0 and h["p_battery_W"] > h["p_shaft_each_W"] * 2
+    assert r["designs"]["synthetic"]["climb"]["thrust_total_N"] > weight
+
+
+ELEC_VALUES = {k: v["value"] for k, v in ELEC.items()}
+
+
+def test_the_report_and_the_sizing_outputs_list_the_live_propeller():
+    m = emst_model()
+    seg = worker.live_segment("hover", 0.0, m["mass_kg"] * worker.G0, [fake_live(m)] * 4, m)
+    clim = worker.live_segment("climb", 2.0, m["mass_kg"] * worker.G0, [fake_live(m)] * 4, m)
+    lv = {"rho_kg_m3": RHO, "n_rotors": 4, "table": {"hover": worker.emst_hover(m), "climb": worker.emst_climb(m, 2.0)},
+          "designs": {"fit_c": {"hover": seg, "climb": clim}}}
+    out = asb_spoke._emst_outputs({"emst_live": lv})
+    names = {o["name"] for o in out}
+    assert "hover_live_fit_c_rpm" in names and "climb_live_fit_c_p_battery_W" in names
+    text = asb_spec.multirotor_report(
+        {}, {"multirotor_drag": {"speed_m_s": 1.0, "rho_kg_m3": 1.2, "S_ref_m2": 0.1, "CdA_asb_m2": dict(x=1, y=1, z=1),
+                                 "hoerner_CdA_m2": dict(x=1, y=1, z=1), "asb_over_hoerner": dict(x=1, y=1, z=1),
+                                 "asymmetry": dict(x=0, y=0, z=0), "CdA_m2": dict(x=1, y=1, z=1),
+                                 "CD": dict(CDx=1, CDy=1, CDz=1), "combine": "max"},
+             "emst_live": lv, "inputs": {"proptimiser_files_sha256": {"fit_c.yaml": "ab" * 32}}}, [])
+    assert "Live propeller" in text and "| maker table | hover |" in text and "| fit_c | climb |" in text and "ab" * 32 in text
+
+
 def test_isa_density_at_sea_level_and_height():
     assert worker.isa_density(0.0) == pytest.approx(1.225, rel=1e-3) and worker.isa_density(1000.0) < worker.isa_density(0.0)
 

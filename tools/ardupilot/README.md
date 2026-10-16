@@ -19,6 +19,8 @@ aircraft_version, package_hash, mass_kg, cg_m, segments, source.
 of that flight (say who weighed it in `source`). `wait_for_log: true` on a flight skips it with a note until the log is
 in the work folder. `mass_kg: document` and `cg_m: document` take the mass model of node 1.2.
 
+A flight (`params`) and the aircraft (`flight_files.parameters`) need two files with different content. AeroPlan registers one dataset for each file hash and refuses one file in two roles. Use the PARM messages of the log for the flight and a Mission Planner save for the aircraft.
+
 Open item: the spoke does not decode the log yet. The decoded record (a dataset of role `flight-record`) comes later.
 
 ## Flight files

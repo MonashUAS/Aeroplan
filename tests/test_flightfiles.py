@@ -135,3 +135,17 @@ def test_export_writes_the_mission_planner_files(tmp_path):
     assert sorted(p.name for p in paths) == ["t.parm", "t.waypoints", "t_fence_1_inclusion.poly"]
     assert (tmp_path / "out" / "t.waypoints").read_text() == WPL
     assert ff.parse_parm((tmp_path / "out" / "t.parm").read_text())["PARAM_0007"] == 1.75
+
+
+def test_the_redback_ardupilot_settings_have_no_fill_in_and_the_flight_names_a_release():
+    """The committed settings hold the facts of the log (no FILL_IN). The firmware of the flight is a release of the file."""
+    import yaml
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / "tools" / "ardupilot" / "settings" / "redback.yaml").read_text(encoding="utf-8")
+    st = yaml.safe_load(text)
+    assert "FILL_IN" not in text
+    releases = {r["release_id"]: r for r in st["releases"]}
+    for f in st["flights"]:
+        assert f["firmware"] in releases and not f.get("wait_for_log")
+        assert releases[f["firmware"]]["git_hash"] and releases[f["firmware"]]["board"]

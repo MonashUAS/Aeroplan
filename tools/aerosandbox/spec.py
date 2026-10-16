@@ -357,6 +357,28 @@ def multirotor_report(spec: Dict[str, Any], results: Dict[str, Any], ph: List[st
         for k, v in se["parameters"].items():
             L.append(f"| {k} | {v['x0']:.4g} | {v['d_endurance_min_per_unit']:.4g} | {v['percent_per_percent']:.3f} |")
         L.append("")
+    lv = results.get("emst_live")
+    if lv:
+        L += ["## Live propeller (Proptimiser BEMT in place of the CT/CP table)", "",
+              f"Hover thrust per rotor {lv['table']['hover']['thrust_each_N']:.2f} N, air density {lv['rho_kg_m3']:.4f} kg/m^3, "
+              f"{lv['n_rotors']} rotors. Each rotor has its own Propeller. The table row is the maker check: the CT/CP table of the "
+              "propulsion dataset at J = 0 with the same electrical chain.", "",
+              "| Case | Segment | RPM | P shaft each (W) | P battery (W) | I total (A) | Duty | Endurance (min) | Thrust spread (N) |",
+              "|---|---|---|---|---|---|---|---|---|"]
+        for seg in ("hover", "climb"):
+            t = lv["table"][seg]
+            L.append(f"| maker table | {seg} | {t['rpm']:.0f} | {t['p_shaft_each_W']:.1f} | {t['p_battery_W']:.0f} | "
+                     f"{t['i_total_A']:.2f} | {t['duty']:.3f} | {t['endurance_min']:.2f} | n/a |")
+        for design, segs in lv["designs"].items():
+            for seg in ("hover", "climb"):
+                t = segs[seg]
+                th = [r["thrust_N"] for r in t["rotors"]]
+                L.append(f"| {design} | {seg} | {t['rpm']:.0f} | {t['p_shaft_each_W']:.1f} | {t['p_battery_W']:.0f} | "
+                         f"{t['i_total_A']:.2f} | {t['duty']:.3f} | {t['endurance_min']:.2f} | {max(th) - min(th):.2g} |")
+        fl = results["inputs"].get("proptimiser_files_sha256") or {}
+        L += ["", "Files of the live propeller (sha256):"] + [f"- `{k}`: {v}" for k, v in sorted(fl.items())]
+        L += ["", "The first design is Fit C: the BEMT blade is fitted to the maker bench table (in sample) and the airfoil is "
+              "assumed. The other designs are comparison cases. The live result is a model value, not a measurement.", ""]
     L += ["## Placeholders that the results use", ""] + [f"- {p}" for p in ph]
     L += ["", "The rotor load is the CT/CP table of the propulsion dataset (manufacturer basis). The paper uses a NACA 0015 BEMT, "
           "and names this as its largest error source (section III.A.9). Rm and Re act on the current of one motor, "

@@ -63,6 +63,13 @@ drag:
   k_rotor_drag_kg: 0.0
   k_rotor_drag_source: "stand-in 0: fit from the flight log"
 
+# Live propeller (job emst_live): hover and vertical climb with the Proptimiser BEMT (`static_and_axial`, one Propeller for
+# each rotor) in place of the CT/CP table. The table result stays as the maker check. The design and state files are in
+# work/aerosandbox/redback/proptimiser/ (copied by hand). Fit C is the design fitted to the maker bench table (Clark-Y assumed,
+# in sample). Fit B is a comparison case with another airfoil assumption.
+proptimiser_design: MAD_FLUXER_22x6_6
+proptimiser_compare: [MAD_FLUXER_22x6_6_fitB]
+
 # EMST electrical model, Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A.2, eq. (9) to (12).
 # Rotor load: the CT/CP table of the propulsion dataset (contract B, manufacturer basis), not the NACA 0015 BEMT of the paper.
 # Motor and ESC chain: the Propalyser chain (kappa, r_tot) of the contract B file.
