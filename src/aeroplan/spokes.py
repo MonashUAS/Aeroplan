@@ -1,6 +1,7 @@
 """Spokes: one folder for each tool at the repository root. A spoke moves data between its tool and the source tree
 of an aircraft (`aircraft/<aircraft>/`).
 
+    Prototype/     the published specs of the team (MTOW) -> sizing targets and the first propulsion sizing
     AeroSandbox/   initial sizing (the first source of a new aircraft)
     flow5/         geometry and aero analysis
     SpecSheet/     the Master Specification Sheet: weight log and CG sheet -> the mass model
@@ -9,6 +10,7 @@ of an aircraft (`aircraft/<aircraft>/`).
     OpenVSP/       geometry to and from an OpenVSP model
     DAVEML/        a published DAVE-ML model (for example the NASA F-16)
     ArduPilot/     flight events: the log, the parameters, the firmware and the segments
+    MissionPlanner/ the flight files of the aircraft: parameters, waypoints, geofence
     Aerolink/      simulator export (the aerolink `.muas` package)
 
 Each folder holds `spoke.py` (the code), `README.md`, a `settings/` folder for tool settings (committed) and a
@@ -34,7 +36,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from .assets import sha256_file  # noqa: F401  (spokes use it)
 
-SPOKES = ("AeroSandbox", "flow5", "SpecSheet", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "Aerolink")
+SPOKES = ("Prototype", "AeroSandbox", "flow5", "SpecSheet", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "MissionPlanner", "Aerolink")
 
 
 def repo_root() -> Path:

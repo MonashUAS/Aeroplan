@@ -1,0 +1,597 @@
+{
+  "wbs_no": "1.2",
+  "name": "AirVehicle",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "redback_airvehicle",
+    "mass_properties": {
+      "mass": {
+        "value": 9.133999999999999,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.0,
+          0.0,
+          0.009729312470317632
+        ],
+        "units": "m"
+      },
+      "inertia": {
+        "axes": "parallel_to_design",
+        "products_convention": "+integral(xy dm)",
+        "ixx": 0.2560918126976092,
+        "iyy": 0.293494539695223,
+        "izz": 0.543003020513364,
+        "ixy": 0.0,
+        "ixz": 0.0,
+        "iyz": 0.0,
+        "units": "kg*m^2",
+        "unverified_products": []
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Configuration all_payloads: the weight log of the Master Specification Sheet (Redback Master SpreadSheet - V2 Weight Breakdown.csv), total row Total Weight.",
+        "Motors, propellers, ESCs and motor mounts are point masses at the four hubs, the boom arms are point masses half way along the arm, and all other mass is at the origin (user rules, 2026-10-16).",
+        "The inertia is the parallel-axis sum of the point masses. A part has no inertia of its own in it."
+      ]
+    },
+    "reference": {
+      "design_frame": "x_aft_y_right_z_up_m_bodyOrigin",
+      "kind": "multirotor",
+      "body_frame": "FRD",
+      "euler": "3-2-1/NED",
+      "s_ref": {
+        "value": 0.06,
+        "units": "m ** 2"
+      },
+      "b_ref": {
+        "value": 0.7476517825609436,
+        "units": "m"
+      },
+      "c_ref": {
+        "value": 0.8010535817335547,
+        "units": "m"
+      },
+      "nominal_cg": {
+        "frame": "design",
+        "xyz": [
+          0.0,
+          0.0,
+          0.009729312470317632
+        ],
+        "units": "m"
+      },
+      "mrp": {
+        "definition": "nominal_cg",
+        "config_id": "redback.nominal",
+        "point": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.009729312470317632
+          ],
+          "units": "m"
+        }
+      },
+      "surface_signs": {},
+      "placeholder_fields": [
+        "mrp",
+        "nominal_cg",
+        "s_ref"
+      ],
+      "notes": [
+        "Multirotor. The design frame origin is the middle of the four hubs (the body origin). s_ref: the frontal area of the demo body box (y times z), a placeholder. b_ref: the hub-to-hub distance in y. c_ref: the hub-to-hub distance in x.",
+        "MRP = the CG of the mass model (SpecSheet spoke). It is a mass model value (placeholder)."
+      ]
+    },
+    "initial_conditions": {
+      "rate_frame": "local_NED",
+      "latitude_type": "geodetic",
+      "attitude_sequence": "3-2-1",
+      "units": "SI",
+      "values": {
+        "speed_mps": 0.0,
+        "altitude_m": 0.0
+      },
+      "placeholder": true
+    },
+    "datasets": [
+      {
+        "role": "aero",
+        "ref": "asset:sha256:e085e9fee76a27d2eee8e9ce35532741ad1c8ba80d18d0a9b953d944032d3be2"
+      }
+    ],
+    "point_masses": [
+      {
+        "tag": "BOOM_ARM-M1",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.20026339543338867,
+            0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M2",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.20026339543338867,
+            -0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M3",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.20026339543338867,
+            -0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M4",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.20026339543338867,
+            0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M1",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M2",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M3",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M4",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "AEROSTRUCTURES-REST",
+        "mass": {
+          "value": 1.906,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Aerostructures weighed total (row 29) less the placed rows. Itemised in the rest: Arm Mount, Top Plate, Bottom Plate, Carbon Spacer Plate, Arm Mount Spacer, Mid Battery Mount, Bottom Battery Mount, Landing Gear Leg Boom, Landing Gear Plate Mount, Landing Gear T Mount, Landing Gear Feet Booms, Landing Gear Feet Caps, Switch Mount, FPV Cam Mount, Herelink Mount, ESC Mount, Cube Mount, MISC (hardware). Not weighed: none. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      },
+      {
+        "tag": "MOTORS-M1",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 31 Motors (Weighed the physical item), 254 g for one arm. Placed at the hub of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTORS-M2",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 31 Motors (Weighed the physical item), 254 g for one arm. Placed at the hub of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTORS-M3",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 31 Motors (Weighed the physical item), 254 g for one arm. Placed at the hub of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTORS-M4",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 31 Motors (Weighed the physical item), 254 g for one arm. Placed at the hub of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPELLORS_INC_HARDWARE-M1",
+        "mass": {
+          "value": 0.049,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 32 Propellors (inc hardware) (Weighed the physical item), 49 g for one arm. Placed at the hub of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPELLORS_INC_HARDWARE-M2",
+        "mass": {
+          "value": 0.049,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 32 Propellors (inc hardware) (Weighed the physical item), 49 g for one arm. Placed at the hub of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPELLORS_INC_HARDWARE-M3",
+        "mass": {
+          "value": 0.049,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 32 Propellors (inc hardware) (Weighed the physical item), 49 g for one arm. Placed at the hub of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPELLORS_INC_HARDWARE-M4",
+        "mass": {
+          "value": 0.049,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 32 Propellors (inc hardware) (Weighed the physical item), 49 g for one arm. Placed at the hub of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "ESCS_INC_WIRING-M1",
+        "mass": {
+          "value": 0.08,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 34 ESCs (inc wiring) (Weighed the physical item), 80 g for one arm. Placed at the hub of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "ESCS_INC_WIRING-M2",
+        "mass": {
+          "value": 0.08,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 34 ESCs (inc wiring) (Weighed the physical item), 80 g for one arm. Placed at the hub of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "ESCS_INC_WIRING-M3",
+        "mass": {
+          "value": 0.08,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 34 ESCs (inc wiring) (Weighed the physical item), 80 g for one arm. Placed at the hub of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "ESCS_INC_WIRING-M4",
+        "mass": {
+          "value": 0.08,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 34 ESCs (inc wiring) (Weighed the physical item), 80 g for one arm. Placed at the hub of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-REST",
+        "mass": {
+          "value": 3.831,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Propulsion weighed total (row 35) less the placed rows. Itemised in the rest: Propulsion Battery, Propulsion Wires. Not weighed: none. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      },
+      {
+        "tag": "MISC_AVIONICS-REST",
+        "mass": {
+          "value": 0.517,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Misc. Avionics weighed total (row 44) less the placed rows. Itemised in the rest: Cube Assembly, Avionics Battery, Here4, Herelink Module + fat antennas, ELRS Receiver + antenna, Stack Wiring, Ethernet Switch. Not weighed: M3 15mm Bolts. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      },
+      {
+        "tag": "LIFELINE-REST",
+        "mass": {
+          "value": 0.572,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Lifeline weighed total (row 52) less the placed rows. Itemised in the rest: Payload 1 (Beacon), Payload 2 (Waterbottle), Servos, 3D printed payload housing (Beacon), 3d Printed payload housing (Water Bottle), Bolts, Braking Motors. Not weighed: none. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      },
+      {
+        "tag": "VISION-REST",
+        "mass": {
+          "value": 0.11,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Vision weighed total (row 55) less the placed rows. Itemised in the rest: SIYI A8 mini, Data Cables. Not weighed: none. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      },
+      {
+        "tag": "DNA-REST",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: DNA weighed total (row 60) less the placed rows. Itemised in the rest: Brave 4 Pro (FPV cam), Pi 4, Data cables. Not weighed: Bolts. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      }
+    ],
+    "sources": [
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336",
+        "role": "multirotor body drag and EMST results"
+      },
+      {
+        "tool": "SpecSheet",
+        "asset": "asset:sha256:30f01a3e6518e0e71057929e50a1ac87ca8c6ce9b10bfa686cf5a530e0dd87d3",
+        "role": "mass model: weight log"
+      },
+      {
+        "tool": "SpecSheet",
+        "asset": "asset:sha256:2e22fca4bc5545815d2126c908d799e265d712fa61709c07e9ac661d819bf8cf",
+        "role": "estimate sheet: sanity check only, never truth",
+        "note": "estimates"
+      }
+    ]
+  }
+}

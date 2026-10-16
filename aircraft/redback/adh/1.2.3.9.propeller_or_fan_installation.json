@@ -1,0 +1,314 @@
+{
+  "wbs_no": "1.2.3.9",
+  "name": "PropellerOrFanInstallation",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "prop_lift_1",
+    "propeller": {
+      "role": "lift",
+      "hub": {
+        "frame": "design",
+        "xyz": [
+          -0.40052679086677734,
+          0.3738258912804718,
+          0.04793286952744405
+        ],
+        "units": "m"
+      },
+      "thrust_axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "spin": "cw",
+      "diameter": {
+        "value": 0.5588,
+        "units": "m"
+      },
+      "motor": 1
+    },
+    "visual": [
+      {
+        "part": "motor_1",
+        "generator": "cylinder",
+        "units": "m",
+        "shape": {
+          "centre": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.02293286952744405
+          ],
+          "axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "length_m": 0.05,
+          "radius_m": 0.0375
+        },
+        "material": "motor",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+        "placeholder": true
+      },
+      {
+        "part": "rotor_1",
+        "generator": "disc",
+        "units": "m",
+        "shape": {
+          "centre": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "radius_m": 0.2794,
+          "thickness_m": 0.002,
+          "alpha": 0.35
+        },
+        "material": "rotor",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+        "placeholder": true
+      }
+    ]
+  },
+  "subcomponents": [
+    {
+      "name": "Lift rotor 2",
+      "description": "Lift rotor 2 (ArduPilot motor 2, rear left)",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_2",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              0.40052679086677734,
+              -0.3738258912804718,
+              0.04793286952744405
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "spin": "cw",
+          "diameter": {
+            "value": 0.5588,
+            "units": "m"
+          },
+          "motor": 2
+        },
+        "visual": [
+          {
+            "part": "motor_2",
+            "generator": "cylinder",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.40052679086677734,
+                -0.3738258912804718,
+                0.02293286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "length_m": 0.05,
+              "radius_m": 0.0375
+            },
+            "material": "motor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "placeholder": true
+          },
+          {
+            "part": "rotor_2",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.40052679086677734,
+                -0.3738258912804718,
+                0.04793286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "radius_m": 0.2794,
+              "thickness_m": 0.002,
+              "alpha": 0.35
+            },
+            "material": "rotor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift rotor 3",
+      "description": "Lift rotor 3 (ArduPilot motor 3, front left)",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_3",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              -0.40052679086677734,
+              -0.3738258912804718,
+              0.04793286952744405
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "spin": "ccw",
+          "diameter": {
+            "value": 0.5588,
+            "units": "m"
+          },
+          "motor": 3
+        },
+        "visual": [
+          {
+            "part": "motor_3",
+            "generator": "cylinder",
+            "units": "m",
+            "shape": {
+              "centre": [
+                -0.40052679086677734,
+                -0.3738258912804718,
+                0.02293286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "length_m": 0.05,
+              "radius_m": 0.0375
+            },
+            "material": "motor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "placeholder": true
+          },
+          {
+            "part": "rotor_3",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                -0.40052679086677734,
+                -0.3738258912804718,
+                0.04793286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "radius_m": 0.2794,
+              "thickness_m": 0.002,
+              "alpha": 0.35
+            },
+            "material": "rotor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift rotor 4",
+      "description": "Lift rotor 4 (ArduPilot motor 4, rear right)",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_4",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              0.40052679086677734,
+              0.3738258912804718,
+              0.04793286952744405
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "spin": "ccw",
+          "diameter": {
+            "value": 0.5588,
+            "units": "m"
+          },
+          "motor": 4
+        },
+        "visual": [
+          {
+            "part": "motor_4",
+            "generator": "cylinder",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.40052679086677734,
+                0.3738258912804718,
+                0.02293286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "length_m": 0.05,
+              "radius_m": 0.0375
+            },
+            "material": "motor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "placeholder": true
+          },
+          {
+            "part": "rotor_4",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.40052679086677734,
+                0.3738258912804718,
+                0.04793286952744405
+              ],
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "radius_m": 0.2794,
+              "thickness_m": 0.002,
+              "alpha": 0.35
+            },
+            "material": "rotor",
+            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ]
+      }
+    }
+  ]
+}

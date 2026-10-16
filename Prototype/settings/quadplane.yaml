@@ -1,0 +1,35 @@
+# Prototype spoke settings for the quadplane (tool settings, not aircraft data). Rename the file to <aircraft>.yaml.
+# base_url, project: where `aeroplan generate Prototype <aircraft>` downloads the published specs. The token is in the
+#   environment variable PROTOTYPE_TOKEN (scope specs:read). Never put a token in this file.
+# specs: Prototype spec slug -> the ADH sizing target on node 1.2.
+#   key:    the flat name of the target (lower case, digits, underscore).
+#   bound:  max, min or target.
+#   units:  pint spelling. The spoke converts the unit of the spec into this unit and refuses a unit it cannot convert.
+# mtow_spec: the slug in `specs` that gives the design MTOW.
+# propulsion_sizing: the assumptions of the first propulsion sizing (src/aeroplan/propulsion_sizing.py). Every value
+#   below is a STAND-IN chosen on 2026-10-16, not a measurement or a team decision. While `confirmed` is false the
+#   derived targets carry placeholder: true and `aeroplan build` lists them. Set confirmed: true after the team agrees.
+base_url: https://meetprototype.com/api/v1
+project: quadplane            # the project slug in Prototype (stand-in: use the real slug)
+specs:
+  mtow:                       # the spec slug (stand-in: use the real slug)
+    key: mtow
+    bound: max
+    units: kg
+mtow_spec: mtow
+propulsion_sizing:
+  confirmed: false
+  n_lift: 4                   # lift rotors (quad)
+  hover_tw: 2.0               # peak lift thrust over weight; margin for control and gusts
+  disc_loading_n_m2: 150.0    # N of weight per m^2 of total rotor area; low = big, quiet, efficient rotors
+  figure_of_merit: 0.65
+  eta_lift_chain: 0.80        # motor * ESC, lift motors
+  cruise_speed_m_s: 22.0
+  lift_to_drag: 10.0          # whole aircraft in cruise, with the idle lift rotors
+  eta_prop_cruise: 0.70
+  eta_cruise_chain: 0.82
+  hover_time_s: 120.0         # take-off + landing + hold, all hover time of the mission
+  cruise_time_s: 2400.0
+  reserve_fraction: 0.25
+  depth_of_discharge: 0.80
+  battery_wh_per_kg: 180.0    # pack level (Li-ion cell level is higher)

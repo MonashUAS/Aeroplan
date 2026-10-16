@@ -98,7 +98,7 @@ def test_imports():
 def test_tool_independence():
     """ADH principle: data is separate from tools. AeroPlan imports no sibling repo."""
     pattern = re.compile(r"^\s*(import|from)\s+(aerolink|propalyser|proptimiser)", re.I | re.M)
-    spokes = [ROOT / name for name in ("AeroSandbox", "flow5", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "Aerolink")]
+    spokes = [ROOT / name for name in ("Prototype", "AeroSandbox", "flow5", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "MissionPlanner", "Aerolink")]
     worker = ROOT / "AeroSandbox" / "asb_worker.py"       # runs in AeroSandbox/.venv: it may import proptimiser
     for py in [*SRC.rglob("*.py"), *(f for d in spokes for f in d.glob("*.py"))]:
         text = py.read_text(encoding="utf-8")

@@ -110,7 +110,8 @@
       "default": "x_aft_y_right_z_up_m_noseDatum",
       "enum": [
         "x_aft_y_right_z_up_m_noseDatum",
-        "x_aft_y_right_z_up_m_flow5Origin"
+        "x_aft_y_right_z_up_m_flow5Origin",
+        "x_aft_y_right_z_up_m_bodyOrigin"
       ],
       "title": "Design Frame",
       "type": "string"
@@ -120,6 +121,20 @@
       "default": "3-2-1/NED",
       "title": "Euler",
       "type": "string"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "const": "multirotor",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)",
+      "title": "Kind"
     },
     "mrp": {
       "$ref": "#/$defs/Mrp"

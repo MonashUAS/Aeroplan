@@ -8,7 +8,10 @@ Settings (committed): ArduPilot/settings/<aircraft>.yaml
     releases    a list of {release_id, firmware, version, git_hash, board, source}
     flights     a list of {event_id, date, log, params, firmware (a release_id), aircraft_version, package_hash,
                 mass_kg, cg_m [x, y, z] (design frame), segments [{name, t_start_s, t_end_s, purpose, note}],
-                source (who weighed it and how)}
+                source (who weighed it and how), wait_for_log}
+    wait_for_log   true: the flight is a stub. When its log is not in the work folder, the spoke skips the flight and prints a
+                   note (the other flights and the releases are still written). Without it, a missing log is an error.
+    mass_kg, cg_m  the word `document` takes the mass or the CG of node 1.2 muas.mass_properties (the as-built mass model)
 
 What ingest writes:
   - each release: an item of `muas.software_releases` on 1.2.9
@@ -44,6 +47,20 @@ def read_params(path: Path) -> Dict[str, float]:
     return out
 
 
+def _as_built(doc: Dict[str, Any], f: Dict[str, Any]) -> Dict[str, Any]:
+    """The flight with `mass_kg: document` and `cg_m: document` replaced by the mass model of node 1.2."""
+    f = dict(f)
+    if "document" in (f.get("mass_kg"), f.get("cg_m")):
+        mp = (adh_doc.node(doc, "1.2").get("muas") or {}).get("mass_properties")
+        if mp is None:
+            raise ValueError(f"flight {f['event_id']}: mass_kg or cg_m is `document`, but node 1.2 has no mass_properties")
+        if f.get("mass_kg") == "document":
+            f["mass_kg"] = mp["mass"]["value"]
+        if f.get("cg_m") == "document":
+            f["cg_m"] = list(mp["cg"]["xyz"])
+    return f
+
+
 def ingest(doc: Dict[str, Any], ctx: Context):
     st = ctx.settings()
     if not st or not (st.get("flights") or st.get("releases")):
@@ -55,15 +72,26 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         changes.append(f"software releases: {', '.join(r['release_id'] for r in st['releases'])}")
     known = {r["release_id"] for r in st.get("releases") or []}
     events = []
-    ft = adh_doc.node(doc, "1.8.1.4", create=True) if st.get("flights") else None
+    flights = []
+    for f in st.get("flights") or []:
+        log = ctx.work / f["log"]
+        if not log.is_file() and f.get("wait_for_log"):
+            print(f"ArduPilot: flight {f['event_id']}: the log {log.relative_to(ctx.root).as_posix()} is not here: flight "
+                  "skipped. Copy the DataFlash log into that folder by hand.")
+            continue
+        flights.append(f)
+    if not flights and not st.get("releases"):
+        return None
+    ft = adh_doc.node(doc, "1.8.1.4", create=True) if flights else None
     if ft is not None:
         adh_doc.muas(ft, "flight_tests")
-    for f in st.get("flights") or []:
+    for f in flights:
         if f["firmware"] not in known:
             raise ValueError(f"flight {f['event_id']}: firmware {f['firmware']!r} is not a release of the settings")
         log = ctx.work / f["log"]
         if not log.is_file():
             raise ValueError(f"flight {f['event_id']}: the log {log.name} is not in {ctx.work}")
+        f = _as_built(doc, f)
         log_ref = ctx.source_ref(log, f"DataFlash log of flight {f['event_id']}")
         ev = {"event_id": f["event_id"], "date": str(f["date"]), "aircraft_version": f["aircraft_version"],
               "mass": {"value": f["mass_kg"], "units": "kg"}, "cg": {"xyz": list(f["cg_m"])},

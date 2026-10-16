@@ -1,0 +1,133 @@
+{
+  "wbs_no": "1.10.2",
+  "name": "DataRepository",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "data_repository",
+    "assets": [
+      {
+        "id": "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336",
+        "kind": "file",
+        "name": "AeroSandbox.multirotor_results.json",
+        "role": "multirotor body drag and EMST results",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 2339,
+        "locations": [
+          {
+            "repo": "AeroSandbox/work/redback/asb/multirotor_results.json"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:2e22fca4bc5545815d2126c908d799e265d712fa61709c07e9ac661d819bf8cf",
+        "kind": "file",
+        "name": "SpecSheet.Redback_Master_SpreadSheet_-_Mk4_Propulsion_Spec.csv",
+        "role": "estimate sheet: sanity check only, never truth",
+        "tool": "SpecSheet",
+        "media_type": "application/vnd.ms-excel",
+        "size": 3625,
+        "locations": [
+          {
+            "repo": "SpecSheet/sheets/redback/Redback Master SpreadSheet - Mk4 Propulsion Spec.csv"
+          }
+        ],
+        "derived_from": [],
+        "note": "estimates"
+      },
+      {
+        "id": "asset:sha256:30f01a3e6518e0e71057929e50a1ac87ca8c6ce9b10bfa686cf5a530e0dd87d3",
+        "kind": "file",
+        "name": "SpecSheet.Redback_Master_SpreadSheet_-_V2_Weight_Breakdown.csv",
+        "role": "mass model: weight log",
+        "tool": "SpecSheet",
+        "media_type": "application/vnd.ms-excel",
+        "size": 6797,
+        "locations": [
+          {
+            "repo": "SpecSheet/sheets/redback/Redback Master SpreadSheet - V2 Weight Breakdown.csv"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:e085e9fee76a27d2eee8e9ce35532741ad1c8ba80d18d0a9b953d944032d3be2",
+        "kind": "dataset",
+        "name": "aero.redback",
+        "role": "aero model (DAVE-ML in ADH form)",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 7621,
+        "locations": [
+          {
+            "repo": "aircraft/redback/datasets/aero.redback.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336"
+        ],
+        "built_against": "redback@0.1.0",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "AeroSandbox AeroBuildup + AeroPlan multirotor body drag",
+            "model_name": "redback body drag",
+            "description": "Quadratic body drag per axis and a rotor drag term. Placeholder until the flight log fits it."
+          },
+          "fidelity": "L1",
+          "mrp": {
+            "frame": "design",
+            "xyz": [
+              0.0,
+              0.0,
+              0.009729312470317632
+            ],
+            "units": "m"
+          },
+          "analysis_mass_model": {
+            "mass": {
+              "value": 9.133999999999999,
+              "units": "kg"
+            },
+            "cg": {
+              "frame": "design",
+              "xyz": [
+                0.0,
+                0.0,
+                0.009729312470317632
+              ],
+              "units": "m"
+            },
+            "inertia": {
+              "axes": "parallel_to_design",
+              "products_convention": "+integral(xy dm)",
+              "ixx": 0.2560918126976092,
+              "iyy": 0.293494539695223,
+              "izz": 0.543003020513364,
+              "ixy": 0.0,
+              "ixz": 0.0,
+              "iyz": 0.0,
+              "units": "kg*m^2",
+              "unverified_products": []
+            },
+            "source": "estimate",
+            "placeholder": true,
+            "notes": [
+              "Configuration all_payloads: the weight log of the Master Specification Sheet (Redback Master SpreadSheet - V2 Weight Breakdown.csv), total row Total Weight.",
+              "Motors, propellers, ESCs and motor mounts are point masses at the four hubs, the boom arms are point masses half way along the arm, and all other mass is at the origin (user rules, 2026-10-16).",
+              "The inertia is the parallel-axis sum of the point masses. A part has no inertia of its own in it."
+            ]
+          },
+          "units_system": "SI",
+          "placeholder": true,
+          "notes": [
+            "Forces only: F = -0.5 rho S C_D v |v| per axis, plus -k_rotor_drag n_sum v on x and y.",
+            "The drag area comes from stand-in shapes. No uncertainty estimate exists (sigma not given)."
+          ]
+        },
+        "dataset_role": "aero"
+      }
+    ]
+  }
+}

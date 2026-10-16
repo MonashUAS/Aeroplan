@@ -4,8 +4,9 @@
 - `Autopilot` sits on the ADH node 1.2.5.10 AutomaticFlightControl (key `muas.autopilot`): the servo output map.
   It is the ground truth for SITL and for the flight controller (Cube). Aerolink makes the ArduPilot parameters from it.
 
-ArduPilot output functions (SERVOn_FUNCTION): aileron 4, elevator 19, rudder 21, throttle 70.
-Source: ArduPilot parameter list, ArduPlane, SERVOn_FUNCTION [reference/index needed].
+ArduPilot output functions (SERVOn_FUNCTION): aileron 4, elevator 19, rudder 21, throttle 70, motor1 to motor4 33 to 36.
+Source: ArduPilot parameter list, SERVOn_FUNCTION [reference/index needed]. Motor1 to motor8 are 33 to 40 there; this
+model has motor1 to motor4 (a quadcopter).
 """
 from __future__ import annotations
 
@@ -16,7 +17,9 @@ from pydantic import Field, model_validator
 
 from .base import MuasModel
 
-ARDUPILOT_FUNCTION = {"aileron": 4, "elevator": 19, "rudder": 21, "throttle": 70}
+ARDUPILOT_FUNCTION = {"aileron": 4, "elevator": 19, "rudder": 21, "throttle": 70, "motor1": 33, "motor2": 34, "motor3": 35,
+                      "motor4": 36}
+MOTOR_FUNCTIONS = ("motor1", "motor2", "motor3", "motor4")
 
 
 class Actuator(MuasModel):
@@ -34,13 +37,20 @@ class OutputFunction(str, Enum):
     ELEVATOR = "elevator"
     RUDDER = "rudder"
     THROTTLE = "throttle"
+    MOTOR1 = "motor1"
+    MOTOR2 = "motor2"
+    MOTOR3 = "motor3"
+    MOTOR4 = "motor4"
 
 
 class ServoOutput(MuasModel):
     """One output channel of the flight controller.
 
     `sign` relates the PWM to the surface: +1 means a PWM above the trim gives a positive deflection in the
-    JSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle has no sign.
+    JSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle and a
+    motor output have no sign. A motor output (`motor1` to `motor4`) drives one lift rotor: `targets` holds the
+    `muas.instance` of the rotor whose `propeller.motor` equals the output number. `pwm_min_us` and `pwm_max_us` are
+    the ESC end points.
     """
 
     channel: int = Field(ge=1, le=16)
@@ -60,9 +70,11 @@ class ServoOutput(MuasModel):
 
     @model_validator(mode="after")
     def _check(self):
-        if self.function is OutputFunction.THROTTLE:
+        if self.function is OutputFunction.THROTTLE or self.function.value in MOTOR_FUNCTIONS:
             if self.sign is not None:
-                raise ValueError("a throttle output has no sign")
+                raise ValueError(f"a {self.function.value} output has no sign")
+            if self.function.value in MOTOR_FUNCTIONS and len(self.targets) != 1:
+                raise ValueError(f"channel {self.channel}: a motor output drives exactly one rotor")
         elif self.sign not in (1, -1):
             raise ValueError(f"channel {self.channel}: sign must be +1 or -1 for a surface output")
         pwm = [p for p in (self.pwm_min_us, self.pwm_trim_us, self.pwm_max_us) if p is not None]

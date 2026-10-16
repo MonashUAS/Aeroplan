@@ -35,6 +35,8 @@ class DatasetRole(str, Enum):
     CONTROL = "control"
     FLIGHT_RECORD = "flight-record"
     PARAMETERS = "parameters"
+    WAYPOINTS = "waypoints"
+    GEOFENCE = "geofence"
     SEGMENTS = "segments"
     OTHER = "other"
 
@@ -42,8 +44,9 @@ class DatasetRole(str, Enum):
 class DatasetMeta(MuasModel):
     """The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables)."""
 
-    form: Literal["daveml-adh", "tables", "parameters"] = Field(
-        description="daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}")
+    form: Literal["daveml-adh", "tables", "parameters", "waypoints", "geofence"] = Field(
+        description="daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}. "
+        "waypoints: a QGC WPL plan. geofence: polygons, circles and a return point (aeroplan.flightfiles)")
     model_description: Dict[str, Any] = Field(description="ADH ModelDescription: generation_tool, version, "
                                               "generation_date_and_time, author, description")
     fidelity: Fidelity

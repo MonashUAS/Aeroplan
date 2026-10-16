@@ -49,3 +49,7 @@ into `flow5/work/currawong/sweeps/`, name it in `flow5/settings/currawong.yaml`,
 - Payload and water are not in the nominal configuration (the weight log has none). `AeroSandbox/lab.py` makes the tank
   configurations from the `tanks` rows of the CG sheets.
 - The CG sheets are for two nose layouts. The position sheet in the settings is the one that agrees with the ADH fuselage.
+
+## CSV mode (Redback)
+
+Settings `format: csv` reads the weight log as a CSV (`SpecSheet/sheets/<aircraft>/`). `placement` rules put per-item weights at the rotor hubs (`hub`) or half way along the arm (`half_arm`). The rest of each weighed subassembly is one point mass at `origin_m`. `mrp: from_mass` sets the MRP to the rolled-up CG. `sanity` compares an estimate sheet (the Mk4 CSV) with the log: never truth.

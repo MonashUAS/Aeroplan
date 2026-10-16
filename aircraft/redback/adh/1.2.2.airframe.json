@@ -1,0 +1,368 @@
+{
+  "wbs_no": "1.2.2",
+  "name": "Airframe",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "airframe",
+    "mass_properties": {
+      "mass": {
+        "value": 2.318,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.0,
+          0.0,
+          0.006658491798031486
+        ],
+        "units": "m"
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Mass: the weighed subassembly total of the sheet (Aerostructures). CG: point masses placed by the rules of the settings (hub, half arm, origin). The origin mass is a stand-in position."
+      ]
+    },
+    "ground_contacts": [
+      {
+        "name": "FOOT_FR",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.25,
+            0.25,
+            -0.2
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "placeholder": true
+      },
+      {
+        "name": "FOOT_RL",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.25,
+            -0.25,
+            -0.2
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "placeholder": true
+      },
+      {
+        "name": "FOOT_FL",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.25,
+            -0.25,
+            -0.2
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "placeholder": true
+      },
+      {
+        "name": "FOOT_RR",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.25,
+            0.25,
+            -0.2
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 3000.0,
+        "damping_N_per_m_s": 150.0,
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "placeholder": true
+      }
+    ],
+    "point_masses": [
+      {
+        "tag": "BOOM_ARM-M1",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.20026339543338867,
+            0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M2",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.20026339543338867,
+            -0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M3",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.20026339543338867,
+            -0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "BOOM_ARM-M4",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.20026339543338867,
+            0.1869129456402359,
+            0.023966434763722025
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 9 Boom Arm (Weighed the physical item), 45 g for one arm. Placed half way along the arm (half the hub vector) of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M1",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_1 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M2",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_2 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M3",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_3 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "MOTOR_MOUNT-M4",
+        "mass": {
+          "value": 0.058,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv row 11 Motor Mount (Determined from CAD), 58 g for one arm. Placed at the hub of prop_lift_4 (muas.propeller.hub): user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin",
+        "placeholder": false
+      },
+      {
+        "tag": "AEROSTRUCTURES-REST",
+        "mass": {
+          "value": 1.906,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: Aerostructures weighed total (row 29) less the placed rows. Itemised in the rest: Arm Mount, Top Plate, Bottom Plate, Carbon Spacer Plate, Arm Mount Spacer, Mid Battery Mount, Bottom Battery Mount, Landing Gear Leg Boom, Landing Gear Plate Mount, Landing Gear T Mount, Landing Gear Feet Booms, Landing Gear Feet Caps, Switch Mount, FPV Cam Mount, Herelink Mount, ESC Mount, Cube Mount, MISC (hardware). Not weighed: none. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      }
+    ],
+    "visual": [
+      {
+        "part": "body",
+        "generator": "box",
+        "units": "m",
+        "shape": {
+          "centre": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "size": [
+            0.3,
+            0.3,
+            0.2
+          ]
+        },
+        "material": "body",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo body box (no CAD): the size is a stand-in, measure the frame.",
+        "placeholder": true
+      },
+      {
+        "part": "arm_1",
+        "generator": "tube",
+        "units": "m",
+        "shape": {
+          "p0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p1": [
+            -0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "radius_m": 0.0125
+        },
+        "material": "arm",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "placeholder": true
+      },
+      {
+        "part": "arm_2",
+        "generator": "tube",
+        "units": "m",
+        "shape": {
+          "p0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p1": [
+            0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "radius_m": 0.0125
+        },
+        "material": "arm",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "placeholder": true
+      },
+      {
+        "part": "arm_3",
+        "generator": "tube",
+        "units": "m",
+        "shape": {
+          "p0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p1": [
+            -0.40052679086677734,
+            -0.3738258912804718,
+            0.04793286952744405
+          ],
+          "radius_m": 0.0125
+        },
+        "material": "arm",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "placeholder": true
+      },
+      {
+        "part": "arm_4",
+        "generator": "tube",
+        "units": "m",
+        "shape": {
+          "p0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p1": [
+            0.40052679086677734,
+            0.3738258912804718,
+            0.04793286952744405
+          ],
+          "radius_m": 0.0125
+        },
+        "material": "arm",
+        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "placeholder": true
+      }
+    ]
+  }
+}

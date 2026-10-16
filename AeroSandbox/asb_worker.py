@@ -14,6 +14,15 @@ Spec (tool-neutral JSON, SI units, angles in degrees where the name says deg, de
     flight       speed_m_s, altitude_m, weight_n
 
 Jobs: version, chain, geometry, polar, cruise_trim, static_check.
+
+Multirotor mode (spec["kind"] == "multirotor"), jobs multirotor_drag, emst_segments, emst_endurance, emst_sensitivity:
+    rotors       [{motor, instance, hub, thrust_axis, spin, diameter_m}]
+    body         {box: {centre, size}, arms: [{p0, p1, radius_m}]}
+    propulsion   diameter_m, p_max_W, motor, battery {v_nominal_V, capacity_As, cells_s}, tables {J, CT, CP}, throttle_map
+    electrical   rb_ohm, rw_ohm, re_ohm, ia_A, ip_A, eta_e, discharge_fraction
+    drag         S_ref_m2, CDx, CDy, CDz, k_rotor_drag_kg (the body drag of the aero dataset)
+    analysis     altitude_m, climb_rate_m_s, forward_speeds_m_s, scan_max_m_s, scan_step_m_s, sensitivity_step
+The EMST functions (the section "EMST" below) use numpy only, so tests can import this file in any Python.
 """
 from __future__ import annotations
 
@@ -134,6 +143,250 @@ def _prop_model(spec):
     from proptimiser.init import Propeller
     prop = Propeller.load(spec["propulsion"]["design"])
     return PropellerModel.from_propeller(prop, n_psi=1), prop
+
+
+# ------------------------------------------------------------------------------------------------------- EMST
+# Electric Multirotor Sizing Tool, segment analysis: Bershadsky, Haviland, Johnson, "Electric Multirotor UAV
+# Propulsion System Sizing for Performance Prediction and Design Optimization", AIAA 2016-0581, section III.A.
+#
+#   Vs  = d s Vc - Id (Rb + Rw + Re + Rm)          eq. (9)   mean voltage at the motor coils
+#   RPM = Kv Vs / G                                 eq. (10)  no-load speed
+#   Id  = Nm (Q w / (etaM Vs) + I0) / etaE          eq. (11)  drive current
+#   It  = Id + Ip + Ia                              eq. (12)  total current
+#
+# What differs from the paper, on purpose:
+#   - The rotor load (thrust and torque against the shaft speed) comes from the CT/CP table of the propulsion dataset
+#     (contract B, manufacturer basis). The paper uses a BEMT with a NACA 0015 section and names it its largest error
+#     (section III.A.9).
+#   - The motor and ESC chain is the Propalyser chain (electric_chain above): I_motor = I0 + (Q + Q0) Kv and
+#     V_term = w / (kappa Kv) + R I_motor. It replaces the two forms Q w / (etaM Vs) and Kv Vs / G, which describe the
+#     same first-order motor with an efficiency etaM. The throttle d is the duty of the ESC chopper.
+#   - Rm and Re act on the current of one motor. Rb and Rw act on the bus current. The paper writes one Id for all
+#     motors. For Nm = 1 the two forms are equal.
+#   - Nm = N identical rotors with the same speed (a symmetric vehicle in steady flight: no trim moment is solved).
+# The paper sets the thrust to the weight (hover) or, in forward flight, loops on the tilt angle until the lift of the
+# body and the thrust carry the weight (section III.A.3). Here the body has drag and no lift: the tilt loop solves
+#   T sin(th) = Dh,  T cos(th) = W + Fv     (Dh: aerodynamic force against the flight direction, Fv: downward part).
+
+G0 = 9.80665                        # m/s^2, standard gravity
+OR_MOTOR_MASS = (4.0499, -0.5329)   # paper eq. (1), outrunner: m_motor [g] = 10^p1 Kv^p2, Kv in rpm/V
+BATT_MASS = (0.026373, 2.0499e-05)  # paper eq. (4): m_batt [g] = (p1 s + p2) C, C in mAh, 1P
+
+
+def rotor_coeffs(tab, j):
+    """CT and CP of the table at the advance ratio j (held at the end values outside the table)."""
+    return float(np.interp(j, tab["J"], tab["CT"])), float(np.interp(j, tab["J"], tab["CP"]))
+
+
+def rotor_load(n_rev_s, v_ax, m):
+    """Thrust (N), shaft torque (N m), shaft power (W) and J of one rotor at n (rev/s) and axial inflow v_ax (m/s)."""
+    d, rho = m["diameter_m"], m["rho"]
+    j = v_ax / (n_rev_s * d)
+    ct, cp = rotor_coeffs(m["tab"], j)
+    thrust = ct * rho * n_rev_s ** 2 * d ** 4
+    power = cp * rho * n_rev_s ** 3 * d ** 5
+    return {"thrust_N": thrust, "torque_Nm": power / (2.0 * math.pi * n_rev_s), "p_shaft_W": power, "J": j, "CT": ct,
+            "CP": cp}
+
+
+def solve_speed(thrust_N, v_ax, m, n_max=500.0):
+    """The rotor speed (rev/s) at which one rotor gives `thrust_N` at the axial inflow v_ax. Bisection on the first
+    crossing of the thrust curve. Raises ValueError when the table cannot give that thrust below n_max."""
+    f = lambda n: rotor_load(n, v_ax, m)["thrust_N"] - thrust_N
+    grid = np.geomspace(0.5, n_max, 600)
+    lo = grid[0]
+    for hi in grid[1:]:
+        if f(hi) >= 0.0:
+            if f(lo) > 0.0:
+                break
+            for _ in range(100):
+                mid = 0.5 * (lo + hi)
+                lo, hi = (mid, hi) if f(mid) < 0.0 else (lo, mid)
+            return 0.5 * (lo + hi)
+        lo = hi
+    raise ValueError(f"the CT table gives no thrust of {thrust_N:.3f} N below {n_max:g} rev/s at an inflow of {v_ax:.3f} m/s")
+
+
+def electric_state(n_rev_s, torque_Nm, m):
+    """The electrical state for N rotors at the speed n and the torque Q: eq. (9) to (12) with the Propalyser chain.
+    Returns the duty, the currents, the voltages and the powers. `saturated` is True when the duty is above 1."""
+    mo, e, N = m["motor"], m["electrical"], m["n_rotors"]
+    omega = 2.0 * math.pi * n_rev_s
+    i_m = mo["i0_A"] + (torque_Nm + mo.get("q0_Nm", 0.0)) * mo["kv_rad_s_V"]
+    r_m = mo["r_tot_ohm"] + e["re_ohm"]
+    v_term = omega / (mo["kappa"] * mo["kv_rad_s_V"]) + r_m * i_m
+    i_aux = e["ip_A"] + e["ia_A"]
+    v0 = m["v_nominal_V"] - e["rb_ohm"] * i_aux                    # the pack under the auxiliary load
+    a = N * i_m / e["eta_e"] * (e["rb_ohm"] + e["rw_ohm"])         # bus voltage drop per unit duty: V_bus = v0 - a d
+    # duty * V_bus = V_term  ->  a d^2 - v0 d + V_term = 0
+    if a == 0.0:
+        duty = v_term / v0
+    else:
+        disc = v0 * v0 - 4.0 * a * v_term
+        if disc < 0.0:
+            raise ValueError("the battery cannot deliver this load (the resistances use the whole voltage)")
+        duty = (v0 - math.sqrt(disc)) / (2.0 * a)
+    i_d = N * duty * i_m / e["eta_e"]
+    i_t = i_d + i_aux
+    v_bus = v0 - (e["rb_ohm"] + e["rw_ohm"]) * i_d
+    return {"duty": duty, "saturated": bool(duty > 1.0), "i_motor_A": i_m, "i_drive_A": i_d, "i_total_A": i_t,
+            "v_term_V": v_term, "v_bus_V": v_bus, "p_motor_in_W": N * v_term * i_m, "p_bus_W": v_bus * i_d,
+            "p_battery_W": m["v_nominal_V"] * i_t, "p_shaft_W": N * torque_Nm * omega,
+            "chain_efficiency": N * torque_Nm * omega / (m["v_nominal_V"] * i_t)}
+
+
+def throttle_command(p_shaft_each_W, m):
+    """The ESC command at which the static throttle map of the propulsion dataset gives this shaft power per rotor, or
+    None without a map. A static map: an approximation in flight."""
+    tm = m.get("throttle_map")
+    if not tm or not m.get("p_max_W"):
+        return None
+    return float(np.interp(p_shaft_each_W / m["p_max_W"], tm["power_fraction"], tm["esc_command_norm"]))
+
+
+def _segment(name, speed, climb, theta, thrust_total, v_ax, m):
+    N = m["n_rotors"]
+    n = solve_speed(thrust_total / N, v_ax, m)
+    r = rotor_load(n, v_ax, m)
+    el = electric_state(n, r["torque_Nm"], m)
+    endurance_min = m["electrical"]["discharge_fraction"] * m["capacity_As"] / el["i_total_A"] / 60.0
+    return {"name": name, "speed_m_s": speed, "climb_rate_m_s": climb, "tilt_deg": math.degrees(theta),
+            "thrust_total_N": thrust_total, "thrust_each_N": thrust_total / N, "axial_inflow_m_s": v_ax,
+            "rev_s": n, "rpm": n * 60.0, "J": r["J"], "CT": r["CT"], "CP": r["CP"], "torque_Nm": r["torque_Nm"],
+            "p_shaft_each_W": r["p_shaft_W"], "esc_command_equiv": throttle_command(r["p_shaft_W"], m), **el,
+            "endurance_min": endurance_min, "range_km": speed * endurance_min * 60.0 / 1000.0}
+
+
+def body_force(u, v, w, n_sum, m):
+    """The body drag of the aero dataset (src/aeroplan/multirotor_aero.py): forces on the body, body axes FRD."""
+    d = m["drag"]
+    q = 0.5 * m["rho"] * d["S_ref_m2"]
+    k = d["k_rotor_drag_kg"]
+    return (-q * d["CDx"] * u * abs(u) - k * n_sum * u, -q * d["CDy"] * v * abs(v) - k * n_sum * v,
+            -q * d["CDz"] * w * abs(w))
+
+
+def emst_hover(m):
+    """Hover: T = W (paper section III.A.1)."""
+    return _segment("hover", 0.0, 0.0, 0.0, m["mass_kg"] * G0, 0.0, m)
+
+
+def emst_climb(m, rate):
+    """Vertical climb at a steady rate: the axial inflow is the climb rate, the thrust carries the weight and the body drag."""
+    fz = body_force(0.0, 0.0, -rate, 0.0, m)[2]            # w < 0 in FRD: the body moves up, the force is down
+    return _segment("climb", 0.0, rate, 0.0, m["mass_kg"] * G0 + fz, rate, m)
+
+
+def emst_forward(m, speed, tol=1e-12, max_iter=500):
+    """Level forward flight at `speed`: the loop on the tilt angle th of the thrust axis from the vertical
+    (paper section III.A.3). The body is pitched nose down by th. The rotors see the axial inflow V sin(th)."""
+    if speed == 0.0:
+        return emst_hover(m)
+    W, N = m["mass_kg"] * G0, m["n_rotors"]
+    th, n_sum = 0.0, N * solve_speed(W / N, 0.0, m)
+    for _ in range(max_iter):
+        u, w = speed * math.cos(th), -speed * math.sin(th)
+        fx, _, fz = body_force(u, 0.0, w, n_sum, m)
+        d_h = -(fx * math.cos(th) - fz * math.sin(th))               # aerodynamic force against the flight direction
+        f_v = fx * math.sin(th) + fz * math.cos(th)                  # aerodynamic force downward
+        th_new, thrust = math.atan2(d_h, W + f_v), math.hypot(d_h, W + f_v)
+        n_new = N * solve_speed(thrust / N, speed * math.sin(th_new), m)
+        done = abs(th_new - th) < tol and abs(n_new - n_sum) < 1e-9
+        th, n_sum = th_new, n_new
+        if done:
+            break
+    else:
+        raise ValueError(f"the tilt loop did not converge at {speed} m/s")
+    seg = _segment("forward", speed, 0.0, th, thrust, speed * math.sin(th), m)
+    seg["body_drag_N"] = d_h
+    return seg
+
+
+def emst_full_throttle(m):
+    """Static thrust at full throttle (duty 1, V = 0) with the battery sag, and the thrust-to-weight ratio."""
+    mo, e, N = m["motor"], m["electrical"], m["n_rotors"]
+    v0 = m["v_nominal_V"] - e["rb_ohm"] * (e["ip_A"] + e["ia_A"])
+
+    def resid(n):
+        r = rotor_load(n, 0.0, m)
+        i_m = mo["i0_A"] + (r["torque_Nm"] + mo.get("q0_Nm", 0.0)) * mo["kv_rad_s_V"]
+        v_bus = v0 - (e["rb_ohm"] + e["rw_ohm"]) * N * i_m / e["eta_e"]
+        return v_bus - (2.0 * math.pi * n / (mo["kappa"] * mo["kv_rad_s_V"]) + (mo["r_tot_ohm"] + e["re_ohm"]) * i_m)
+
+    lo, hi = 1.0, 500.0
+    if resid(lo) <= 0.0:
+        raise ValueError("the chain cannot turn the rotor at full throttle")
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if resid(mid) > 0.0 else (lo, mid)
+    n = 0.5 * (lo + hi)
+    r = rotor_load(n, 0.0, m)
+    el = electric_state(n, r["torque_Nm"], m)
+    return {"rev_s": n, "rpm": n * 60.0, "thrust_each_N": r["thrust_N"], "thrust_total_N": N * r["thrust_N"],
+            "thrust_to_weight": N * r["thrust_N"] / (m["mass_kg"] * G0), "p_shaft_each_W": r["p_shaft_W"],
+            "i_motor_A": el["i_motor_A"], "i_total_A": el["i_total_A"], "duty_check": el["duty"]}
+
+
+def emst_model(spec, rho):
+    """The flat model dict of the EMST functions, from a multirotor spec and the air density (kg/m^3)."""
+    p, e, d = spec["propulsion"], spec["electrical"], spec["drag"]
+    mo, b = p["motor"], p["battery"]
+    return {"rho": rho, "n_rotors": len(spec["rotors"]), "diameter_m": p["diameter_m"], "mass_kg": spec["mass"]["mass_kg"],
+            "tab": {k: list(v) for k, v in p["tables"].items()},
+            "motor": {**{k: mo[k] for k in ("kv_rad_s_V", "i0_A", "kappa", "r_tot_ohm")}, "q0_Nm": mo.get("q0_Nm", 0.0)},
+            "v_nominal_V": b["v_nominal_V"], "capacity_As": b["capacity_As"], "electrical": dict(e), "drag": dict(d),
+            "throttle_map": p.get("throttle_map"), "p_max_W": p.get("p_max_W")}
+
+
+def emst_scan(m, v_max, step):
+    """Hover and forward flight from 0 to v_max (m/s). The best speeds for endurance and range (paper section III.A.4)."""
+    rows = [emst_forward(m, float(v)) for v in np.arange(0.0, v_max + 0.5 * step, step)]
+    return {"rows": rows, "best_endurance": max(rows, key=lambda r: r["endurance_min"]),
+            "best_range": max(rows, key=lambda r: r["range_km"])}
+
+
+def motor_mass_kg(kv_rpm_per_V):
+    return 10.0 ** OR_MOTOR_MASS[0] * kv_rpm_per_V ** OR_MOTOR_MASS[1] / 1000.0
+
+
+def emst_sensitivity(m, cells_s, step=0.01):
+    """Central differences of the hover endurance (min) with the motor Kv, the rotor diameter, the mass and the battery
+    capacity (paper section III.A.5): the analyser runs again with x(1 + h) and x(1 - h). The Kv change moves the
+    motor mass by eq. (1) and the capacity change moves the battery mass by eq. (4); the diameter change moves no mass
+    (the constant p3 of eq. (5) is not in the source text)."""
+    import copy
+
+    base = emst_hover(m)["endurance_min"]
+    out = {"base_endurance_min": base, "step": step, "parameters": {}}
+
+    def run(name, x0, change):
+        ends = []
+        for sgn in (+1.0, -1.0):
+            mm = copy.deepcopy(m)
+            change(mm, x0 * (1.0 + sgn * step), x0)
+            ends.append(emst_hover(mm)["endurance_min"])
+        d_dx = (ends[0] - ends[1]) / (2.0 * step * x0)
+        out["parameters"][name] = {"x0": x0, "d_endurance_min_per_unit": d_dx, "percent_per_percent": d_dx * x0 / base}
+
+    def kv(mm, x, x0):
+        mm["motor"]["kv_rad_s_V"] = x * 2.0 * math.pi / 60.0
+        mm["mass_kg"] += mm["n_rotors"] * (motor_mass_kg(x) - motor_mass_kg(x0))
+
+    def diameter(mm, x, x0):
+        mm["diameter_m"] = x
+
+    def mass(mm, x, x0):
+        mm["mass_kg"] = x
+
+    def capacity(mm, x, x0):                      # x in A s; 1 mAh = 3.6 A s
+        mm["capacity_As"] = x
+        mm["mass_kg"] += (x - x0) / 3.6 * (BATT_MASS[0] * cells_s + BATT_MASS[1]) / 1000.0
+
+    run("kv_rpm_per_V", m["motor"]["kv_rad_s_V"] * 60.0 / (2.0 * math.pi), kv)
+    run("diameter_m", m["diameter_m"], diameter)
+    run("mass_kg", m["mass_kg"], mass)
+    run("capacity_As", m["capacity_As"], capacity)
+    return out
 
 
 # -------------------------------------------------------------------------------------------------------- the jobs
@@ -315,9 +568,130 @@ def job_static_check(job):
     return {"static_check": res}
 
 
+# ------------------------------------------------------------------------------------------------ multirotor jobs
+def isa_density(altitude_m):
+    """ISA air density (kg/m^3) in the troposphere (ISO 2533): T = 288.15 - 0.0065 h, p = 101325 (T/288.15)^5.25588."""
+    t = 288.15 - 0.0065 * altitude_m
+    return 101325.0 * (t / 288.15) ** 5.25588 / (287.05287 * t)
+
+
+def _rho_of(job):
+    spec = job["spec"]
+    return float(job.get("rho_kg_m3") or isa_density(spec["analysis"]["altitude_m"]))
+
+
+def build_multirotor_airplane(spec):
+    """The body box and the arm tubes as AeroSandbox fuselages (the airplane has no wing). The box is a superellipse
+    (shape 10) that spans the box edges. An arm is a round tube with its cross sections along its path, listed in
+    rising x (AeroSandbox fuselages run along x)."""
+    import aerosandbox as asb
+
+    body = spec["body"]
+    bx = body["box"]
+    lx, ly, lz = bx["size"]
+    cx, cy, cz = bx["centre"]
+    n = int(spec["drag_job"].get("box_edge_sections", 5))
+    fus = [asb.Fuselage(name="body", xsecs=[asb.FuselageXSec(xyz_c=[float(x), cy, cz], width=ly, height=lz, shape=10.0)
+                                            for x in np.linspace(cx - lx / 2, cx + lx / 2, n)])]
+    for i, arm in enumerate(body["arms"], 1):
+        p0, p1 = sorted((np.asarray(arm["p0"], float), np.asarray(arm["p1"], float)), key=lambda p: p[0])
+        if p1[0] - p0[0] <= 0.0:
+            raise ValueError(f"arm {i} has no extent along x: AeroSandbox fuselages run along x")
+        fus.append(asb.Fuselage(name=f"arm_{i}", xsecs=[asb.FuselageXSec(xyz_c=list(p0 + t * (p1 - p0)), radius=arm["radius_m"])
+                                                       for t in np.linspace(0.0, 1.0, 5)]))
+    props = [asb.Propulsor(name=f"rotor_{r['motor']}", xyz_c=r["hub"], xyz_normal=r["thrust_axis"], radius=0.5 * r["diameter_m"])
+             for r in spec["rotors"]]
+    ref = spec["reference"]
+    return asb.Airplane(name=spec["name"], xyz_ref=ref["xyz_ref"], fuselages=fus, propulsors=props, s_ref=ref["s_m2"],
+                        b_ref=ref["b_m"], c_ref=ref["c_m"])
+
+
+def hoerner_cda(spec, h):
+    """The hand check of the body drag: C_D A along each body axis from the crossflow drag of the bluff shapes
+    (Hoerner, Fluid-Dynamic Drag, 1965, chapter 3). The box takes its flat-face coefficient on the face normal to the flow.
+    A tube takes the cylinder crossflow coefficient on its projected area, with the independence principle: only the
+    velocity component normal to the tube axis counts, so the force along the flow is C_d 2 r L (1 - a_i^2)^1.5 for a
+    flow along axis i (a_i: the axis component of the tube direction)."""
+    lx, ly, lz = spec["body"]["box"]["size"]
+    out = {"x": h["cd_box_flat_face"] * ly * lz, "y": h["cd_box_flat_face"] * lx * lz, "z": h["cd_box_flat_face"] * lx * ly}
+    for arm in spec["body"]["arms"]:
+        v = np.asarray(arm["p1"], float) - np.asarray(arm["p0"], float)
+        length = float(np.linalg.norm(v))
+        a = v / length
+        for i, ax in enumerate("xyz"):
+            out[ax] += h["cd_cylinder_crossflow"] * 2.0 * arm["radius_m"] * length * (1.0 - a[i] ** 2) ** 1.5
+    return out
+
+
+def job_multirotor_drag(job):
+    """Body drag of the multirotor (AeroBuildup of the box and the arm tubes). The flow runs along +x, -x, +y, -y, +z
+    and -z of the body axes FRD (alpha and beta of the operating point). C_D A of an axis is the mean of the two
+    directions of the force component along the flow: |F_b,i| / q. C_Di = C_D A / S_ref. AeroBuildup also gives a force
+    along x for a pure side or vertical flow (a slender-body term of the fuselage model): it is not used.
+
+    AeroBuildup is a slender-body method: it has no pressure drag on the flat front face of a bluff box. The hand check
+    (hoerner_cda) has it. `drag_job.combine` picks the C_D A of each axis: asb, hoerner, or max (the larger one; the
+    default, because a too small drag area is the unsafe error)."""
+    import aerosandbox as asb
+
+    spec = job["spec"]
+    cfg = spec["drag_job"]
+    plane = build_multirotor_airplane(spec)
+    atm = asb.Atmosphere(altitude=cfg["altitude_m"])
+    rho, speed = float(atm.density()), cfg["speed_m_s"]
+    q = 0.5 * rho * speed ** 2
+    flows = {"+x": (0.0, 0.0, 0), "-x": (0.0, 180.0, 0), "+y": (0.0, 90.0, 1), "-y": (0.0, -90.0, 1),
+             "+z": (90.0, 0.0, 2), "-z": (-90.0, 0.0, 2)}
+    cda = {}
+    for key, (alpha, beta, i) in flows.items():
+        op = asb.OperatingPoint(atmosphere=atm, velocity=speed, alpha=alpha, beta=beta)
+        r = asb.AeroBuildup(airplane=plane, op_point=op).run()
+        cda[key] = abs(_f(r["F_b"][i])) / q
+        if not math.isfinite(cda[key]):
+            raise RuntimeError(f"AeroBuildup gave no force for the flow {key}")
+    mean = {ax: 0.5 * (cda["+" + ax] + cda["-" + ax]) for ax in "xyz"}
+    s_ref = spec["reference"]["s_m2"]
+    hoerner = hoerner_cda(spec, cfg["hoerner"])
+    combine = cfg.get("combine", "max")
+    pick = {"asb": lambda a, h: a, "hoerner": lambda a, h: h, "max": max}[combine]
+    used = {ax: pick(mean[ax], hoerner[ax]) for ax in "xyz"}
+    return {"multirotor_drag": {
+        "speed_m_s": speed, "rho_kg_m3": rho, "S_ref_m2": s_ref, "CdA_by_direction_m2": cda, "CdA_asb_m2": mean,
+        "hoerner_CdA_m2": hoerner, "combine": combine, "CdA_m2": used,
+        "CD": {"CDx": used["x"] / s_ref, "CDy": used["y"] / s_ref, "CDz": used["z"] / s_ref},
+        "asb_over_hoerner": {ax: mean[ax] / hoerner[ax] for ax in "xyz"},
+        "asymmetry": {ax: abs(cda["+" + ax] - cda["-" + ax]) / mean[ax] for ax in "xyz"}}}
+
+
+def job_emst_segments(job):
+    """Hover, climb and forward flight (the tilt loop), and the full-throttle limit. Paper section III.A."""
+    spec = job["spec"]
+    a = spec["analysis"]
+    m = emst_model(spec, _rho_of(job))
+    segs = [emst_hover(m), emst_climb(m, a["climb_rate_m_s"])] + [emst_forward(m, v) for v in a["forward_speeds_m_s"]]
+    return {"emst_segments": {"rho_kg_m3": m["rho"], "mass_kg": m["mass_kg"], "weight_N": m["mass_kg"] * G0,
+                              "n_rotors": m["n_rotors"], "segments": segs, "full_throttle": emst_full_throttle(m)}}
+
+
+def job_emst_endurance(job):
+    """Endurance and range against the airspeed, with the best speeds (paper section III.A.4)."""
+    a = job["spec"]["analysis"]
+    m = emst_model(job["spec"], _rho_of(job))
+    return {"emst_endurance": emst_scan(m, a["scan_max_m_s"], a["scan_step_m_s"])}
+
+
+def job_emst_sensitivity(job):
+    """Central differences of the hover endurance (paper section III.A.5)."""
+    spec = job["spec"]
+    m = emst_model(spec, _rho_of(job))
+    return {"emst_sensitivity": emst_sensitivity(m, spec["propulsion"]["battery"]["cells_s"], spec["analysis"]["sensitivity_step"])}
+
+
 JOBS = {"version": job_version, "chain": job_chain, "library_check": job_library_check,
         "synthetic_design": job_synthetic_design, "geometry": job_geometry, "polar": job_polar,
-        "cruise_trim": job_cruise_trim, "static_check": job_static_check}
+        "cruise_trim": job_cruise_trim, "static_check": job_static_check,
+        "multirotor_drag": job_multirotor_drag, "emst_segments": job_emst_segments, "emst_endurance": job_emst_endurance,
+        "emst_sensitivity": job_emst_sensitivity}
 
 
 def main(argv):

@@ -5,8 +5,10 @@ For each entry:
     registered hash. Else the part has no CAD mesh here (`missing`).
   - generator "planform": the lifting surface of the item (planform and foils). On the fin it stops at the rudder
     hinge, so the CAD rudder fits behind it.
-  - generator "tube": the boom, from the aft end of the fuselage to the root quarter chord of the horizontal tail.
-    Rule of Aerolink 6f7edb7 visual/airframe.py.
+  - generator "tube" with `tube`: the boom, from the aft end of the fuselage to the root quarter chord of the
+    horizontal tail. Rule of Aerolink 6f7edb7 visual/airframe.py.
+  - generators box, tube, cylinder, disc with `shape`: demo shapes from numbers (the body, arms, motors and rotor
+    discs of a multirotor). No CAD. A disc part carries `alpha` in its node extras (semi-transparent view).
 
 Fallback when a CAD mesh is missing: an item with a planform gets its full lifting surface, an item with an ADH body
 gets the lofted body. The note says so. A part with no fallback is left out.
@@ -21,7 +23,7 @@ import numpy as np
 
 from . import adh_doc, assets
 from .geometry import body_mesh, foils_of, planform_wing, surface_mesh
-from .visual import PIVOT, _wing_to_design, lifting_surface, mirror_y, read_stl, to_design, tube
+from .visual import PIVOT, _wing_to_design, box, cylinder, disc, lifting_surface, mirror_y, read_stl, to_design, tube
 
 
 @dataclass
@@ -33,6 +35,7 @@ class Part:
     material: Optional[str]
     source: str
     placeholder: bool = False
+    alpha: Optional[float] = None
 
 
 @dataclass
@@ -107,9 +110,13 @@ def part_meshes(doc: Dict[str, Any], root: Path) -> PartSet:
         inst = item["muas"]["instance"]
         if v["generator"] == "planform":
             tri = _planform_part(item, out)
+        elif v.get("shape") is not None:
+            tri = _shape_part(v)
         else:
             tri = _tube_part(doc, v, out)
-        out.parts[v["part"]] = Part(v["part"], inst, tri, None, v.get("material"), v["source"], v.get("placeholder", False))
+        alpha = (v.get("shape") or {}).get("alpha") if v["generator"] == "disc" else None
+        out.parts[v["part"]] = Part(v["part"], inst, tri, None, v.get("material"), v["source"], v.get("placeholder", False),
+                                    alpha)
     return out
 
 
@@ -177,6 +184,18 @@ def _planform_part(item: Dict[str, Any], out: PartSet) -> np.ndarray:
         return min(1.0, (hx - le_x) / chord)
 
     return surface_mesh(item, cut)
+
+
+def _shape_part(v: Dict[str, Any]) -> np.ndarray:
+    """The triangles of a demo shape (generator box, tube, cylinder or disc) from `shape`."""
+    s, g = v["shape"], v["generator"]
+    if g == "box":
+        return box(s["centre"], s["size"])
+    if g == "tube":
+        return tube(s["p0"], s["p1"], float(s["radius_m"]))
+    if g == "cylinder":
+        return cylinder(s["centre"], s["axis"], float(s["length_m"]), float(s["radius_m"]))
+    return disc(s["centre"], s["axis"], float(s["radius_m"]), float(s["thickness_m"]))
 
 
 def _tube_part(doc: Dict[str, Any], v: Dict[str, Any], out: PartSet) -> np.ndarray:

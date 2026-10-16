@@ -79,3 +79,7 @@ not need Proptimiser. Proptimiser is optional in the venv: without it `cruise_tr
   for the neutral point (`docs/methods_report.md`).
 - The tail boom (`tail_boom`) is a placeholder tube of the CREO spoke. It adds CD 0.0005 and almost no lift or moment.
 - The sizing printout gives no units: see `UNITS` in `spoke.py` and `units_basis`.
+
+## Multirotor mode
+
+Settings `kind: multirotor` seed the aircraft (aeroplan.multirotor) and enable the jobs multirotor_drag, emst_segments, emst_endurance and emst_sensitivity (Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A). Order: build, `generate AeroSandbox <aircraft>`, build. Output: `work/<aircraft>/asb/multirotor_results.json` and `report.md`. The EMST jobs need the Propalyser propulsion system.

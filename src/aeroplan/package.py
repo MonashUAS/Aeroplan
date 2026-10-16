@@ -85,6 +85,8 @@ def _preview(acft, root: Path) -> Optional[bytes]:
             ex["material"] = p.material
         if p.placeholder:
             ex["placeholder"] = True
+        if p.alpha is not None:
+            ex["alpha"] = p.alpha
         parts.append((name, p.tri, ex))
     return write_glb(parts, aircraft=acft.name)
 

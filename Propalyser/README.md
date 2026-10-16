@@ -10,3 +10,7 @@ The propulsion system that flies: Ct/Cp table, throttle map, propeller diameter,
 
 The spoke reads the file with h5py only. It refuses another schema or version, and a `units` attribute that is not
 a pint spelling.
+
+## Several rotors
+
+Settings `rotors: [instances]` make every listed propeller name the one system and copy the ESC end points into the motor outputs of the autopilot. A missing file prints a note and skips the spoke.

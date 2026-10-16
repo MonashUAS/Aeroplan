@@ -1,0 +1,48 @@
+{
+  "wbs_no": "1.2.5.4",
+  "name": "MissionComputerProcessing",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "mission_computer",
+    "mass_properties": {
+      "mass": {
+        "value": 0.254,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "units": "m"
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Mass: the weighed subassembly total of the sheet (DNA). CG: point masses placed by the rules of the settings (hub, half arm, origin). The origin mass is a stand-in position."
+      ]
+    },
+    "point_masses": [
+      {
+        "tag": "DNA-REST",
+        "mass": {
+          "value": 0.254,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "Redback Master SpreadSheet - V2 Weight Breakdown.csv: DNA weighed total (row 60) less the placed rows. Itemised in the rest: Brave 4 Pro (FPV cam), Pi 4, Data cables. Not weighed: Bolts. At the origin [0.0, 0.0, 0.0]: user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin (stand-in: the real positions are not in the sheet)",
+        "placeholder": true
+      }
+    ]
+  }
+}

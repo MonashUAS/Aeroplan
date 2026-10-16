@@ -171,3 +171,30 @@ def tube(p0: np.ndarray, p1: np.ndarray, radius: float, sides: int = 16) -> np.n
     ang = np.linspace(0, 2 * np.pi, sides, endpoint=False)
     ring = np.outer(np.cos(ang), u) + np.outer(np.sin(ang), v)
     return _loft(np.array([p0 + radius * ring, p1 + radius * ring]))
+
+
+def box(centre, size) -> np.ndarray:
+    """A closed box with its edges along x, y and z: centre (x, y, z) and size (lx, ly, lz), metres. 12 triangles with
+    outward normals (the demo body of a multirotor)."""
+    c, s = np.asarray(centre, float), np.asarray(size, float)
+    if s.shape != (3,) or np.any(s <= 0):
+        raise ValueError("a box needs three positive edge lengths")
+    lo, hi = c - s / 2, c + s / 2
+    v = np.array([[lo[0], lo[1], lo[2]], [hi[0], lo[1], lo[2]], [hi[0], hi[1], lo[2]], [lo[0], hi[1], lo[2]],
+                  [lo[0], lo[1], hi[2]], [hi[0], lo[1], hi[2]], [hi[0], hi[1], hi[2]], [lo[0], hi[1], hi[2]]])
+    quads = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6), (1, 2, 6, 5), (3, 0, 4, 7)]   # -z +z -y +y +x -x
+    return np.array([t for a, b, c_, d in quads for t in ((v[a], v[b], v[c_]), (v[a], v[c_], v[d]))])
+
+
+def cylinder(centre, axis, length: float, radius: float, sides: int = 24) -> np.ndarray:
+    """A closed round cylinder of the given length about the unit vector `axis` through `centre` (a motor)."""
+    centre, axis = np.asarray(centre, float), np.asarray(axis, float)
+    axis = axis / np.linalg.norm(axis)
+    if length <= 0 or radius <= 0:
+        raise ValueError("a cylinder needs a positive length and radius")
+    return tube(centre - 0.5 * length * axis, centre + 0.5 * length * axis, radius, sides)
+
+
+def disc(centre, axis, radius: float, thickness: float, sides: int = 48) -> np.ndarray:
+    """A thin closed disc (a rotor disc of the demo view): a cylinder of small thickness about `axis`."""
+    return cylinder(centre, axis, thickness, radius, sides)

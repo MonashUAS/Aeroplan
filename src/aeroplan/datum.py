@@ -6,6 +6,10 @@ contract B propeller and, when they are on this machine, the CAD meshes of the C
 tolerance. A failed check stops the build. An `info` row records a value with no second source to compare against.
 A `warn` row does not stop the build. It asks for an action (for example a new flow5 sweep after an OpenVSP change).
 A CAD check is left out when the CAD mesh is not on this machine. An info row says so.
+
+A multirotor (`muas.reference.kind` multirotor) has no wing, tail or cruise propeller: those checks are left out
+(they look for `wing_main`, `htail` and `prop_cruise` and find none). Its checks are the hub symmetry, the clearance
+between adjacent rotor discs and MRP = mass CG within 1 mm.
 """
 from __future__ import annotations
 
@@ -138,8 +142,46 @@ def _surface_checks(rep: DatumReport, air: Dict, pf: Optional[Dict]) -> None:
                     "sizing output m_total, muas.mass_properties")
 
 
+def _mirror_error(hubs: np.ndarray, flip: np.ndarray) -> float:
+    """The largest distance from a hub, mirrored by `flip`, to the nearest hub (0 when the hubs are symmetric)."""
+    return float(max(np.linalg.norm(hubs - h * flip, axis=1).min() for h in hubs))
+
+
+def _multirotor_checks(rep: DatumReport, doc: Dict) -> None:
+    """Hub symmetry and the clearance between rotor discs of the lift rotors (looked up by role, no instance name)."""
+    from . import adh_doc
+
+    rot = [(item["muas"]["instance"], item["muas"]["propeller"]) for _, item, _ in adh_doc.iter_nodes(doc)
+           if ((item.get("muas") or {}).get("propeller") or {}).get("role") == "lift"]
+    if not rot:
+        return
+    hubs = np.array([p["hub"]["xyz"] for _, p in rot], float)
+    src = "lift rotors muas.propeller hub"
+    rep.add("hub symmetry: mirror y (largest gap to a hub)", _mirror_error(hubs, np.array([1.0, -1.0, 1.0])), 0.0, MM,
+            "m", src)
+    rep.add("hub symmetry: mirror x (largest gap to a hub)", _mirror_error(hubs, np.array([-1.0, 1.0, 1.0])), 0.0, MM,
+            "m", src)
+    gaps = {}
+    for i in range(len(rot)):
+        for j in range(i + 1, len(rot)):
+            d_in_plane = float(np.linalg.norm(hubs[i, :2] - hubs[j, :2]))
+            gap = d_in_plane - 0.5 * (rot[i][1]["diameter"]["value"] + rot[j][1]["diameter"]["value"])
+            gaps[(rot[i][0], rot[j][0])] = gap
+    worst = min(gaps, key=gaps.get)
+    rep.checks.append(Check("rotor tip clearance, smallest gap between two discs", gaps[worst], None, None, "m",
+                            "pass" if gaps[worst] > 0 else "fail",
+                            f"{worst[0]} and {worst[1]}: hub distance less the disc radii (must be above 0)"))
+    seen = set()
+    for (a, b), g in sorted(gaps.items(), key=lambda kv: kv[1]):
+        if round(g, 6) in seen:
+            continue
+        seen.add(round(g, 6))
+        rep.add(f"rotor tip clearance {a} to {b}", g, None, None, "m", "hub distance less the disc radii")
+
+
 def datum_checks(doc: Dict, root) -> DatumReport:
     from . import adh_doc
+    from .consumers import MRP_CG_TOL_M, vehicle_kind
     from .parts import part_meshes
 
     rep = DatumReport()
@@ -154,7 +196,10 @@ def datum_checks(doc: Dict, root) -> DatumReport:
     if ref and mp:
         cg = np.array(mp["cg"]["xyz"], float)
         gap = float(np.linalg.norm(np.array(ref["mrp"]["point"]["xyz"]) - cg))
-        if any(r.get("tool") == "SpecSheet" for r in am.get("sources") or []) and gap > 1e-6:
+        if vehicle_kind(doc) == "multirotor":
+            rep.add("MRP against the mass CG (distance)", gap, 0.0, MRP_CG_TOL_M, "m",
+                    "muas.reference mrp, muas.mass_properties cg (a multirotor needs 1 mm)")
+        elif any(r.get("tool") == "SpecSheet" for r in am.get("sources") or []) and gap > 1e-6:
             rep.warn("MRP differs from the mass CG by %.1f mm: the aero model is about the old MRP" % (gap * 1000),
                      "run `aeroplan generate flow5` for the mass model of the SpecSheet spoke, run a new flow5 sweep, "
                      "then build")
@@ -171,6 +216,8 @@ def datum_checks(doc: Dict, root) -> DatumReport:
             rep.add("mass: sum of the subassembly masses less the air vehicle mass", sum(parts) - mp["mass"]["value"],
                     0.0, 1e-6, "kg", "muas.mass_properties of the subassemblies, node 1.2")
 
+    if vehicle_kind(doc) == "multirotor":
+        _multirotor_checks(rep, doc)
     ps = part_meshes(doc, root)
     for n in ps.notes:
         rep.add("view part note", 0.0, None, None, "-", n)

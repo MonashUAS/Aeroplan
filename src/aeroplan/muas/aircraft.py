@@ -83,13 +83,18 @@ class VisualPart(MuasModel):
 
     part: str = Field(min_length=1, description="Part name, for example 'aileron_l'")
     mesh: Optional[SourceRef] = Field(None, description="The CAD mesh, when the part comes from CAD")
-    generator: Optional[Literal["planform", "tube"]] = Field(
-        None, description="How a tool makes the mesh when no CAD mesh exists")
+    generator: Optional[Literal["planform", "tube", "box", "cylinder", "disc"]] = Field(
+        None, description="How a tool makes the mesh when no CAD mesh exists. planform, tube (boom): from the ADH "
+        "items. box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)")
     units: str = Field("m", description="Units of the CAD mesh")
     transform: Optional[Transform] = None
     hinge: Optional[List[List[float]]] = Field(None, description="Two points of the hinge axis, design frame, m")
     tube: Optional[Dict[str, Any]] = Field(
-        None, description="For generator tube: radius_m and to_instance (the item whose root quarter chord ends it)")
+        None, description="For generator tube (boom): radius_m and to_instance (the item whose root quarter chord ends it)")
+    shape: Optional[Dict[str, Any]] = Field(
+        None, description="The numbers of a demo shape, design frame, metres. box: centre [x, y, z], size [lx, ly, lz]. "
+        "tube: p0, p1, radius_m. cylinder: centre, axis (unit vector), length_m, radius_m. disc: centre, axis, "
+        "radius_m, thickness_m, alpha (0 to 1: the view draws it semi-transparent)")
     material: Optional[str] = None
     source: str = Field(min_length=1)
     placeholder: bool = False
@@ -100,6 +105,21 @@ class VisualPart(MuasModel):
             raise ValueError(f"visual part {self.part}: give a CAD mesh or a generator, not both and not neither")
         if self.hinge is not None and (len(self.hinge) != 2 or any(len(p) != 3 for p in self.hinge)):
             raise ValueError(f"visual part {self.part}: hinge must be two points of three numbers")
+        need = {"box": {"centre", "size"}, "tube": {"p0", "p1", "radius_m"},
+                "cylinder": {"centre", "axis", "length_m", "radius_m"},
+                "disc": {"centre", "axis", "radius_m", "thickness_m"}}
+        if self.shape is not None:
+            if self.generator not in need:
+                raise ValueError(f"visual part {self.part}: `shape` needs the generator box, tube, cylinder or disc")
+            keys = set(self.shape) - ({"alpha"} if self.generator == "disc" else set())
+            if keys != need[self.generator]:
+                raise ValueError(f"visual part {self.part}: the {self.generator} shape needs exactly "
+                                 f"{sorted(need[self.generator])}")
+            for k in ("centre", "size", "axis", "p0", "p1"):
+                if k in self.shape and (not isinstance(self.shape[k], list) or len(self.shape[k]) != 3):
+                    raise ValueError(f"visual part {self.part}: shape.{k} must be three numbers")
+        elif self.generator in need and not (self.generator == "tube" and self.tube is not None):
+            raise ValueError(f"visual part {self.part}: the {self.generator} generator needs `shape`")
         return self
 
 

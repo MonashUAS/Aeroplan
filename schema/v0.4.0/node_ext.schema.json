@@ -656,11 +656,13 @@
           "$ref": "#/$defs/Fidelity"
         },
         "form": {
-          "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}",
+          "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}. waypoints: a QGC WPL plan. geofence: polygons, circles and a return point (aeroplan.flightfiles)",
           "enum": [
             "daveml-adh",
             "tables",
-            "parameters"
+            "parameters",
+            "waypoints",
+            "geofence"
           ],
           "title": "Form",
           "type": "string"
@@ -756,6 +758,8 @@
         "control",
         "flight-record",
         "parameters",
+        "waypoints",
+        "geofence",
         "segments",
         "other"
       ],
@@ -1403,7 +1407,11 @@
         "aileron",
         "elevator",
         "rudder",
-        "throttle"
+        "throttle",
+        "motor1",
+        "motor2",
+        "motor3",
+        "motor4"
       ],
       "title": "OutputFunction",
       "type": "string"
@@ -1617,7 +1625,7 @@
     },
     "PropellerInstallation": {
       "additionalProperties": false,
-      "description": "Mount of a propeller or rotor in the design frame (WBS 1.2.3.9).",
+      "description": "Mount of a propeller or rotor in the design frame (WBS 1.2.3.9).\n\nA multirotor has one installation for each lift rotor (the first one on the WBS node, the others as\nsubcomponents of it). `motor` is the autopilot motor number (ArduPilot MOTn, 1 to 8) and `system` names the\npropulsion system (`muas.propulsion_system.system_id`) that drives the rotor. The system data and the Ct/Cp\ndataset are stored once, on one item.",
       "properties": {
         "diameter": {
           "$ref": "#/$defs/Quantity"
@@ -1625,11 +1633,40 @@
         "hub": {
           "$ref": "#/$defs/Position"
         },
+        "motor": {
+          "anyOf": [
+            {
+              "maximum": 8,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Autopilot motor number (ArduPilot MOTn). Needed for a lift rotor",
+          "title": "Motor"
+        },
         "role": {
           "$ref": "#/$defs/PropRole"
         },
         "spin": {
           "$ref": "#/$defs/Spin"
+        },
+        "system": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "system_id of the propulsion system",
+          "title": "System"
         },
         "thrust_axis": {
           "description": "Unit vector, design frame",
@@ -1899,7 +1936,8 @@
           "default": "x_aft_y_right_z_up_m_noseDatum",
           "enum": [
             "x_aft_y_right_z_up_m_noseDatum",
-            "x_aft_y_right_z_up_m_flow5Origin"
+            "x_aft_y_right_z_up_m_flow5Origin",
+            "x_aft_y_right_z_up_m_bodyOrigin"
           ],
           "title": "Design Frame",
           "type": "string"
@@ -1909,6 +1947,20 @@
           "default": "3-2-1/NED",
           "title": "Euler",
           "type": "string"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "const": "multirotor",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)",
+          "title": "Kind"
         },
         "mrp": {
           "$ref": "#/$defs/Mrp"
@@ -2030,7 +2082,7 @@
     },
     "ServoOutput": {
       "additionalProperties": false,
-      "description": "One output channel of the flight controller.\n\n`sign` relates the PWM to the surface: +1 means a PWM above the trim gives a positive deflection in the\nJSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle has no sign.",
+      "description": "One output channel of the flight controller.\n\n`sign` relates the PWM to the surface: +1 means a PWM above the trim gives a positive deflection in the\nJSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle and a\nmotor output have no sign. A motor output (`motor1` to `motor4`) drives one lift rotor: `targets` holds the\n`muas.instance` of the rotor whose `propeller.motor` equals the output number. `pwm_min_us` and `pwm_max_us` are\nthe ESC end points.",
       "properties": {
         "channel": {
           "maximum": 16,
@@ -2305,6 +2357,7 @@
       "type": "object"
     },
     "Spin": {
+      "description": "The turn direction of a rotor, seen looking ALONG the thrust vector from behind the rotor (the JSBSim sense\nconvention). CW means the angular velocity vector points along `thrust_axis` (right-hand rule): the rotor\nreaction torque on the airframe then points against the thrust axis.\n\nA lift rotor with its thrust up is seen from below. An ArduPilot motor that turns CCW seen from above is\ntherefore `cw` here, and an ArduPilot CW motor is `ccw` here.",
       "enum": [
         "cw",
         "ccw"
@@ -2611,7 +2664,10 @@
             {
               "enum": [
                 "planform",
-                "tube"
+                "tube",
+                "box",
+                "cylinder",
+                "disc"
               ],
               "type": "string"
             },
@@ -2620,7 +2676,7 @@
             }
           ],
           "default": null,
-          "description": "How a tool makes the mesh when no CAD mesh exists",
+          "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom): from the ADH items. box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
           "title": "Generator"
         },
         "hinge": {
@@ -2677,6 +2733,20 @@
           "title": "Placeholder",
           "type": "boolean"
         },
+        "shape": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The numbers of a demo shape, design frame, metres. box: centre [x, y, z], size [lx, ly, lz]. tube: p0, p1, radius_m. cylinder: centre, axis (unit vector), length_m, radius_m. disc: centre, axis, radius_m, thickness_m, alpha (0 to 1: the view draws it semi-transparent)",
+          "title": "Shape"
+        },
         "source": {
           "minLength": 1,
           "title": "Source",
@@ -2704,7 +2774,7 @@
             }
           ],
           "default": null,
-          "description": "For generator tube: radius_m and to_instance (the item whose root quarter chord ends it)",
+          "description": "For generator tube (boom): radius_m and to_instance (the item whose root quarter chord ends it)",
           "title": "Tube"
         },
         "units": {

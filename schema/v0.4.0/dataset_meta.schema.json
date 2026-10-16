@@ -586,11 +586,13 @@
       "$ref": "#/$defs/Fidelity"
     },
     "form": {
-      "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}",
+      "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}. waypoints: a QGC WPL plan. geofence: polygons, circles and a return point (aeroplan.flightfiles)",
       "enum": [
         "daveml-adh",
         "tables",
-        "parameters"
+        "parameters",
+        "waypoints",
+        "geofence"
       ],
       "title": "Form",
       "type": "string"

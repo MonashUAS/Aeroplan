@@ -20,16 +20,27 @@ changes no ADH data.
 
 The sizing stage comes before flow5. Its geometry values do not set the flow5 geometry. The datum report lists the
 differences.
+
+Multirotor (settings `kind: multirotor`): there is no Athena printout. `ingest` seeds the aircraft from the `multirotor`
+block of the settings (aeroplan.multirotor.seed: reference, four lift rotors, motor outputs, ground contacts, demo
+shapes) and reads `work/<aircraft>/asb/multirotor_results.json`, when it exists, into the body-drag aero dataset
+(src/aeroplan/multirotor_aero.py) and the `sizing` performance record of node 1.2 (the EMST results). `generate` runs the
+worker jobs multirotor_drag, emst_segments, emst_endurance and emst_sensitivity (the EMST jobs need the propulsion
+system of the Propalyser spoke) and writes that file and `report.md`. Order: build, generate, build.
 """
 from __future__ import annotations
 
+import copy
 import re
 import hashlib
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from aeroplan import adh_doc
+from aeroplan import adh_doc, multirotor, multirotor_aero
+from aeroplan.daveml_adh import from_xml
+from aeroplan.dml_validate import validate_dml
 from aeroplan.geometry import planform_reference
 from aeroplan.spokes import Context, set_sources
 
@@ -37,6 +48,7 @@ from . import runner, spec as asb_spec
 
 NAME = "AeroSandbox"
 FILE = "athena_outputs.txt"
+RESULTS = "multirotor_results.json"
 
 UNITS = {
     "Take-off distance": ("m", "magnitude"), "Climb angle": ("deg", "magnitude"), "Glide ratio": ("nd", "consistency"),
@@ -89,7 +101,112 @@ def consistency(v: Dict[str, float]) -> List[str]:
     return rows
 
 
+def _output(name, value, units):
+    return {"name": name, "value": float(value), "units": units, "units_basis": "SI model output"}
+
+
+def _emst_outputs(res: Dict[str, Any]) -> List[Dict[str, Any]]:
+    out = []
+    seg = res.get("emst_segments")
+    if seg:
+        keys = (("rpm", "rpm"), ("thrust_each_N", "N"), ("tilt_deg", "deg"), ("duty", "nd"), ("i_total_A", "A"),
+                ("p_shaft_W", "W"), ("p_battery_W", "W"), ("endurance_min", "min"))
+        for s in seg["segments"]:
+            tag = s["name"] if s["name"] != "forward" else f"forward_{s['speed_m_s']:g}_m_s"
+            out += [_output(f"{tag}_{k}", s[k], u) for k, u in keys]
+            if s.get("esc_command_equiv") is not None:
+                out.append(_output(f"{tag}_esc_command_from_static_map", s["esc_command_equiv"], "nd"))
+        f = seg["full_throttle"]
+        out += [_output("full_throttle_thrust_total_N", f["thrust_total_N"], "N"),
+                _output("thrust_to_weight", f["thrust_to_weight"], "nd")]
+    sc = res.get("emst_endurance")
+    if sc:
+        out += [_output("best_endurance_speed_m_s", sc["best_endurance"]["speed_m_s"], "m/s"),
+                _output("best_range_speed_m_s", sc["best_range"]["speed_m_s"], "m/s"),
+                _output("best_range_km", sc["best_range"]["range_km"], "km")]
+    se = res.get("emst_sensitivity")
+    if se:
+        out += [_output(f"sensitivity_{k}_percent_per_percent", v["percent_per_percent"], "nd")
+                for k, v in se["parameters"].items()]
+    return out
+
+
+def _ingest_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]):
+    """Seed the multirotor from the settings, then read the results of `generate` when they exist."""
+    changes = multirotor.seed(doc, ctx.aircraft, st["multirotor"])
+    path = ctx.work / "asb" / RESULTS
+    if not path.is_file():
+        changes.append(f"no {path.relative_to(ctx.root).as_posix()}: no body-drag aero dataset and no EMST record yet. "
+                       f"Run `python -m aeroplan generate AeroSandbox {ctx.aircraft}`, then build again")
+        return changes
+    res = json.loads(path.read_text(encoding="utf-8"))
+    air = adh_doc.node(doc, "1.2")
+    ref = air["muas"]["reference"]
+    s_ref = ref["s_ref"]["value"]
+    if abs(res["inputs"]["s_ref_m2"] - s_ref) > 1e-9:
+        raise ValueError(f"{path.name} was made with S_ref {res['inputs']['s_ref_m2']} m^2, the document has {s_ref} m^2: "
+                         f"run `aeroplan generate AeroSandbox {ctx.aircraft}` again")
+    mp = air["muas"].get("mass_properties")
+    if mp and abs(res["inputs"]["mass_kg"] - mp["mass"]["value"]) > 1e-6:
+        changes.append(f"WARNING: the results used the mass {res['inputs']['mass_kg']:.4f} kg, the document has "
+                       f"{mp['mass']['value']:.4f} kg: run generate again")
+    ref_src = ctx.source_ref(path, "multirotor body drag and EMST results")
+    d = res["multirotor_drag"]
+    src = (f"AeroSandbox AeroBuildup of the demo body box and arm tubes (job multirotor_drag, {d['speed_m_s']:g} m/s, "
+           f"Hoerner hand check, AeroBuildup over Hoerner x {d['asb_over_hoerner']['x']:.2f}, y {d['asb_over_hoerner']['y']:.2f}, "
+           f"z {d['asb_over_hoerner']['z']:.2f}; rule combine {d['combine']}). Stand-in shapes: fit from the flight log")
+    k = st["drag"]["k_rotor_drag_kg"]
+    sources = {"S_ref": ("muas.reference s_ref (the frontal area of the demo body box)", True),
+               "CDx": (src, True), "CDy": (src, True), "CDz": (src, True),
+               "k_rotor_drag": (st["drag"]["k_rotor_drag_source"], True)}
+    coefs = multirotor_aero.coefficients(s_ref, d["CD"], k, sources)
+    cg = ref["mrp"]["point"]["xyz"]
+    xml = multirotor_aero.to_daveml(
+        coefs, name=f"{ctx.aircraft.capitalize()} body drag model", author="AeroPlan AeroSandbox spoke", org="MUAS",
+        created=str(res["inputs"]["date"]),
+        description=f"{ctx.aircraft} multirotor body drag (forces only, body axes FRD, no moments). "
+                    "See spec/multirotor_contract.md.")
+    errors = validate_dml(xml)
+    if errors:
+        raise ValueError(f"the body-drag model fails the DAVE-ML 2.0 DTD: {errors[:3]}")
+    meta = {"form": "daveml-adh", "fidelity": "L1", "units_system": "SI",
+            "model_description": {"generation_tool": "AeroSandbox AeroBuildup + AeroPlan multirotor body drag",
+                                  "model_name": f"{ctx.aircraft} body drag",
+                                  "description": "Quadratic body drag per axis and a rotor drag term. Placeholder until the "
+                                                 "flight log fits it."},
+            "mrp": {"xyz": list(cg)}, "placeholder": True,
+            "notes": ["Forces only: F = -0.5 rho S C_D v |v| per axis, plus -k_rotor_drag n_sum v on x and y.",
+                      "The drag area comes from stand-in shapes. No uncertainty estimate exists (sigma not given)."]}
+    if mp:
+        meta["analysis_mass_model"] = copy.deepcopy(mp)
+    ctx.add_dataset(air, f"aero.{ctx.aircraft}", from_xml(xml), role="aero model (DAVE-ML in ADH form)",
+                    dataset_role="aero", derived_from=[ref_src["asset"]], meta=meta)
+    changes.append(f"aero dataset: body drag, CDx {coefs['CDx'].value:.3f}, CDy {coefs['CDy'].value:.3f}, "
+                   f"CDz {coefs['CDz'].value:.3f} on S {s_ref:.4f} m^2, k_rotor_drag {k:g} kg (all placeholder)")
+    outputs = _emst_outputs(res)
+    if outputs:
+        names = (("rb", "ohm"), ("rw", "ohm"), ("re", "ohm"), ("ia", "A"), ("ip", "A"), ("eta_e", "nd"),
+                 ("discharge_fraction", "nd"))
+        ins = [{"name": n, "value": v["value"], "units": u, "placeholder": v["placeholder"], "source": v["source"]}
+               for (n, u), v in zip(names, st["electrical"].values())]
+        sizing = {"name": "sizing", "description": "EMST segment analysis of the multirotor (hover, climb, forward flight "
+                  "with the tilt loop), endurance and sensitivities. Rotor load: the CT/CP table of the propulsion dataset.",
+                  "tools": [{"model_name": "EMST segment analysis", "generation_tool": "AeroSandbox worker (asb_worker.py)",
+                             "description": "Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A, eq. (9) to (12). "
+                                            "Inputs marked placeholder are stand-ins.",
+                             "data_exchange": {"model_identifier": "emst", "inputs": ins, "outputs": outputs}}]}
+        air["performance"] = [sizing] + [x for x in air.get("performance") or [] if x.get("name") != "sizing"]
+        changes.append(f"sizing: {len(outputs)} EMST outputs")
+    else:
+        changes.append("no EMST results (no propulsion system when generate ran)")
+    set_sources(air, NAME, [ref_src])
+    return changes
+
+
 def ingest(doc: Dict[str, Any], ctx: Context):
+    st = ctx.settings()
+    if st.get("kind") == "multirotor":
+        return _ingest_multirotor(doc, ctx, st)
     path = ctx.work / FILE
     if not path.is_file():
         return None
@@ -117,9 +234,42 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _generate_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]) -> List[Path]:
+    """The multirotor jobs: body drag, then (with a propulsion system in the document) the EMST jobs."""
+    out = ctx.work / "asb"
+    out.mkdir(parents=True, exist_ok=True)
+    spec = asb_spec.multirotor_spec(doc, st, ctx)
+    drag = runner.run({"job": "multirotor_drag", "spec": spec})["multirotor_drag"]
+    results: Dict[str, Any] = {"multirotor_drag": drag}
+    spec = asb_spec.multirotor_spec(doc, st, ctx, drag=drag["CD"])
+    if spec["propulsion"] is None:
+        print("AeroSandbox: the document has no propulsion system (Propalyser contract B file missing): "
+              "body drag only, no EMST results")
+    else:
+        for job in ("emst_segments", "emst_endurance", "emst_sensitivity"):
+            results[job] = runner.run({"job": job, "spec": spec})[job]
+    ph = asb_spec.multirotor_placeholders(st, spec)
+    results["inputs"] = {"s_ref_m2": spec["reference"]["s_m2"], "mass_kg": spec["mass"]["mass_kg"],
+                         "date": date.today().isoformat(), "placeholders": ph,
+                         "propulsion_system": (spec["propulsion"] or {}).get("system_id")}
+    res_file = out / RESULTS
+    res_file.write_text(json.dumps(results, indent=1), encoding="utf-8")
+    report = out / "report.md"
+    report.write_text(asb_spec.multirotor_report(spec, results, ph), encoding="utf-8")
+    seg = results.get("emst_segments")
+    if seg:
+        h = seg["segments"][0]
+        print(f"AeroSandbox: hover {h['rpm']:.0f} rpm, {h['p_battery_W']:.0f} W, {h['i_total_A']:.1f} A, "
+              f"endurance {h['endurance_min']:.1f} min")
+    print(f"AeroSandbox: CDx {drag['CD']['CDx']:.3f}, CDy {drag['CD']['CDy']:.3f}, CDz {drag['CD']['CDz']:.3f}")
+    return [report, res_file]
+
+
 def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
     """Build the AeroSandbox model of the aircraft and run the jobs. Files go to work/<aircraft>/asb/."""
     st = ctx.settings()
+    if st.get("kind") == "multirotor":
+        return _generate_multirotor(doc, ctx, st)
     spec = asb_spec.spec_from_doc(doc, st, ctx)
     home = ctx.work / "proptimiser"
     design = home / "designs" / f"{st['proptimiser_design']}.yaml"

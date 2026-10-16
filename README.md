@@ -9,7 +9,7 @@ Each tool has a **spoke**: a folder that moves data between the tool and the sou
 tool, then runs `aeroplan build`. AeroPlan reads the tool output, checks it and writes the source tree.
 
 ```
-      AeroSandbox/  flow5/  SpecSheet/  Propalyser/  CREO/  OpenVSP/  DAVEML/  ArduPilot/
+      AeroSandbox/  flow5/  SpecSheet/  Propalyser/  CREO/  OpenVSP/  DAVEML/  ArduPilot/  MissionPlanner/
             |          |         |           |         |        |        |         |
             +----------+---------+-----+-----+---------+--------+--------+---------+
                                       |  aeroplan build
@@ -63,11 +63,25 @@ The package holds the 3D view as glTF (`preview/aircraft.glb`). The parts come f
 your machine (`CREO/work/`). Without CAD files, they come from the ADH shapes (lifting surfaces, body, control
 surfaces). They then look simpler, but they move the same.
 
+## Start a multirotor (the Redback)
+
+A multirotor starts from the AeroSandbox settings (`AeroSandbox/settings/<aircraft>.yaml` with `kind: multirotor`), not from
+a sizing printout. The settings hold the CAD arm (distance and direction angles), the Quad X motor pattern and the demo sizes.
+
+1. `python -m aeroplan build redback --new --author "Your Name" --consumers review archive` seeds the rotors, the motor outputs,
+   the reference data, the ground contacts and the demo shapes, and rolls up the mass from the weight CSV
+   (`SpecSheet/sheets/redback/`). The Propalyser, ArduPilot and MissionPlanner spokes skip with a note until their files exist.
+2. `python -m aeroplan generate AeroSandbox redback` runs the body drag and (with a propulsion system) the EMST jobs.
+3. `python -m aeroplan build redback --author "Your Name"` writes the body-drag aero dataset and the `sizing` record.
+4. Copy `redback_mk4.v2.h5` into `Propalyser/work/redback/` by hand, then repeat steps 2 and 3, then add `aerolink` with
+   `--consumers aerolink review archive`. The contract for Aerolink is `spec/multirotor_contract.md`.
+
 ## Folders
 
 | Folder | What it holds |
 |---|---|
 | `aircraft/<aircraft>/` | The source tree of each aircraft (the SSOT): `aircraft.yaml`, `adh/`, `datasets/` |
+| `Prototype/` | Spoke: published specs of the team (MTOW) from Prototype -> sizing targets, and the first propulsion sizing |
 | `AeroSandbox/` | Spoke: initial sizing (the first source of a new aircraft), and the AeroSandbox model with the propulsion chain (`aeroplan setup AeroSandbox` first) |
 | `flow5/` | Spoke: geometry, mass model, reference dimensions and aero model from a flow5 sweep |
 | `SpecSheet/` | Spoke: the Master Specification Sheet (weight log and CG sheet) to the mass model of the ADH. Runs after flow5, so it owns the mass |
@@ -76,6 +90,7 @@ surfaces). They then look simpler, but they move the same.
 | `OpenVSP/` | Spoke: the ADH geometry to an OpenVSP model and back (`aeroplan setup OpenVSP` first) |
 | `DAVEML/` | Spoke: published DAVE-ML models (the NASA F-16 of the NESC check cases) |
 | `ArduPilot/` | Spoke: flight events (log, parameters, firmware, segments) and firmware releases |
+| `MissionPlanner/` | Spoke: the flight files of the aircraft (`.parm`, `.waypoints`, geofence) as datasets of the autopilot node |
 | `Aerolink/` | Spoke: the simulator export (the `aerolink` package) |
 | `src/aeroplan/` | The core: source tree, asset register, package, ADH document rules, checks, DAVE-ML |
 | `packages/muas_adh/` | Upstream ADH (pristine), its commit (`upstream_commit.txt`) and the MUAS patch series |
@@ -168,6 +183,11 @@ aircraft/<aircraft>/
 - The flow5 sweep runner is not in AeroPlan yet. A member runs the sweep in flow5 by hand.
 - OpenVSP spoke: no VSPAERO runs yet. The fuselage is not fitted to the CAD skin (the body frames are up to 43 mm
   wider than the skin at the wing root, x = -0.08 to 0.35 m).
+- Redback: the propulsion system file `Propalyser/work/redback/redback_mk4.v2.h5` does not exist yet, so the aircraft has no
+  propulsion dataset, no EMST results and no `aerolink` consumer. Copy the Propalyser export, then build again. The flight log
+  goes to `ArduPilot/work/redback/` (fill the `FILL_IN` values of `ArduPilot/settings/redback.yaml`), the `.parm` to
+  `MissionPlanner/work/redback/redback.parm`. Placeholders: body drag (stand-in shapes), `k_rotor_drag`, gear positions,
+  battery, wiring and ESC resistance, avionics current, demo sizes. The Mk4 CSV holds estimates: sanity check only.
 - Mass: the `SpecSheet` spoke writes the mass model from the Master Specification Sheet (weighed subassembly totals, x
   positions of the CG sheet). y and z are zero, because the sheet has none (stand-ins). The CREO spoke reads no mass
   report yet. The sheet is an xlsx in the repository. A link to the Google Sheet (download of

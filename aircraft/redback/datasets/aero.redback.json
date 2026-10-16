@@ -1,0 +1,428 @@
+{
+  "file_header": {
+    "name": "Redback body drag model",
+    "author": [
+      {
+        "name": "AeroPlan AeroSandbox spoke",
+        "org": "MUAS"
+      }
+    ],
+    "creation_date": {
+      "date": "2026-10-16"
+    },
+    "file_version": {
+      "value": "1"
+    },
+    "description": {
+      "value": "redback multirotor body drag (forces only, body axes FRD, no moments). See spec/multirotor_contract.md."
+    }
+  },
+  "variable_def": [
+    {
+      "name": "bodyVelocityU",
+      "var_id": "u",
+      "units": "m/s",
+      "axis_system": "body axes FRD",
+      "sign": "air-relative velocity of the body along x, positive forward",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "bodyVelocityV",
+      "var_id": "v",
+      "units": "m/s",
+      "axis_system": "body axes FRD",
+      "sign": "air-relative velocity of the body along y, positive right",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "bodyVelocityW",
+      "var_id": "w",
+      "units": "m/s",
+      "axis_system": "body axes FRD",
+      "sign": "air-relative velocity of the body along z, positive down",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "rotorSpeedSum",
+      "var_id": "n_sum",
+      "units": "rev/s",
+      "axis_system": "none",
+      "sign": "sum of the four rotor speeds, each above 0",
+      "initial_value": "0",
+      "is_input": true
+    },
+    {
+      "name": "airDensity",
+      "var_id": "rho",
+      "units": "kg/m^3",
+      "axis_system": "none",
+      "sign": "air density",
+      "initial_value": "1.2250000000000001",
+      "description": {
+        "value": "source: ISA sea level, ISO 2533 (the default value of the input rho); placeholder: false"
+      },
+      "is_input": true
+    },
+    {
+      "name": "S_ref",
+      "var_id": "S_ref",
+      "units": "m^2",
+      "initial_value": "0.059999999999999998",
+      "description": {
+        "value": "source: muas.reference s_ref (the frontal area of the demo body box); placeholder: true"
+      }
+    },
+    {
+      "name": "CDx",
+      "var_id": "CDx",
+      "units": "nd",
+      "initial_value": "1.4039860630167442",
+      "description": {
+        "value": "source: AeroSandbox AeroBuildup of the demo body box and arm tubes (job multirotor_drag, 10 m/s, Hoerner hand check, AeroBuildup over Hoerner x 0.36, y 1.57, z 1.03, rule combine max). Stand-in shapes: fit from the flight log; placeholder: true"
+      }
+    },
+    {
+      "name": "CDy",
+      "var_id": "CDy",
+      "units": "nd",
+      "initial_value": "2.3234000384225406",
+      "description": {
+        "value": "source: AeroSandbox AeroBuildup of the demo body box and arm tubes (job multirotor_drag, 10 m/s, Hoerner hand check, AeroBuildup over Hoerner x 0.36, y 1.57, z 1.03, rule combine max). Stand-in shapes: fit from the flight log; placeholder: true"
+      }
+    },
+    {
+      "name": "CDz",
+      "var_id": "CDz",
+      "units": "nd",
+      "initial_value": "2.7545451671801549",
+      "description": {
+        "value": "source: AeroSandbox AeroBuildup of the demo body box and arm tubes (job multirotor_drag, 10 m/s, Hoerner hand check, AeroBuildup over Hoerner x 0.36, y 1.57, z 1.03, rule combine max). Stand-in shapes: fit from the flight log; placeholder: true"
+      }
+    },
+    {
+      "name": "k_rotor_drag",
+      "var_id": "k_rotor_drag",
+      "units": "kg",
+      "initial_value": "0",
+      "description": {
+        "value": "source: stand-in 0: fit from the flight log; placeholder: true"
+      }
+    },
+    {
+      "name": "bodyForceX",
+      "var_id": "Fx",
+      "units": "N",
+      "axis_system": "body axes FRD",
+      "sign": "force along x, positive forward",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <minus />\n          <apply>\n            <plus />\n            <apply>\n              <times />\n              <cn>0.5</cn>\n              <ci>rho</ci>\n              <ci>S_ref</ci>\n              <ci>CDx</ci>\n              <ci>u</ci>\n              <apply>\n                <abs />\n                <ci>u</ci>\n              </apply>\n            </apply>\n            <apply>\n              <times />\n              <ci>k_rotor_drag</ci>\n              <ci>n_sum</ci>\n              <ci>u</ci>\n            </apply>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "bodyForceY",
+      "var_id": "Fy",
+      "units": "N",
+      "axis_system": "body axes FRD",
+      "sign": "force along y, positive right",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <minus />\n          <apply>\n            <plus />\n            <apply>\n              <times />\n              <cn>0.5</cn>\n              <ci>rho</ci>\n              <ci>S_ref</ci>\n              <ci>CDy</ci>\n              <ci>v</ci>\n              <apply>\n                <abs />\n                <ci>v</ci>\n              </apply>\n            </apply>\n            <apply>\n              <times />\n              <ci>k_rotor_drag</ci>\n              <ci>n_sum</ci>\n              <ci>v</ci>\n            </apply>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    },
+    {
+      "name": "bodyForceZ",
+      "var_id": "Fz",
+      "units": "N",
+      "axis_system": "body axes FRD",
+      "sign": "force along z, positive down",
+      "calculation": {
+        "math": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n        <apply>\n          <minus />\n          <apply>\n            <times />\n            <cn>0.5</cn>\n            <ci>rho</ci>\n            <ci>S_ref</ci>\n            <ci>CDz</ci>\n            <ci>w</ci>\n            <apply>\n              <abs />\n              <ci>w</ci>\n            </apply>\n          </apply>\n        </apply>\n      </math>"
+      },
+      "is_output": true
+    }
+  ],
+  "check_data": {
+    "static_shot": [
+      {
+        "name": "rest",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.2250000000000001"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "forward",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "10"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "100"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.2250000000000001"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "-5.1596487815865348",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "backward_side",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "-4"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "3"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "80"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.2250000000000001"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "0.8255438050538455",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "-0.76846456270825525",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "climb_and_descent",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "-2"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "90"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.2250000000000001"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "0.40491813957548273",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "descent",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "3"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "0"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.1000000000000001"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "-0",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "-0.81809991465250609",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      },
+      {
+        "name": "all_axes",
+        "check_inputs": {
+          "signal": [
+            {
+              "var_id": "u",
+              "signal_value": "6"
+            },
+            {
+              "var_id": "v",
+              "signal_value": "-5"
+            },
+            {
+              "var_id": "w",
+              "signal_value": "2.5"
+            },
+            {
+              "var_id": "n_sum",
+              "signal_value": "120"
+            },
+            {
+              "var_id": "rho",
+              "signal_value": "1.2"
+            }
+          ]
+        },
+        "check_outputs": {
+          "signal": [
+            {
+              "var_id": "Fx",
+              "signal_value": "-1.8195659376697004",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fy",
+              "signal_value": "2.0910600345802863",
+              "tol": "1e-09"
+            },
+            {
+              "var_id": "Fz",
+              "signal_value": "-0.61977266261553476",
+              "tol": "1e-09"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

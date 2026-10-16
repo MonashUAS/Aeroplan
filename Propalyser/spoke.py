@@ -4,7 +4,14 @@ propeller node (1.2.3.9 PropellerOrFanInstallation, `muas.propulsion_system`).
 Input (git ignores it): Propalyser/work/<aircraft>/<system_id>.v2.h5, copied by hand from the Propalyser exports.
 Settings (committed): Propalyser/settings/<aircraft>.yaml
     system      the system that flies (the file <system>.v2.h5 is read)
-    instance    muas.instance of the propeller node
+    instance    muas.instance of the propeller node. It holds the system data and the Ct/Cp dataset
+    rotors      optional: the muas.instance of every propeller that the system drives (a multirotor has one system and
+                four lift rotors). Each one gets `muas.propeller.system` = the system id and the diameter of the file.
+                The ESC end points of the file (pwm_low, pwm_high) go into the motor outputs of the autopilot
+                (node 1.2.5.10) that drive these rotors.
+
+The file is not required: when it is not in the work folder, the spoke prints a note and the build goes on without it
+(the aircraft then lacks the propulsion system and the aerolink profile refuses it).
 
 Read with h5py only (no Propalyser code). Every `units` attribute must be a pint spelling. Another schema or version
 is refused: there is no legacy reader. The file stays a raw file (a linked asset). Its Ct/Cp table and throttle
@@ -18,7 +25,7 @@ import h5py
 import numpy as np
 
 from aeroplan import adh_doc
-from aeroplan.muas.units import parse_units
+from aeroplan.muas.units import parse_units, ureg
 from aeroplan.spokes import Context
 
 NAME = "Propalyser"
@@ -135,6 +142,8 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         return None
     path = ctx.work / f"{st['system']}.v2.h5"
     if not path.is_file():
+        print(f"Propalyser: {path.relative_to(ctx.root).as_posix()} is not here: spoke skipped. Copy the contract B "
+              f"export of the system {st['system']} into that folder by hand.")
         return None
     data = read_system(path)
     if data["system_id"] != st["system"]:
@@ -156,5 +165,36 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     inst = n["muas"].get("propeller")
     if inst is not None:
         inst["diameter"] = dict(data["diameter"])
-    return [f"{st['instance']}: propulsion system {st['system']} ({len(tables['prop_ctcp']['columns']['J'])} J points, "
-            f"D {data['diameter']['value']} m, placeholder {data['placeholder']})"]
+    changes = [f"{st['instance']}: propulsion system {st['system']} ({len(tables['prop_ctcp']['columns']['J'])} J points, "
+               f"D {data['diameter']['value']} m, placeholder {data['placeholder']})"]
+    rotors = list(st.get("rotors") or [])
+    for r in rotors:
+        try:
+            pr = adh_doc.find(doc, r)["muas"]["propeller"]
+        except (KeyError, TypeError):
+            raise ValueError(f"settings rotors: {r!r} has no muas.propeller (build with the AeroSandbox seed first)") from None
+        pr["system"] = data["system_id"]
+        pr["diameter"] = dict(data["diameter"])
+    if rotors:
+        changes.append(f"{len(rotors)} rotors name the system {data['system_id']}: {', '.join(rotors)}")
+        changes += _esc_end_points(doc, data, rotors, path.name)
+    return changes
+
+
+def _esc_end_points(doc: Dict[str, Any], data: Dict[str, Any], rotors, file_name: str):
+    """The ESC end points of the contract B file into the autopilot outputs that drive `rotors` (us, whole numbers)."""
+    esc = data.get("esc") or {}
+    if "pwm_low" not in esc or "pwm_high" not in esc or not adh_doc.has_node(doc, "1.2.5.10"):
+        return []
+    ap = (adh_doc.node(doc, "1.2.5.10").get("muas") or {}).get("autopilot")
+    if not ap:
+        return []
+    lo, hi = (round(ureg.Quantity(esc[k]["value"], esc[k]["units"]).to("us").magnitude) for k in ("pwm_low", "pwm_high"))
+    n = 0
+    for o in ap["outputs"]:
+        if o["targets"] and all(t in rotors for t in o["targets"]):
+            o["pwm_min_us"], o["pwm_max_us"] = lo, hi
+            o["source"] = (f"{o['source']} ESC end points {lo} to {hi} us: {file_name} /esc pwm_low_us, pwm_high_us "
+                           "(Propalyser spoke).")
+            n += 1
+    return [f"ESC end points {lo} to {hi} us written to {n} motor outputs of the autopilot"] if n else []

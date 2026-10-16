@@ -9,6 +9,9 @@ The design frame is not the glTF frame (y up). A viewer that needs the glTF fram
 `extras.to_gltf` (a 4x4 matrix, row major). The data stays in the design frame, so no rounding of a rotation
 changes a hinge or a vertex.
 
+A part whose extras hold `alpha` (0 to 1, for example a rotor disc) gets a glTF material with alphaMode BLEND and that
+opacity, so a viewer draws it semi-transparent. The reader ignores materials and keeps `alpha` in the extras.
+
 The writer is deterministic: the same parts give the same bytes.
 """
 from __future__ import annotations
@@ -37,7 +40,7 @@ def _pad(b: bytes, fill: bytes) -> bytes:
 
 def write_glb(parts: List[Tuple[str, np.ndarray, Dict[str, Any]]], *, aircraft: str) -> bytes:
     """GLB bytes of the parts: (name, triangles (n, 3, 3) in m, extras), sorted by name."""
-    nodes, meshes, accessors, views = [], [], [], []
+    nodes, meshes, accessors, views, materials = [], [], [], [], []
     blob = bytearray()
     for name, tri, extras in sorted(parts, key=lambda p: p[0]):
         pos = np.ascontiguousarray(np.asarray(tri, dtype=np.float32).reshape(-1, 3))
@@ -48,13 +51,23 @@ def write_glb(parts: List[Tuple[str, np.ndarray, Dict[str, Any]]], *, aircraft: 
         blob += _pad(data, b"\0")
         accessors.append({"bufferView": len(views) - 1, "componentType": FLOAT, "count": int(len(pos)), "type": "VEC3",
                           "min": [float(v) for v in pos.min(axis=0)], "max": [float(v) for v in pos.max(axis=0)]})
-        meshes.append({"name": name, "primitives": [{"attributes": {"POSITION": len(accessors) - 1}, "mode": 4}]})
+        prim = {"attributes": {"POSITION": len(accessors) - 1}, "mode": 4}
+        if extras.get("alpha") is not None:
+            alpha = float(extras["alpha"])
+            if not 0.0 <= alpha <= 1.0:
+                raise GltfError(f"part {name}: alpha must be between 0 and 1")
+            materials.append({"name": f"{name}_blend", "alphaMode": "BLEND", "doubleSided": True,
+                              "pbrMetallicRoughness": {"baseColorFactor": [0.5, 0.5, 0.5, alpha], "metallicFactor": 0.0}})
+            prim["material"] = len(materials) - 1
+        meshes.append({"name": name, "primitives": [prim]})
         nodes.append({"name": name, "mesh": len(meshes) - 1, "extras": extras})
     doc = {"asset": {"version": "2.0", "generator": "AeroPlan", "extras": {"aircraft": aircraft, "frame": FRAME,
                                                                           "units": "m", "to_gltf": TO_GLTF}},
            "scene": 0, "scenes": [{"name": aircraft, "nodes": list(range(len(nodes)))}],
            "nodes": nodes, "meshes": meshes, "accessors": accessors, "bufferViews": views,
            "buffers": [{"byteLength": len(blob)}]}
+    if materials:
+        doc["materials"] = materials
     js = _pad(json.dumps(doc, sort_keys=True, separators=(",", ":")).encode("utf-8"), b" ")
     bn = bytes(blob)
     total = 12 + 8 + len(js) + 8 + len(bn)

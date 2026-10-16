@@ -88,7 +88,10 @@
         {
           "enum": [
             "planform",
-            "tube"
+            "tube",
+            "box",
+            "cylinder",
+            "disc"
           ],
           "type": "string"
         },
@@ -97,7 +100,7 @@
         }
       ],
       "default": null,
-      "description": "How a tool makes the mesh when no CAD mesh exists",
+      "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom): from the ADH items. box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
       "title": "Generator"
     },
     "hinge": {
@@ -154,6 +157,20 @@
       "title": "Placeholder",
       "type": "boolean"
     },
+    "shape": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The numbers of a demo shape, design frame, metres. box: centre [x, y, z], size [lx, ly, lz]. tube: p0, p1, radius_m. cylinder: centre, axis (unit vector), length_m, radius_m. disc: centre, axis, radius_m, thickness_m, alpha (0 to 1: the view draws it semi-transparent)",
+      "title": "Shape"
+    },
     "source": {
       "minLength": 1,
       "title": "Source",
@@ -181,7 +198,7 @@
         }
       ],
       "default": null,
-      "description": "For generator tube: radius_m and to_instance (the item whose root quarter chord ends it)",
+      "description": "For generator tube (boom): radius_m and to_instance (the item whose root quarter chord ends it)",
       "title": "Tube"
     },
     "units": {

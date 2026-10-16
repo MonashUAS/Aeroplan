@@ -1,0 +1,10 @@
+# Propalyser spoke settings for the Redback (tool settings, not aircraft data).
+# system: the propulsion system that flies: the Propalyser system redback_mk4 (M6C10 IPE V3 KV150, FLUXER PRO 22x6.6, AMPX 40A V2,
+#   battery 12S3P of 6 x NXE 6S 4500 mAh). The file <system>.v2.h5 is read from Propalyser/work/redback/. The user copies the
+#   export of Propalyser (python -m propalyser export redback_mk4 --basis vendor) there by hand. Until then the build skips this spoke.
+# instance: muas.instance of the ADH propeller node 1.2.3.9. It holds the system data and the Ct/Cp dataset (stored once).
+# rotors: the four lift rotors. Each names the one system (muas.propeller.system). The ESC end points of the file go to
+#   the motor outputs of the autopilot.
+system: redback_mk4
+instance: prop_lift_1
+rotors: [prop_lift_1, prop_lift_2, prop_lift_3, prop_lift_4]

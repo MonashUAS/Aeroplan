@@ -223,3 +223,142 @@ def report(spec: Dict[str, Any], results: Dict[str, Any], hashes: Dict[str, str]
     pm = sum(p["mass_kg"] for p in spec["mass"]["point_masses"])
     L += ["", f"The point masses add to {pm:.3f} kg. The mass model total is {spec['mass']['mass_kg']:.3f} kg.", ""]
     return "\n".join(L)
+
+
+# ------------------------------------------------------------------------------------------------------ multirotor
+def multirotor_spec(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context, drag: Optional[Dict[str, Any]] = None
+                    ) -> Dict[str, Any]:
+    """The spec of the multirotor jobs, from the ADH document and the settings. `drag` {CDx, CDy, CDz} (the result of
+    the multirotor_drag job) fills the body drag of the EMST jobs. `propulsion` is None until the document holds a
+    propulsion system and its Ct/Cp dataset (the Propalyser spoke)."""
+    air = adh_doc.node(doc, "1.2")["muas"]
+    ref, mp = air["reference"], air.get("mass_properties")
+    if ref.get("kind") != "multirotor":
+        raise ValueError("muas.reference.kind is not multirotor: build the aircraft first (the AeroSandbox seed)")
+    if mp is None:
+        raise ValueError("node 1.2 has no muas.mass_properties: run the SpecSheet spoke (aeroplan build) first")
+    rotors, shapes, psys_item = [], {}, None
+    for _, item, _ in adh_doc.iter_nodes(doc):
+        m = item.get("muas") or {}
+        pr = m.get("propeller")
+        if pr and pr["role"] == "lift":
+            rotors.append({"motor": pr["motor"], "instance": m["instance"], "hub": list(pr["hub"]["xyz"]),
+                           "thrust_axis": list(pr["thrust_axis"]), "spin": pr["spin"], "diameter_m": pr["diameter"]["value"]})
+        for v in m.get("visual") or []:
+            if v.get("shape") and v["generator"] in ("box", "tube"):
+                shapes[v["part"]] = v["shape"]
+        if m.get("propulsion_system") and psys_item is None:
+            psys_item = m
+    rotors.sort(key=lambda r: r["motor"])
+    if "body" not in shapes:
+        raise ValueError("the document has no visual part `body` (box): the drag job needs the body shape")
+    arms = [{"p0": s["p0"], "p1": s["p1"], "radius_m": s["radius_m"]} for k, s in sorted(shapes.items()) if k.startswith("arm_")]
+    cfg = st["drag"]
+    spec: Dict[str, Any] = {
+        "kind": "multirotor", "name": doc.get("name", "aircraft"),
+        "reference": {"s_m2": ref["s_ref"]["value"], "b_m": ref["b_ref"]["value"], "c_m": ref["c_ref"]["value"],
+                      "xyz_ref": list(ref["mrp"]["point"]["xyz"])},
+        "rotors": rotors, "body": {"box": shapes["body"], "arms": arms},
+        "mass": {"mass_kg": mp["mass"]["value"], "cg": list(mp["cg"]["xyz"]), "inertia": mp.get("inertia"),
+                 "placeholder": bool(mp.get("placeholder"))},
+        "drag_job": {"speed_m_s": cfg["speed_m_s"], "altitude_m": cfg["altitude_m"],
+                     "box_edge_sections": cfg.get("box_edge_sections", 5), "combine": cfg.get("combine", "max"),
+                     "hoerner": {k: v for k, v in cfg["hoerner"].items() if k != "source"}},
+        "electrical": {k: v["value"] for k, v in st["electrical"].items()},
+        "analysis": dict(st["analysis"]), "propulsion": None, "drag": None}
+    if drag is not None:
+        spec["drag"] = {"S_ref_m2": ref["s_ref"]["value"], "CDx": drag["CDx"], "CDy": drag["CDy"], "CDz": drag["CDz"],
+                        "k_rotor_drag_kg": cfg["k_rotor_drag_kg"]}
+    ps = (psys_item or {}).get("propulsion_system")
+    if ps:
+        m_ = ps.get("motor") or {}
+        if m_.get("kappa") is None or m_.get("r_tot") is None:
+            raise ValueError("the contract B file has no motor chain constants (kappa, r_tot)")
+        ref_id = next((d["ref"] for d in psys_item.get("datasets", []) if d["role"] == "propulsion"), None)
+        if ref_id is None:
+            raise ValueError("the propulsion system has no propulsion dataset (Ct/Cp table)")
+        data = ctx.dataset(ref_id)
+        b = ps.get("battery") or {}
+        if not b or b.get("capacity") is None:
+            raise ValueError("the contract B file has no battery with a capacity")
+        spec["propulsion"] = {
+            "system_id": ps["system_id"], "diameter_m": ps["diameter"]["value"], "p_max_W": ps["p_max"]["value"],
+            "placeholder": bool(ps.get("placeholder")), "basis": ps["basis"],
+            "motor": {"kv_rad_s_V": m_["kv"]["value"], "i0_A": m_["i0"]["value"], "kappa": m_["kappa"],
+                      "r_tot_ohm": m_["r_tot"]["value"], "q0_Nm": _value(m_.get("q0"), 0.0)},
+            "battery": {"v_nominal_V": b["v_nominal"]["value"], "cells_s": b["cells_s"], "cells_p": b["cells_p"],
+                        "capacity_As": b["capacity"]["value"]},
+            "tables": {k: list(v) for k, v in data["prop_ctcp"]["columns"].items()},
+            "throttle_map": {k: list(v) for k, v in data["throttle_map"]["columns"].items()}}
+    return spec
+
+
+def multirotor_placeholders(st: Dict[str, Any], spec: Dict[str, Any]) -> List[str]:
+    """The placeholder inputs that the multirotor results use, one line each."""
+    out = [f"{k}: {v['value']:g} ({v['source']})" for k, v in st["electrical"].items() if v["placeholder"]]
+    d = st["drag"]
+    out.append(f"k_rotor_drag: {d['k_rotor_drag_kg']:g} kg ({d['k_rotor_drag_source']})")
+    out.append("body drag CDx, CDy, CDz: AeroBuildup of the demo box and arm tubes, stand-in sizes: fit from the flight log")
+    out.append("body box, arm tube radius, motor shape, s_ref: demo geometry, stand-in: measure the frame")
+    if spec["mass"]["placeholder"]:
+        out.append("mass model of node 1.2: the CG and inertia are a point-mass model (placeholder)")
+    ps = spec.get("propulsion")
+    if ps and ps["placeholder"]:
+        out.append(f"propulsion system {ps['system_id']} (contract B, basis {ps['basis']}): placeholder")
+    out.append("battery: nominal voltage, full capacity, no reserve; the chain resistance r_tot comes from the contract B file")
+    return out
+
+
+def multirotor_report(spec: Dict[str, Any], results: Dict[str, Any], ph: List[str]) -> str:
+    """work/<aircraft>/asb/report.md of the multirotor jobs (ASD-STE100 prose)."""
+    d = results["multirotor_drag"]
+    L = ["# AeroSandbox multirotor model", "",
+         "Written by `python -m aeroplan generate AeroSandbox <aircraft>`. Nothing here goes back into the ADH data "
+         "except through `aeroplan build`.", "",
+         "## Body drag (AeroBuildup of the box and the arm tubes)", "",
+         f"Flow speed {d['speed_m_s']:g} m/s, air density {d['rho_kg_m3']:.4f} kg/m^3, S_ref {d['S_ref_m2']:.4f} m^2.", "",
+         "| Axis | C_D A, AeroBuildup (m^2) | C_D A, Hoerner hand check (m^2) | Ratio | Asymmetry (+ and -) | C_D A used (m^2) | C_D on S_ref |",
+         "|---|---|---|---|---|---|---|"]
+    for ax in "xyz":
+        L.append(f"| {ax} | {d['CdA_asb_m2'][ax]:.4f} | {d['hoerner_CdA_m2'][ax]:.4f} | {d['asb_over_hoerner'][ax]:.2f} | "
+                 f"{d['asymmetry'][ax]:.1%} | {d['CdA_m2'][ax]:.4f} | {d['CD']['CD' + ax]:.3f} |")
+    L += ["", f"The Hoerner column uses the crossflow drag of the bluff shapes (Hoerner, Fluid-Dynamic Drag, 1965, chapter 3). "
+          f"AeroBuildup is a slender-body method and has no pressure drag on the flat front face of the box. The rule "
+          f"`combine: {d['combine']}` picks the drag area of each axis. The box and arm sizes are stand-ins, so the drag area "
+          "is a placeholder.", ""]
+    e = results.get("emst_segments")
+    if e is None:
+        L += ["## EMST", "", "Not run: the document has no propulsion system yet (copy the Propalyser contract B file "
+              "into `Propalyser/work/<aircraft>/` and build again).", ""]
+    else:
+        L += ["## EMST segments (Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A)", "",
+              f"Mass {e['mass_kg']:.3f} kg, weight {e['weight_N']:.2f} N, air density {e['rho_kg_m3']:.4f} kg/m^3, "
+              f"{e['n_rotors']} rotors.", "",
+              "| Segment | V (m/s) | Climb (m/s) | Tilt (deg) | Thrust each (N) | RPM | Duty | ESC command (map) | P shaft (W) | "
+              "P battery (W) | I total (A) | Endurance (min) |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for s in e["segments"]:
+            cmd = f"{s['esc_command_equiv']:.3f}" if s.get("esc_command_equiv") is not None else "n/a"
+            L.append(f"| {s['name']} | {s['speed_m_s']:g} | {s['climb_rate_m_s']:g} | {s['tilt_deg']:.2f} | "
+                     f"{s['thrust_each_N']:.2f} | {s['rpm']:.0f} | {s['duty']:.3f} | {cmd} | {s['p_shaft_W']:.0f} | "
+                     f"{s['p_battery_W']:.0f} | {s['i_total_A']:.1f} | {s['endurance_min']:.2f} |")
+        f = e["full_throttle"]
+        L += ["", f"Full throttle, static: {f['thrust_total_N']:.1f} N in total, thrust to weight {f['thrust_to_weight']:.2f}, "
+              f"{f['rpm']:.0f} rpm, {f['i_total_A']:.1f} A.", ""]
+    sc = results.get("emst_endurance")
+    if sc:
+        be, br = sc["best_endurance"], sc["best_range"]
+        L += ["## Best speeds", "", f"- Best endurance: {be['speed_m_s']:g} m/s, {be['endurance_min']:.2f} min, tilt {be['tilt_deg']:.2f} deg.",
+              f"- Best range: {br['speed_m_s']:g} m/s, {br['range_km']:.2f} km, tilt {br['tilt_deg']:.2f} deg.", ""]
+    se = results.get("emst_sensitivity")
+    if se:
+        L += ["## Sensitivity of the hover endurance (central differences)", "",
+              f"Base hover endurance {se['base_endurance_min']:.2f} min, relative step {se['step']:g}.", "",
+              "| Parameter | x0 | d(endurance)/dx (min per unit) | % per % |", "|---|---|---|---|"]
+        for k, v in se["parameters"].items():
+            L.append(f"| {k} | {v['x0']:.4g} | {v['d_endurance_min_per_unit']:.4g} | {v['percent_per_percent']:.3f} |")
+        L.append("")
+    L += ["## Placeholders that the results use", ""] + [f"- {p}" for p in ph]
+    L += ["", "The rotor load is the CT/CP table of the propulsion dataset (manufacturer basis). The paper uses a NACA 0015 BEMT, "
+          "and names this as its largest error source (section III.A.9). Rm and Re act on the current of one motor, "
+          "Rb and Rw on the bus current (see the comment block in `AeroSandbox/asb_worker.py`).", ""]
+    return "\n".join(L)

@@ -12,3 +12,5 @@ Flight events and firmware releases. A flight keeps its ArduPilot DataFlash log 
 weighing of that flight (say who weighed it in `source`).
 
 Open item: the spoke does not decode the log yet. The decoded record (a dataset of role `flight-record`) comes later.
+
+`wait_for_log: true` on a flight skips it with a note until the log is in the work folder. `mass_kg: document` and `cg_m: document` take the mass model of node 1.2.

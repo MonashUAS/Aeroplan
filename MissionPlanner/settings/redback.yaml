@@ -1,0 +1,8 @@
+# MissionPlanner spoke settings for the Redback (tool settings, not aircraft data).
+# optional: the parameter file is not here yet. The build skips it with a note until the file is in
+#   MissionPlanner/work/redback/. Save it in Mission Planner (Config > Full Parameter List > Save) and copy it by hand.
+# firmware: the firmware that the parameters belong to.
+# parameters: the file name of the .parm.
+optional: true
+firmware: ArduCopter
+parameters: redback.parm

@@ -20,8 +20,8 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
   Storage tiers inline, embedded, linked. Packing profiles `aerolink`, `review`, `flight-record`, `archive`
   (`consumers.py`). Flight events on 1.8.1.4 FlightTests, firmware on 1.2.9 AirVehicleSoftwareRelease.
 - Aerolink packaging uses glTF (`preview/aircraft.glb`) for the 3D parts. No STL output (2026-10-10).
-- One folder for each tool: `AeroSandbox/` (initial sizing), `flow5/`, `SpecSheet/` (the weight sheet), `Propalyser/`, `CREO/` (CAD link), `OpenVSP/`,
-  `DAVEML/` (published DAVE-ML models), `ArduPilot/` (flight events), `Aerolink/`. A new tool gets a new folder
+- One folder for each tool: `Prototype/` (published team specs, MTOW -> propulsion sizing targets), `AeroSandbox/` (initial sizing), `flow5/`, `SpecSheet/` (the weight sheet), `Propalyser/`, `CREO/` (CAD link), `OpenVSP/`,
+  `DAVEML/` (published DAVE-ML models), `ArduPilot/` (flight events), `MissionPlanner/` (flight files), `Aerolink/`. A new tool gets a new folder
   with `spoke.py`, `README.md`, `settings/`, `work/`.
 - A new aircraft starts from the AeroSandbox sizing output, then moves forward to flow5. A published reference
   model (the NASA F-16, `aircraft/f16/`) starts from the DAVEML spoke.
@@ -47,6 +47,15 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 - 2026-10-15: The fuselage body (`geometry.body`) is a fit of the Creo shrinkwrap skin, cut by the CREO spoke
   (`aeroplan.skin_body`). The skin (`muas.skin`, faceted STEP) stays the exact shape and goes to the OpenVSP analysis
   (CompGeom, parasite drag, VSPAERO panel). `muas.skin.body_fit` records the method and the fit.
+- 2026-10-16: The flight files (ArduPilot `.parm`, `.waypoints`, geofence) go into the `.muas` as datasets of the autopilot node 1.2.5.10 (roles `parameters`, `waypoints`, `geofence`). The `MissionPlanner/` spoke reads them from `work/<aircraft>/`. The `aerolink` profile embeds them (`consumers.tier`). `flightfiles.py` parses and writes the formats. Aerolink extracts them and can write them into the autopilot.
+- 2026-10-16: Multirotor path. The Redback (X quadcopter) starts from `AeroSandbox/settings/redback.yaml` (`kind: multirotor`,
+  `aeroplan.multirotor.seed`), not from a sizing printout. `muas.reference.kind = multirotor` selects the Aerolink needs
+  (`consumers.FLIGHT_ITEMS_BY_KIND`): four lift rotors (`muas.propeller` role lift, `motor` 1 to 4, `system`), motor outputs
+  `motor1` to `motor4` (ArduPilot 33 to 36), no control surfaces. `spin` is the sense seen along the thrust vector (ArduPilot
+  CCW from above is `cw`). The SpecSheet spoke has a CSV mode with placement rules (hub, half_arm, origin). The AeroSandbox worker
+  has EMST jobs (Bershadsky 2016) with the Ct/Cp table as rotor load. The body drag is a forces-only DAVE-ML
+  (`multirotor_aero.py`). The contract for Aerolink is `spec/multirotor_contract.md`. The Mk4 propulsion CSV is an estimate
+  (sanity check only).
 - The web editor and viewer are shelved for now.
 - The changed file wins (2026-10-08): a geometry spoke writes an item only when its input file differs from the
   asset that the item names. `muas.geometry_tool` names the spoke that wrote the geometry last.
@@ -77,6 +86,7 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 |---|---|
 | `source_tree.py` | The source tree `aircraft/<aircraft>/` <-> the `Aircraft` in memory (ADH doc, datasets, info) |
 | `assets.py` | The asset register: IDs (content hashes), file and dataset entries, references, fetch with hash check |
+| `flightfiles.py` | The flight files: parse and write `.parm`, QGC WPL `.waypoints`, fence polygons, and the fence parameter check |
 | `package.py` | `.muas` ZIP package: pack (profiles, deterministic bytes), open (every hash), unpack |
 | `consumers.py` | Packing profiles, storage tiers, what Aerolink needs (`missing_for_flight`) |
 | `h5json.py` | JSON <-> HDF5 of the data files `data/<name>.h5` (no time stamps) |
@@ -92,6 +102,8 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 | `step_mesh.py` | Triangles of a faceted STEP file (the Creo shrinkwrap skin), no CAD kernel |
 | `aero_buildup.py` | The flow5 aero build-up and its DAVE-ML writer |
 | `skin_body.py` | Body frames from a closed skin mesh (slices, wing panel cut, fit report), mesh repair for VSPAERO |
+| `multirotor.py` | The multirotor seed: hubs from a CAD arm, rotors, motor outputs, reference, gear, demo shapes |
+| `multirotor_aero.py` | The multirotor body-drag DAVE-ML (forces only) |
 | `mass_model.py` | Point masses to mass, CG and inertia (parallel axis). Strip distribution of a mass over a planform |
 
 ## Commands
@@ -114,6 +126,7 @@ python -m aeroplan build currawong --author "Liam M." --consumers review archive
 AeroSandbox/.venv/bin/jupyter lab AeroSandbox/notebooks   # the notebooks
 python -m aeroplan generate OpenVSP currawong
 python -m aeroplan export Aerolink currawong <out>
+python -m aeroplan build redback --new --author "Liam M." --consumers review archive   # the quadcopter, then generate AeroSandbox, build again
 python -m aeroplan build f16 --author "Liam M."   # the NASA F-16 (DAVEML spoke, downloads when needed)
 python -m aeroplan schema --out schema      # after a model change
 ```

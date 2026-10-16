@@ -1,0 +1,52 @@
+{
+  "wbs_no": "1.2.5.10",
+  "name": "AutomaticFlightControl",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "autopilot",
+    "autopilot": {
+      "firmware": "ArduCopter",
+      "outputs": [
+        {
+          "channel": 1,
+          "function": "motor1",
+          "targets": [
+            "prop_lift_1"
+          ],
+          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 1 drives motor 1 (SERVO1_FUNCTION 33). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "placeholder": true
+        },
+        {
+          "channel": 2,
+          "function": "motor2",
+          "targets": [
+            "prop_lift_2"
+          ],
+          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 2 drives motor 2 (SERVO2_FUNCTION 34). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "placeholder": true
+        },
+        {
+          "channel": 3,
+          "function": "motor3",
+          "targets": [
+            "prop_lift_3"
+          ],
+          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 3 drives motor 3 (SERVO3_FUNCTION 35). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "placeholder": true
+        },
+        {
+          "channel": 4,
+          "function": "motor4",
+          "targets": [
+            "prop_lift_4"
+          ],
+          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 4 drives motor 4 (SERVO4_FUNCTION 36). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "placeholder": true
+        }
+      ],
+      "notes": [
+        "Quad X: M1 front right CCW, M2 rear left CCW, M3 front left CW, M4 rear right CW (seen from above), ArduPilot AP_MotorsMatrix FRAME_CLASS 1, FRAME_TYPE 1."
+      ]
+    }
+  }
+}

@@ -125,6 +125,8 @@ def generate(spoke_name: str, aircraft: str) -> List[Path]:
     spoke = load(spoke_name)
     if not hasattr(spoke, "generate"):
         raise ValueError(f"the spoke {spoke_name} has no generate step")
+    if getattr(spoke, "GENERATE_NEEDS_TREE", True) is False and not (aircraft_dir(aircraft) / "aircraft.yaml").is_file():
+        return spoke.generate(None, context(spoke_name, aircraft))      # a download for an aircraft not built yet
     acft = load_aircraft(aircraft)
     return spoke.generate(acft.doc, context(spoke_name, aircraft, acft))
 
