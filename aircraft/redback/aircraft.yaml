@@ -1,5 +1,6 @@
 name: redback
 kind: aircraft
 consumers:
+- aerolink
 - review
 - archive

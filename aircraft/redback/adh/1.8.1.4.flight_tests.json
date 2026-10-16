@@ -1,0 +1,34 @@
+{
+  "wbs_no": "1.8.1.4",
+  "name": "FlightTests",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "flight_tests",
+    "flight_tests": [
+      {
+        "event_id": "redback_flight_1",
+        "date": "2026-09-15",
+        "aircraft_version": "0.2.0",
+        "mass": {
+          "value": 9.133999999999999,
+          "units": "kg"
+        },
+        "cg": {
+          "frame": "design",
+          "xyz": [
+            0.0,
+            0.0,
+            0.009729312470317632
+          ],
+          "units": "m"
+        },
+        "firmware": "arducopter-4.7.0-1511f271",
+        "parameters": "asset:sha256:4ab6c1607837b3eb4f85140809af1ba5d6dba0e3b0f57bd7a9635db5d309a750",
+        "log": "asset:sha256:215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d",
+        "segments": [],
+        "source": "Log 00000171.BIN (sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d), 1197.4 s. AUTO mission with takeoff from 466.7 s, RTL from 1193.7 s, disarm at 1328.3 s (boot time), then two short arm periods of 19 s and 16 s. Parameters: the PARM messages of the log (00000171_log.parm, sha256 3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13). Pilot: not stated by the user. Site: not stated by the user. Mass and CG: the weight sheet total 9.134 kg and the mass model of node 1.2, not weighed for this flight.",
+        "placeholder": false
+      }
+    ]
+  }
+}

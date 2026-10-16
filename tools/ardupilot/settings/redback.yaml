@@ -27,7 +27,7 @@ flights:
     log: 00000171.BIN
     params: 00000171_log.parm        # PARM messages of the log
     firmware: arducopter-4.7.0-1511f271
-    aircraft_version: "0.1.1"        # the AeroPlan version when the log was added. No package of the aircraft flew.
+    aircraft_version: "0.2.0"        # the first AeroPlan version that holds the real data of the flown aircraft. No package flew.
     mass_kg: document
     cg_m: document
     segments: []

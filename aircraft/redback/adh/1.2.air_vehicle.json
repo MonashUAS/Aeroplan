@@ -102,7 +102,7 @@
     "datasets": [
       {
         "role": "aero",
-        "ref": "asset:sha256:e085e9fee76a27d2eee8e9ce35532741ad1c8ba80d18d0a9b953d944032d3be2"
+        "ref": "asset:sha256:e4dd95f0d097dce63caa6ab0fa897b6bc14db6cdab3d14e9d57fbc88fe55d345"
       }
     ],
     "point_masses": [
@@ -578,7 +578,7 @@
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336",
+        "asset": "asset:sha256:f508ab84f67010658f0498465fb96deae950469539ac1758ee8032f7d1bdb66c",
         "role": "multirotor body drag and EMST results"
       },
       {
@@ -593,5 +593,542 @@
         "note": "estimates"
       }
     ]
-  }
+  },
+  "performance": [
+    {
+      "name": "sizing",
+      "description": "EMST segment analysis of the multirotor (hover, climb, forward flight with the tilt loop), endurance and sensitivities. Rotor load: the CT/CP table of the propulsion dataset.",
+      "tools": [
+        {
+          "model_name": "EMST segment analysis",
+          "generation_tool": "AeroSandbox worker (asb_worker.py)",
+          "description": "Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A, eq. (9) to (12). Inputs marked placeholder are stand-ins.",
+          "data_exchange": {
+            "model_identifier": "emst",
+            "inputs": [
+              {
+                "name": "rb",
+                "value": 0.015,
+                "units": "ohm",
+                "placeholder": true,
+                "source": "stand-in: battery internal resistance of the whole 12S3P pack. The paper (section II.C) gives no figure. The flight log fits it"
+              },
+              {
+                "name": "rw",
+                "value": 0.005,
+                "units": "ohm",
+                "placeholder": true,
+                "source": "stand-in: wiring resistance. The paper (section II.B) says it is small. Wire gauge and length are not known"
+              },
+              {
+                "name": "re",
+                "value": 0.027,
+                "units": "ohm",
+                "placeholder": true,
+                "source": "stand-in: the middle of the ESC resistance range of the paper, 9 to 45 mOhm (section II.B). Per ESC, added to r_tot of the chain, which holds the motor only until the log fits it"
+              },
+              {
+                "name": "ia",
+                "value": 0.5,
+                "units": "A",
+                "placeholder": true,
+                "source": "stand-in: avionics current at the battery voltage. The avionics load is not measured"
+              },
+              {
+                "name": "ip",
+                "value": 0.0,
+                "units": "A",
+                "placeholder": false,
+                "source": "no payload current in the nominal configuration (no payload)"
+              },
+              {
+                "name": "eta_e",
+                "value": 1.0,
+                "units": "nd",
+                "placeholder": false,
+                "source": "1: the manufacturer chart power includes the ESC (the paper uses 0.97, section III.A.2)"
+              },
+              {
+                "name": "discharge_fraction",
+                "value": 1.0,
+                "units": "nd",
+                "placeholder": true,
+                "source": "stand-in: the whole capacity is used. The paper allows a value below 1 (section III.A.2)"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "hover_rpm",
+                "value": 3167.576044146099,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_thrust_each_N",
+                "value": 22.393485274999996,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_tilt_deg",
+                "value": 0.0,
+                "units": "deg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_duty",
+                "value": 0.5852902510002413,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_i_total_A",
+                "value": 22.19546413472503,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_p_shaft_W",
+                "value": 723.6406038767927,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_p_battery_W",
+                "value": 985.4786075817913,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_endurance_min",
+                "value": 36.49394286523375,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_esc_command_from_static_map",
+                "value": 0.5777931682444697,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_rpm",
+                "value": 3324.1024051687596,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_thrust_each_N",
+                "value": 22.494714811391592,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_tilt_deg",
+                "value": 0.0,
+                "units": "deg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_duty",
+                "value": 0.6204415665055018,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_i_total_A",
+                "value": 25.868736430357153,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_p_shaft_W",
+                "value": 844.0604280906192,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_p_battery_W",
+                "value": 1148.5718975078576,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_endurance_min",
+                "value": 31.311927514536777,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_esc_command_from_static_map",
+                "value": 0.6123613934474597,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_rpm",
+                "value": 3172.4936316017383,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_thrust_each_N",
+                "value": 22.39129533855524,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_tilt_deg",
+                "value": 0.8249470542491233,
+                "units": "deg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_duty",
+                "value": 0.5864090340637487,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_i_total_A",
+                "value": 22.3109556096616,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_p_shaft_W",
+                "value": 727.4337315298702,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_p_battery_W",
+                "value": 990.6064290689751,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_endurance_min",
+                "value": 36.3050339111981,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_5_m_s_esc_command_from_static_map",
+                "value": 0.5789360248079061,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_rpm",
+                "value": 3206.6194451572273,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_thrust_each_N",
+                "value": 22.36489021675357,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_tilt_deg",
+                "value": 3.291289603874307,
+                "units": "deg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_duty",
+                "value": 0.594168786438162,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_i_total_A",
+                "value": 23.11802571328211,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_p_shaft_W",
+                "value": 753.9118813924772,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_p_battery_W",
+                "value": 1026.4403416697255,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_endurance_min",
+                "value": 35.037594042238084,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_10_m_s_esc_command_from_static_map",
+                "value": 0.5867300920915716,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_rpm",
+                "value": 3303.760978966395,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_thrust_each_N",
+                "value": 22.303291061959953,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_tilt_deg",
+                "value": 7.325032176815368,
+                "units": "deg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_duty",
+                "value": 0.6159351155039445,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_i_total_A",
+                "value": 25.394559902138976,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_p_shaft_W",
+                "value": 828.5282756350348,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_p_battery_W",
+                "value": 1127.5184596549705,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_endurance_min",
+                "value": 31.896595299207135,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "forward_15_m_s_esc_command_from_static_map",
+                "value": 0.6080187728681441,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "full_throttle_thrust_total_N",
+                "value": 212.37144455771565,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "thrust_to_weight",
+                "value": 2.370906559985175,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_rpm",
+                "value": 3281.2382267791227,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_thrust_each_N",
+                "value": 22.393484814699686,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_p_shaft_each_W",
+                "value": 188.75621143193317,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_p_battery_W",
+                "value": 1022.4071855037015,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_i_total_A",
+                "value": 23.02718886269598,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_endurance_min",
+                "value": 35.17580911980963,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_rpm",
+                "value": 3439.7903095624993,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_thrust_each_N",
+                "value": 22.494714811518165,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_p_shaft_each_W",
+                "value": 219.14770270155827,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_p_battery_W",
+                "value": 1186.0178737199178,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_i_total_A",
+                "value": 26.71211427297112,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_endurance_min",
+                "value": 30.323320412701488,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_rpm",
+                "value": 3212.4304623264534,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_thrust_each_N",
+                "value": 22.393485267608078,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_p_shaft_each_W",
+                "value": 175.5113030663918,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_p_battery_W",
+                "value": 951.3102684976271,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_i_total_A",
+                "value": 21.425906948144757,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_live_MAD_FLUXER_22x6_6_fitB_endurance_min",
+                "value": 37.80470072797254,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_rpm",
+                "value": 3362.7116562302713,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_thrust_each_N",
+                "value": 22.494714717452574,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_p_shaft_each_W",
+                "value": 203.91513061994155,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_p_battery_W",
+                "value": 1103.7518527656678,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_i_total_A",
+                "value": 24.85927596319072,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "climb_live_MAD_FLUXER_22x6_6_fitB_endurance_min",
+                "value": 32.583410763828034,
+                "units": "min",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "best_endurance_speed_m_s",
+                "value": 0.0,
+                "units": "m/s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "best_range_speed_m_s",
+                "value": 20.0,
+                "units": "m/s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "best_range_km",
+                "value": 31.715214832087334,
+                "units": "km",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "sensitivity_kv_rpm_per_V_percent_per_percent",
+                "value": 0.027893354389909177,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "sensitivity_diameter_m_percent_per_percent",
+                "value": 0.5843800518150065,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "sensitivity_mass_kg_percent_per_percent",
+                "value": -1.4757347186539864,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "sensitivity_capacity_As_percent_per_percent",
+                "value": 0.3097876876026537,
+                "units": "nd",
+                "units_basis": "SI model output"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
 }

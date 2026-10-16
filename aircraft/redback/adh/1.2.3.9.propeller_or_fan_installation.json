@@ -25,8 +25,15 @@
         "value": 0.5588,
         "units": "m"
       },
-      "motor": 1
+      "motor": 1,
+      "system": "redback_mk4"
     },
+    "datasets": [
+      {
+        "role": "propulsion",
+        "ref": "asset:sha256:ff90e320a533ff22d617890de4dc9f7342c4153dccebd873fd22dd2413c4074d"
+      }
+    ],
     "visual": [
       {
         "part": "motor_1",
@@ -73,7 +80,121 @@
         "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
         "placeholder": true
       }
-    ]
+    ],
+    "propulsion_system": {
+      "system_id": "redback_mk4",
+      "basis": "vendor",
+      "p_max": {
+        "value": 751.9969057701462,
+        "units": "kg * m ** 2 / s ** 3"
+      },
+      "diameter": {
+        "value": 0.5588,
+        "units": "m"
+      },
+      "blades": 2,
+      "ixx": {
+        "value": 0.00128,
+        "units": "kg * m ** 2"
+      },
+      "model": "FLUXER PRO 22x6.6 MATT",
+      "motor": {
+        "model": "Antimatter M6C10 IPE V3 150KV",
+        "kv": {
+          "value": 15.707963267948966,
+          "units": "A * rad * s ** 2 / kg / m ** 2"
+        },
+        "r": {
+          "value": 0.12,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "i0": {
+          "value": 0.7,
+          "units": "A"
+        },
+        "kappa": 0.983378803627061,
+        "r_tot": {
+          "value": 0.4320968424279978,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "pole_pairs": 14,
+        "mass": {
+          "value": 0.234,
+          "units": "kg"
+        },
+        "imax_continuous": {
+          "value": 36.3,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 50.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "esc": {
+        "model": "AMPX 40A (5-14S) V2.0 CAN with heat sink",
+        "protocol": "DroneCAN / CyphalCAN (selectable)",
+        "pwm_low": {
+          "value": 0.00105,
+          "units": "s"
+        },
+        "pwm_high": {
+          "value": 0.0019399999999999999,
+          "units": "s"
+        },
+        "imax_continuous": {
+          "value": 40.0,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 64.0,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "battery": {
+        "model": "NXE 22.2v 4500mAh 50C Hard Case LiPo (SKU 4500HC506SXT90)",
+        "cells_s": 12,
+        "cells_p": 3,
+        "capacity": {
+          "value": 48600.0,
+          "units": "A * s"
+        },
+        "v_nominal": {
+          "value": 44.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_min": {
+          "value": 3.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_max": {
+          "value": 4.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "mass": {
+          "value": 3.786,
+          "units": "kg"
+        }
+      },
+      "warnings": [
+        "Built from manufacturer data only. No stand test of this assembly exists, so every value is a model (placeholder).",
+        "V1: the maker tables differ from their own printed digits by more than rounding. 74 of 75 rows exceed rounding. Worst ratio per check: input_power 3.0, output_power 1.2, efficiency 56.7, gf_per_W 5.2. Mean of V*I minus the printed input power: +0.40 W. The values are used as printed.",
+        "Propeller load: Ct and Cp at J = 0 come from the maker bench rows of the same propeller (MAD FLUXER PRO 22x6.6 MATT). The sigma of Ct (0.0080) and Cp (0.0089) is the scatter of the rows about a smooth curve. It does not hold a systematic bench error: the maker states none.",
+        "Air density: the rows were reduced at rho 1.184 kg/m3 (25 C, sea level, as the sheet says). The build runs at 1.225 kg/m3 (ISA). The same Ct and Cp at the higher density give about 3.5 % more thrust at one rpm.",
+        "The J > 0 shape: Proptimiser model of this propeller (Proptimiser (MAD_FLUXER_22x6_6, MAD_FLUXER_PRO_22x6_6.prop-performance.h5)).",
+        "V3 is in-sample: the propeller load comes from the same maker rows. It tests kappa and R_tot, not the propeller.",
+        "The pack voltage is the nominal 44.4 V (12 cells). A full pack gives more power, an empty pack less.",
+        "The ESC start command is not known. The motor model turns from 0.01 command. Real ESCs start in a step.",
+        "Maker bench rows: Ct and Cp are a model. Below 1899 rpm the edge value of the table applies.",
+        "The stand throttle is not involved: the command is the normalized ESC command (linear in PWM between pwm_low and pwm_high)."
+      ],
+      "source": {
+        "tool": "Propalyser",
+        "asset": "asset:sha256:096c9704c18b123ce40c1d34d89c771f1472b1d418f80c24aef0734d4d7779d4",
+        "role": "contract B file of the propulsion system redback_mk4"
+      },
+      "placeholder": true
+    }
   },
   "subcomponents": [
     {
@@ -103,7 +224,8 @@
             "value": 0.5588,
             "units": "m"
           },
-          "motor": 2
+          "motor": 2,
+          "system": "redback_mk4"
         },
         "visual": [
           {
@@ -181,7 +303,8 @@
             "value": 0.5588,
             "units": "m"
           },
-          "motor": 3
+          "motor": 3,
+          "system": "redback_mk4"
         },
         "visual": [
           {
@@ -259,7 +382,8 @@
             "value": 0.5588,
             "units": "m"
           },
-          "motor": 4
+          "motor": 4,
+          "system": "redback_mk4"
         },
         "visual": [
           {

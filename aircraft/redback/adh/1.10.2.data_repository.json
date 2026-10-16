@@ -6,16 +6,76 @@
     "instance": "data_repository",
     "assets": [
       {
-        "id": "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336",
+        "id": "asset:sha256:f508ab84f67010658f0498465fb96deae950469539ac1758ee8032f7d1bdb66c",
         "kind": "file",
         "name": "AeroSandbox.multirotor_results.json",
         "role": "multirotor body drag and EMST results",
         "tool": "AeroSandbox",
         "media_type": "application/json",
-        "size": 2339,
+        "size": 32168,
         "locations": [
           {
             "repo": "work/aerosandbox/redback/asb/multirotor_results.json"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d",
+        "kind": "file",
+        "name": "ArduPilot.00000171.BIN",
+        "role": "DataFlash log of flight redback_flight_1",
+        "tool": "ArduPilot",
+        "media_type": "application/octet-stream",
+        "size": 28737536,
+        "locations": [
+          {
+            "repo": "work/ardupilot/redback/00000171.BIN"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13",
+        "kind": "file",
+        "name": "ArduPilot.00000171_log.parm",
+        "role": "parameter file of flight redback_flight_1",
+        "tool": "ArduPilot",
+        "media_type": "application/octet-stream",
+        "size": 20944,
+        "locations": [
+          {
+            "repo": "work/ardupilot/redback/00000171_log.parm"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:a484d212d4bd0302027bf498e96984af67c951388378da6981127f24722577e2",
+        "kind": "file",
+        "name": "ArduPilot.2026-10-02_Param_Pull_After_Regaining_MAVLink_Access_to_Cube.param",
+        "role": "ArduPilot parameter file of the aircraft",
+        "tool": "ArduPilot",
+        "media_type": "application/octet-stream",
+        "size": 21329,
+        "locations": [
+          {
+            "repo": "work/ardupilot/redback/2026-10-02 Param Pull After Regaining MAVLink Access to Cube.param"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:096c9704c18b123ce40c1d34d89c771f1472b1d418f80c24aef0734d4d7779d4",
+        "kind": "file",
+        "name": "Propalyser.redback_mk4.v2.h5",
+        "role": "contract B file of the propulsion system redback_mk4",
+        "tool": "Propalyser",
+        "media_type": "application/x-hdf5",
+        "size": 87505,
+        "locations": [
+          {
+            "repo": "work/propalyser/redback/redback_mk4.v2.h5"
           }
         ],
         "derived_from": []
@@ -52,7 +112,7 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:e085e9fee76a27d2eee8e9ce35532741ad1c8ba80d18d0a9b953d944032d3be2",
+        "id": "asset:sha256:e4dd95f0d097dce63caa6ab0fa897b6bc14db6cdab3d14e9d57fbc88fe55d345",
         "kind": "dataset",
         "name": "aero.redback",
         "role": "aero model (DAVE-ML in ADH form)",
@@ -65,9 +125,9 @@
           }
         ],
         "derived_from": [
-          "asset:sha256:c5900b82234c04ac0ca6161990dc6878802a6804a109e32a8c10078650880336"
+          "asset:sha256:f508ab84f67010658f0498465fb96deae950469539ac1758ee8032f7d1bdb66c"
         ],
-        "built_against": "redback@0.1.0",
+        "built_against": "redback@0.2.0",
         "dataset": {
           "form": "daveml-adh",
           "model_description": {
@@ -127,6 +187,99 @@
           ]
         },
         "dataset_role": "aero"
+      },
+      {
+        "id": "asset:sha256:80fc165f85c9bb1b8d9108fe930f4c46e23d9a030857dfa77facdc7b481816ce",
+        "kind": "dataset",
+        "name": "autopilot.parameters",
+        "role": "autopilot parameters",
+        "tool": "ArduPilot",
+        "media_type": "application/json",
+        "size": 24576,
+        "locations": [
+          {
+            "repo": "aircraft/redback/datasets/autopilot.parameters.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:a484d212d4bd0302027bf498e96984af67c951388378da6981127f24722577e2"
+        ],
+        "built_against": "redback@0.2.0",
+        "dataset": {
+          "form": "parameters",
+          "model_description": {
+            "generation_tool": "Mission Planner",
+            "version": "ArduCopter 4.7.0"
+          },
+          "fidelity": "L4",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": []
+        },
+        "dataset_role": "parameters"
+      },
+      {
+        "id": "asset:sha256:4ab6c1607837b3eb4f85140809af1ba5d6dba0e3b0f57bd7a9635db5d309a750",
+        "kind": "dataset",
+        "name": "parameters.redback_flight_1",
+        "role": "parameters of flight redback_flight_1",
+        "tool": "ArduPilot",
+        "media_type": "application/json",
+        "size": 25106,
+        "locations": [
+          {
+            "repo": "aircraft/redback/datasets/parameters.redback_flight_1.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13"
+        ],
+        "built_against": "redback@0.2.0",
+        "dataset": {
+          "form": "parameters",
+          "model_description": {
+            "generation_tool": "ArduPilot parameter file",
+            "version": "arducopter-4.7.0-1511f271"
+          },
+          "fidelity": "L4",
+          "units_system": "as-source",
+          "placeholder": false,
+          "notes": []
+        },
+        "dataset_role": "parameters"
+      },
+      {
+        "id": "asset:sha256:ff90e320a533ff22d617890de4dc9f7342c4153dccebd873fd22dd2413c4074d",
+        "kind": "dataset",
+        "name": "propulsion.redback_mk4",
+        "role": "Ct/Cp table and throttle map",
+        "tool": "Propalyser",
+        "media_type": "application/json",
+        "size": 3458,
+        "locations": [
+          {
+            "repo": "aircraft/redback/datasets/propulsion.redback_mk4.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:096c9704c18b123ce40c1d34d89c771f1472b1d418f80c24aef0734d4d7779d4"
+        ],
+        "built_against": "redback@0.2.0",
+        "dataset": {
+          "form": "tables",
+          "model_description": {
+            "generation_tool": "Propalyser (contract B v2)",
+            "model_name": "redback_mk4",
+            "description": "FLUXER PRO 22x6.6 MATT"
+          },
+          "fidelity": "L0",
+          "units_system": "SI",
+          "placeholder": true,
+          "notes": [
+            "basis vendor"
+          ]
+        },
+        "dataset_role": "propulsion"
       }
     ]
   }

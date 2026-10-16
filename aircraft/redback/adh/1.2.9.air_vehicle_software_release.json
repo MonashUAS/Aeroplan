@@ -1,0 +1,18 @@
+{
+  "wbs_no": "1.2.9",
+  "name": "AirVehicleSoftwareRelease",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "air_vehicle_software_release",
+    "software_releases": [
+      {
+        "release_id": "arducopter-4.7.0-1511f271",
+        "firmware": "ArduCopter",
+        "version": "4.7.0",
+        "git_hash": "1511f271",
+        "board": "CubeOrangePlus",
+        "source": "DataFlash log 00000171.BIN, sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d: MSG and VER 'ArduCopter V4.7.0 (1511f271)', MSG 'CubeOrangePlus 003E0036 3032510B 33383839', ChibiOS 4f34e217."
+      }
+    ]
+  }
+}
