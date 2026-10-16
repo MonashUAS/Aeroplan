@@ -1,0 +1,42 @@
+# SpecSheet spoke settings for the Redback (tool settings, not aircraft data). CSV mode.
+# workbook: the weight log exported as CSV (Redback Master SpreadSheet - V2 Weight Breakdown). A path from the repository
+#   root. The header row is the row with "Component" in column B.
+# total_row: the text of column A that ends the log. Its column C is the sheet total (9134 g). The spoke refuses a log
+#   whose subassembly overrides ("Subassembly weight override" rows) do not add to it.
+# configuration: the nominal mass model: the six subassemblies as weighed, all payloads on board.
+# hubs: the ADH items (muas.instance) whose muas.propeller.hub is the arm tip. The AeroSandbox seed writes them.
+# placement: weight log row -> rule. Rows that are not named here stay at origin_m (inside their subassembly rest).
+#   hub: the per-item weight at each hub (the item count must be the number of hubs).
+#   half_arm: the per-item weight at half the hub vector (the arm is a uniform tube from the origin to the hub).
+# origin_m: the position of every other mass (user rule, 2026-10-16: all other masses at the origin).
+# mrp: from_mass sets the MRP and the nominal CG of the reference data to the rolled-up CG (MRP = nominal CG).
+# sanity: an estimate sheet that is only compared with the weight log. It is an estimate, never truth.
+# subassemblies: sheet group -> ADH node. The six groups of the sheet. "Miscellaneous" has no mass.
+#   Aerostructures -> 1.2.2 Airframe, Propulsion -> 1.2.3, Misc. Avionics -> 1.2.5 Avionics,
+#   Lifeline (payloads) -> 1.2.17 Cargo, Vision (camera) -> 1.2.5.8 Reconnaissance,
+#   DNA (FPV camera, Pi, cables) -> 1.2.5.4 MissionComputerProcessing. No WBS number is invented.
+format: csv
+workbook: tools/specsheet/sheets/redback/Redback Master SpreadSheet - V2 Weight Breakdown.csv
+total_row: Total Weight
+configuration: all_payloads
+hubs: [prop_lift_1, prop_lift_2, prop_lift_3, prop_lift_4]
+origin_m: [0.0, 0.0, 0.0]
+mrp: from_mass
+placement_source: "user rules of 2026-10-16: motors, propellers, ESCs and motor mounts are point masses at the hubs, boom arms half way along the arm, all other masses at the origin"
+placement:
+  Motors: hub
+  Propellors (inc hardware): hub
+  ESCs (inc wiring): hub
+  Motor Mount: hub
+  Boom Arm: half_arm
+sanity:
+  file: tools/specsheet/sheets/redback/Redback Master SpreadSheet - Mk4 Propulsion Spec.csv
+  row: MTOW
+  col: 5
+subassemblies:
+  Aerostructures: {node: "1.2.2", instance: airframe}
+  Propulsion: {node: "1.2.3", instance: propulsion}
+  Misc. Avionics: {node: "1.2.5", instance: avionics}
+  Lifeline: {node: "1.2.17", instance: payload_lifeline}
+  Vision: {node: "1.2.5.8", instance: payload_vision}
+  DNA: {node: "1.2.5.4", instance: mission_computer}

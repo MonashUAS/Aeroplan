@@ -779,7 +779,7 @@
         {
           "model_name": "Athena initial sizing",
           "generation_tool": "AeroSandbox (Athena sizing scripts)",
-          "description": "Printout of the sizing scripts. The printout gives no units: see units_basis of each output (AeroPlan AeroSandbox/spoke.py).",
+          "description": "Printout of the sizing scripts. The printout gives no units: see units_basis of each output (AeroPlan tools/aerosandbox/spoke.py).",
           "data_exchange": {
             "model_identifier": "athena",
             "inputs": [],

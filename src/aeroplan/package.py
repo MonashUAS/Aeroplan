@@ -41,7 +41,7 @@ class PackageError(ValueError):
 
 def adh_fork(root: Path) -> Dict[str, Any]:
     """The ADH copy that checks the package: upstream commit, the hash of the upstream tree and of each patch."""
-    base = Path(root) / "packages" / "muas_adh"
+    base = Path(root) / "standards" / "adh"
     up = base / "upstream" / "src"
     h = []
     for p in sorted(up.rglob("*.py")):

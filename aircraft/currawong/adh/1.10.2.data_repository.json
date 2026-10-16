@@ -15,7 +15,7 @@
         "size": 754,
         "locations": [
           {
-            "repo": "AeroSandbox/work/currawong/athena_outputs.txt"
+            "repo": "work/aerosandbox/currawong/athena_outputs.txt"
           }
         ],
         "derived_from": []
@@ -30,7 +30,7 @@
         "size": 7584,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/aileron_l.stl"
+            "repo": "work/creo/currawong/cad/aileron_l.stl"
           }
         ],
         "derived_from": []
@@ -45,7 +45,7 @@
         "size": 7584,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/aileron_r.stl"
+            "repo": "work/creo/currawong/cad/aileron_r.stl"
           }
         ],
         "derived_from": []
@@ -60,7 +60,7 @@
         "size": 246784,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/elevator.stl"
+            "repo": "work/creo/currawong/cad/elevator.stl"
           }
         ],
         "derived_from": []
@@ -75,7 +75,7 @@
         "size": 1163784,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/fuselage.stl"
+            "repo": "work/creo/currawong/cad/fuselage.stl"
           }
         ],
         "derived_from": []
@@ -90,7 +90,7 @@
         "size": 12819089,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/fuseskinshrinkwrap.stp"
+            "repo": "work/creo/currawong/cad/fuseskinshrinkwrap.stp"
           }
         ],
         "derived_from": []
@@ -105,7 +105,7 @@
         "size": 243584,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/gear.stl"
+            "repo": "work/creo/currawong/cad/gear.stl"
           }
         ],
         "derived_from": []
@@ -120,7 +120,7 @@
         "size": 243684,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/hstab.stl"
+            "repo": "work/creo/currawong/cad/hstab.stl"
           }
         ],
         "derived_from": []
@@ -135,7 +135,7 @@
         "size": 221584,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/propeller.stl"
+            "repo": "work/creo/currawong/cad/propeller.stl"
           }
         ],
         "derived_from": []
@@ -150,7 +150,7 @@
         "size": 76284,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/rudder.stl"
+            "repo": "work/creo/currawong/cad/rudder.stl"
           }
         ],
         "derived_from": []
@@ -165,7 +165,7 @@
         "size": 250484,
         "locations": [
           {
-            "repo": "CREO/work/currawong/cad/wing.stl"
+            "repo": "work/creo/currawong/cad/wing.stl"
           }
         ],
         "derived_from": []
@@ -180,7 +180,7 @@
         "size": 5575288,
         "locations": [
           {
-            "repo": "OpenVSP/work/currawong/currawong.vsp3"
+            "repo": "work/openvsp/currawong/currawong.vsp3"
           }
         ],
         "derived_from": []
@@ -195,7 +195,7 @@
         "size": 96255,
         "locations": [
           {
-            "repo": "Propalyser/work/currawong/currawongcustom.v2.h5"
+            "repo": "work/propalyser/currawong/currawongcustom.v2.h5"
           }
         ],
         "derived_from": []
@@ -210,7 +210,7 @@
         "size": 342216,
         "locations": [
           {
-            "repo": "Currawong Master Specification Sheet.xlsx"
+            "repo": "tools/specsheet/sheets/currawong/Currawong Master Specification Sheet.xlsx"
           }
         ],
         "derived_from": []
@@ -308,7 +308,7 @@
         "size": 5619,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/EPPLER 393 AIRFOIL.dat"
+            "repo": "work/flow5/currawong/plane/EPPLER 393 AIRFOIL.dat"
           }
         ],
         "derived_from": []
@@ -323,7 +323,7 @@
         "size": 5625,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/EPPLER 393 AIRFOIL 0 Deg.dat"
+            "repo": "work/flow5/currawong/plane/EPPLER 393 AIRFOIL 0 Deg.dat"
           }
         ],
         "derived_from": []
@@ -338,7 +338,7 @@
         "size": 5619,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/EPPLER 395 AIRFOIL.dat"
+            "repo": "work/flow5/currawong/plane/EPPLER 395 AIRFOIL.dat"
           }
         ],
         "derived_from": []
@@ -353,7 +353,7 @@
         "size": 5610,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/NACA 0012.dat"
+            "repo": "work/flow5/currawong/plane/NACA 0012.dat"
           }
         ],
         "derived_from": []
@@ -368,7 +368,7 @@
         "size": 5616,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/NACA 0012 0 Deg.dat"
+            "repo": "work/flow5/currawong/plane/NACA 0012 0 Deg.dat"
           }
         ],
         "derived_from": []
@@ -383,7 +383,7 @@
         "size": 2782,
         "locations": [
           {
-            "repo": "flow5/work/currawong/plane/NACA 3410.dat"
+            "repo": "work/flow5/currawong/plane/NACA 3410.dat"
           }
         ],
         "derived_from": []
@@ -398,7 +398,7 @@
         "size": 6131,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/alpha_viscous.csv"
+            "repo": "work/flow5/currawong/sweeps/currawong_sheetcg/alpha_viscous.csv"
           }
         ],
         "derived_from": []
@@ -413,7 +413,7 @@
         "size": 42381,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/plane_with_body.xml"
+            "repo": "work/flow5/currawong/sweeps/currawong_sheetcg/plane_with_body.xml"
           }
         ],
         "derived_from": []
@@ -428,7 +428,7 @@
         "size": 4292,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/results.json"
+            "repo": "work/flow5/currawong/sweeps/currawong_sheetcg/results.json"
           }
         ],
         "derived_from": []
@@ -443,7 +443,7 @@
         "size": 1587,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/t7_reference.xml"
+            "repo": "work/flow5/currawong/sweeps/currawong_sheetcg/t7_reference.xml"
           }
         ],
         "derived_from": []
@@ -458,7 +458,7 @@
         "size": 159284,
         "locations": [
           {
-            "repo": "flow5/work/currawong/sweeps/currawong_sheetcg/t7_reference_opoint.txt"
+            "repo": "work/flow5/currawong/sweeps/currawong_sheetcg/t7_reference_opoint.txt"
           }
         ],
         "derived_from": []

@@ -51,7 +51,7 @@ def test_h5json_refuses_none_and_a_bad_key():
 def _aircraft(tmp_path):
     """A synthetic aircraft with one raw file and one dataset."""
     acft = source_tree.new("t", consumers=["review", "archive"])
-    f = tmp_path / "AeroSandbox" / "work" / "t" / "x.txt"
+    f = tmp_path / "work" / "aerosandbox" / "t" / "x.txt"
     f.parent.mkdir(parents=True)
     f.write_text("synthetic")
     air = adh_doc.node(acft.doc, "1.2", create=True)
@@ -70,7 +70,7 @@ def test_asset_ids_are_content_hashes(tmp_path):
     f = next(e for e in reg if e["kind"] == "file")
     d = next(e for e in reg if e["kind"] == "dataset")
     assert f["id"] == "asset:sha256:" + hashlib.sha256(b"synthetic").hexdigest()
-    assert f["locations"] == [{"repo": "AeroSandbox/work/t/x.txt"}]
+    assert f["locations"] == [{"repo": "work/aerosandbox/t/x.txt"}]
     assert d["id"] == assets.dataset_id({"x": [1.0, 2.0]}) and d["derived_from"] == [f["id"]]
     assert assets.dataset(acft, d["id"] + "#/x/1") == 2.0
     adh_doc.validate_document(acft.doc)
@@ -92,7 +92,7 @@ def test_fetch_checks_the_hash(tmp_path, monkeypatch):
     acft = _aircraft(tmp_path)
     e = next(e for e in assets.register(acft.doc) if e["kind"] == "file")
     assert assets.fetch(e, tmp_path).read_text() == "synthetic"
-    (tmp_path / "AeroSandbox" / "work" / "t" / "x.txt").write_text("changed")
+    (tmp_path / "work" / "aerosandbox" / "t" / "x.txt").write_text("changed")
     with pytest.raises(assets.AssetError, match="not on this machine"):
         assets.fetch(e, tmp_path)
 
@@ -367,12 +367,12 @@ def test_spoke_without_input_is_skipped(tmp_path):
 
 def test_source_ref_registers_the_file(tmp_path):
     acft = source_tree.new("a")
-    f = tmp_path / "AeroSandbox" / "work" / "a" / "x.txt"
+    f = tmp_path / "work" / "aerosandbox" / "a" / "x.txt"
     f.parent.mkdir(parents=True)
     f.write_text("x")
     ref = Context("a", tmp_path, "AeroSandbox", acft).source_ref(f, "test")
     e = assets.entry(acft.doc, ref["asset"])
-    assert e["locations"] == [{"repo": "AeroSandbox/work/a/x.txt"}] and e["tool"] == "AeroSandbox"
+    assert e["locations"] == [{"repo": "work/aerosandbox/a/x.txt"}] and e["tool"] == "AeroSandbox"
 
 
 def test_ardupilot_records_a_flight(tmp_path):

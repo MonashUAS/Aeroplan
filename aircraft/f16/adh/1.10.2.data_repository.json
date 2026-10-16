@@ -15,7 +15,7 @@
         "size": 175444,
         "locations": [
           {
-            "repo": "DAVEML/work/f16/F16_aero.dml"
+            "repo": "work/daveml/f16/F16_aero.dml"
           },
           {
             "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
@@ -34,7 +34,7 @@
         "size": 39614,
         "locations": [
           {
-            "repo": "DAVEML/work/f16/F16_control.dml"
+            "repo": "work/daveml/f16/F16_control.dml"
           },
           {
             "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
@@ -53,7 +53,7 @@
         "size": 46829,
         "locations": [
           {
-            "repo": "DAVEML/work/f16/F16_gnc.dml"
+            "repo": "work/daveml/f16/F16_gnc.dml"
           },
           {
             "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
@@ -72,7 +72,7 @@
         "size": 5223,
         "locations": [
           {
-            "repo": "DAVEML/work/f16/F16_inertia.dml"
+            "repo": "work/daveml/f16/F16_inertia.dml"
           },
           {
             "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",
@@ -91,7 +91,7 @@
         "size": 29371,
         "locations": [
           {
-            "repo": "DAVEML/work/f16/F16_prop.dml"
+            "repo": "work/daveml/f16/F16_prop.dml"
           },
           {
             "url": "https://nescacademy.nasa.gov/src/flightsim/Models/Atmospheric_models.zip",

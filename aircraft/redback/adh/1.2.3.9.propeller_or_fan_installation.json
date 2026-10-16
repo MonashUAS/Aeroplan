@@ -47,7 +47,7 @@
           "radius_m": 0.0375
         },
         "material": "motor",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
         "placeholder": true
       },
       {
@@ -70,7 +70,7 @@
           "alpha": 0.35
         },
         "material": "rotor",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
         "placeholder": true
       }
     ]
@@ -125,7 +125,7 @@
               "radius_m": 0.0375
             },
             "material": "motor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
             "placeholder": true
           },
           {
@@ -148,7 +148,7 @@
               "alpha": 0.35
             },
             "material": "rotor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
             "placeholder": true
           }
         ]
@@ -203,7 +203,7 @@
               "radius_m": 0.0375
             },
             "material": "motor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
             "placeholder": true
           },
           {
@@ -226,7 +226,7 @@
               "alpha": 0.35
             },
             "material": "rotor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
             "placeholder": true
           }
         ]
@@ -281,7 +281,7 @@
               "radius_m": 0.0375
             },
             "material": "motor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo motor can (no CAD).",
             "placeholder": true
           },
           {
@@ -304,7 +304,7 @@
               "alpha": 0.35
             },
             "material": "rotor",
-            "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
+            "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo rotor disc, diameter of the propeller (no CAD). Turns about the thrust axis through the hub.",
             "placeholder": true
           }
         ]

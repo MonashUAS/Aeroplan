@@ -129,8 +129,8 @@ def test_mapped_parts_over_the_total_are_refused(tmp_path):
 
 def ingest(tmp_path):
     write_book(tmp_path / "sheet.xlsx")
-    (tmp_path / "SpecSheet" / "settings").mkdir(parents=True)
-    (tmp_path / "SpecSheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
+    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
+    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
     doc = make_full_doc()
     ctx = Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc))
     return doc, sheet.ingest(doc, ctx)
@@ -185,8 +185,8 @@ def test_a_datum_that_differs_from_the_wing_root_is_a_warning(tmp_path):
 
 def test_a_matching_datum_gives_no_warning(tmp_path):
     write_book(tmp_path / "sheet.xlsx")
-    (tmp_path / "SpecSheet" / "settings").mkdir(parents=True)
-    (tmp_path / "SpecSheet" / "settings" / "test.yaml").write_text(yaml.safe_dump({**SETTINGS, "datum_x_m": 0.1}),
+    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
+    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump({**SETTINGS, "datum_x_m": 0.1}),
                                                                    encoding="utf-8")
     doc = make_full_doc()
     changes = sheet.ingest(doc, Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc)))

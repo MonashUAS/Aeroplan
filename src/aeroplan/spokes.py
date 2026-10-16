@@ -1,20 +1,20 @@
-"""Spokes: one folder for each tool at the repository root. A spoke moves data between its tool and the source tree
-of an aircraft (`aircraft/<aircraft>/`).
+"""Spokes: one folder for each tool in `tools/`. A spoke moves data between its tool and the source tree
+of an aircraft (`aircraft/<aircraft>/`). The folder name is the spoke name in lower case.
 
-    Prototype/     the published specs of the team (MTOW) -> sizing targets and the first propulsion sizing
-    AeroSandbox/   initial sizing (the first source of a new aircraft)
-    flow5/         geometry and aero analysis
-    SpecSheet/     the Master Specification Sheet: weight log and CG sheet -> the mass model
-    Propalyser/    the propulsion system
-    CREO/          the CAD link (part meshes and their pose)
-    OpenVSP/       geometry to and from an OpenVSP model
-    DAVEML/        a published DAVE-ML model (for example the NASA F-16)
-    ArduPilot/     flight events: the log, the parameters, the firmware and the segments
-    MissionPlanner/ the flight files of the aircraft: parameters, waypoints, geofence
-    Aerolink/      simulator export (the aerolink `.muas` package)
+    tools/prototype/     the published specs of the team (MTOW) -> sizing targets and the first propulsion sizing
+    tools/aerosandbox/   initial sizing (the first source of a new aircraft)
+    tools/flow5/         geometry and aero analysis
+    tools/specsheet/     the Master Specification Sheet: weight log and CG sheet -> the mass model
+    tools/propalyser/    the propulsion system
+    tools/creo/          the CAD link (part meshes and their pose)
+    tools/openvsp/       geometry to and from an OpenVSP model
+    tools/daveml/        a published DAVE-ML model (for example the NASA F-16)
+    tools/ardupilot/     flight events (log, firmware, segments) and flight files (.parm, .waypoints, geofence)
+    tools/aerolink/      simulator export (the aerolink `.muas` package)
 
-Each folder holds `spoke.py` (the code), `README.md`, a `settings/` folder for tool settings (committed) and a
-`work/<aircraft>/` folder for the raw tool files (git ignores it). A spoke module defines:
+Each folder holds `spoke.py` (the code), `README.md` and a `settings/` folder for tool settings (committed). The raw
+tool files of an aircraft are in `work/<tool>/<aircraft>/` at the repository root (git ignores `work/`). A spoke
+module defines:
 
     NAME                         the build runs the spokes in SPOKES order
     ingest(doc, ctx)             read work/<aircraft>/ (and settings) and change the ADH document. Return a list of
@@ -36,7 +36,12 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from .assets import sha256_file  # noqa: F401  (spokes use it)
 
-SPOKES = ("Prototype", "AeroSandbox", "flow5", "SpecSheet", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "MissionPlanner", "Aerolink")
+SPOKES = ("Prototype", "AeroSandbox", "flow5", "SpecSheet", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "Aerolink")
+
+
+def folder_name(spoke: str) -> str:
+    """The folder of a spoke below `tools/` and below `work/`: the spoke name in lower case."""
+    return spoke.lower()
 
 
 def repo_root() -> Path:
@@ -59,11 +64,11 @@ class Context:
 
     @property
     def work(self) -> Path:
-        return self.root / self.spoke / "work" / self.aircraft
+        return self.root / "work" / folder_name(self.spoke) / self.aircraft
 
     @property
     def settings_file(self) -> Path:
-        return self.root / self.spoke / "settings" / f"{self.aircraft}.yaml"
+        return self.root / "tools" / folder_name(self.spoke) / "settings" / f"{self.aircraft}.yaml"
 
     def settings(self) -> Dict[str, Any]:
         """The tool settings of this aircraft (YAML, committed), or an empty dict."""
@@ -103,7 +108,7 @@ def load(name: str) -> ModuleType:
     """Import the spoke of a tool folder as the package `aeroplan_spokes.<name>`."""
     if name not in SPOKES:
         raise KeyError(f"unknown spoke {name!r} (spokes: {', '.join(SPOKES)})")
-    folder = repo_root() / name
+    folder = repo_root() / "tools" / folder_name(name)
     mod_name = f"aeroplan_spokes.{name}"
     if mod_name in sys.modules:
         return sys.modules[mod_name]

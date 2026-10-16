@@ -184,7 +184,7 @@ def test_the_notebooks_are_committed_without_outputs():
     """A notebook in git holds code only: outputs are big and change on every run."""
     import json
 
-    assert NOTEBOOKS, "AeroSandbox/notebooks has no notebook"
+    assert NOTEBOOKS, "tools/aerosandbox/notebooks has no notebook"
     for nb in NOTEBOOKS:
         cells = json.loads(nb.read_text(encoding="utf-8"))["cells"]
         for i, c in enumerate(cells):

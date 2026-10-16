@@ -80,7 +80,7 @@ def test_muas_schemas_export(tmp_path):
 def test_committed_schema_is_current():
     from aeroplan import MUAS_SCHEMA_VERSION
 
-    committed = Path(__file__).resolve().parents[1] / "schema" / f"v{MUAS_SCHEMA_VERSION}"
+    committed = Path(__file__).resolve().parents[1] / "standards" / "schema" / f"v{MUAS_SCHEMA_VERSION}"
     if not committed.exists():
         pytest.skip("schema not exported yet")
     import tempfile
@@ -98,8 +98,8 @@ def test_imports():
 def test_tool_independence():
     """ADH principle: data is separate from tools. AeroPlan imports no sibling repo."""
     pattern = re.compile(r"^\s*(import|from)\s+(aerolink|propalyser|proptimiser)", re.I | re.M)
-    spokes = [ROOT / name for name in ("Prototype", "AeroSandbox", "flow5", "Propalyser", "CREO", "OpenVSP", "DAVEML", "ArduPilot", "MissionPlanner", "Aerolink")]
-    worker = ROOT / "AeroSandbox" / "asb_worker.py"       # runs in AeroSandbox/.venv: it may import proptimiser
+    spokes = [ROOT / "tools" / name for name in ("prototype", "aerosandbox", "flow5", "propalyser", "creo", "openvsp", "daveml", "ardupilot", "aerolink")]
+    worker = ROOT / "tools" / "aerosandbox" / "asb_worker.py"       # runs in tools/aerosandbox/.venv: it may import proptimiser
     for py in [*SRC.rglob("*.py"), *(f for d in spokes for f in d.glob("*.py"))]:
         text = py.read_text(encoding="utf-8")
         assert not (re.compile(r"^\s*(import|from)\s+(aerolink|propalyser)", re.I | re.M) if py == worker else pattern).search(text), py

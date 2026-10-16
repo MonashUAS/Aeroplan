@@ -1,7 +1,7 @@
 """The multirotor seed: the ADH items of a quadcopter from the numbers of a settings file.
 
 A multirotor starts in AeroPlan the way a fixed-wing aircraft starts from the AeroSandbox sizing output: the
-AeroSandbox spoke reads `AeroSandbox/settings/<aircraft>.yaml` with `kind: multirotor` and calls `seed`. The seed
+AeroSandbox spoke reads `tools/aerosandbox/settings/<aircraft>.yaml` with `kind: multirotor` and calls `seed`. The seed
 writes the structure that no other spoke knows: the four lift rotors, the motor outputs of the autopilot, the
 reference data, the ground contacts and the demo shapes of the 3D view. The mass comes from the SpecSheet spoke, the
 propulsion system from the Propalyser spoke, the body drag and the EMST results from the AeroSandbox worker.

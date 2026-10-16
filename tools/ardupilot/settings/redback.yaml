@@ -1,0 +1,35 @@
+# ArduPilot spoke settings for the Redback (tool settings, not aircraft data). One file for the flight events (`releases`,
+# `flights`) and the flight files (`flight_files`).
+# This file is a stub for the Redback flight log. No log exists yet. `wait_for_log: true` makes the build skip the flight
+# with a note until the file is in work/ardupilot/redback/.
+#
+# When the user has the log:
+#   1. Copy the DataFlash log into work/ardupilot/redback/ and name it in `log` (and the .parm in `params`).
+#   2. Fill in every value that says FILL_IN. A FILL_IN value stops the build on purpose.
+#   3. Add the firmware release to `releases` (release_id, firmware ArduCopter, version, git_hash, board, source).
+#   4. Build: python -m aeroplan build redback --author "Name"
+# mass_kg and cg_m: `document` takes the mass model of node 1.2 (the weight sheet, 9.134 kg). Replace them when the aircraft
+# was weighed for the flight, and say who weighed it in `source`.
+releases: []
+flights:
+  - event_id: redback_flight_1
+    wait_for_log: true
+    date: FILL_IN                    # the flight date, YYYY-MM-DD
+    log: FILL_IN.BIN                 # file name in work/ardupilot/redback/
+    params: FILL_IN.parm             # optional: the parameter file of the flight (NAME,VALUE lines)
+    firmware: FILL_IN                # release_id of an entry in `releases`
+    aircraft_version: FILL_IN        # the AeroPlan version that flew, for example 0.1.0
+    mass_kg: document
+    cg_m: document
+    segments: []
+    source: "FILL_IN: who flew, where, and how the mass was found (the weight sheet total is 9.134 kg)"
+
+# flight_files: the files of the aircraft that go into the autopilot node 1.2.5.10 (datasets parameters, waypoints, geofence).
+# optional: the parameter file is not here yet. The build skips it with a note until the file is in
+#   work/ardupilot/redback/. Save it in Mission Planner (Config > Full Parameter List > Save) and copy it by hand.
+# firmware: the firmware that the parameters belong to.
+# parameters: the file name of the .parm.
+flight_files:
+  optional: true
+  firmware: ArduCopter
+  parameters: redback.parm

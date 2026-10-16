@@ -55,13 +55,13 @@ def test_fence_parameter_warnings():
 
 def _ingest(tmp_path, settings):
     acft = source_tree.new("t")
-    ctx = Context("t", tmp_path, "MissionPlanner", acft)
+    ctx = Context("t", tmp_path, "ArduPilot", acft)
     ctx.work.mkdir(parents=True)
     (ctx.work / "t.parm").write_text(_parm() + "FENCE_ENABLE,1\nFENCE_TYPE,6\n")
     (ctx.work / "t.waypoints").write_text(WPL)
     (ctx.work / "fence.poly").write_text(POLY)
     ctx.settings_file.parent.mkdir(parents=True)
-    ctx.settings_file.write_text(yaml.safe_dump(settings))
+    ctx.settings_file.write_text(yaml.safe_dump({"flight_files": settings}))
     return acft, ctx
 
 
@@ -73,7 +73,7 @@ SETTINGS = {"firmware": "ArduPlane 0.0.1", "parameters": "t.parm", "waypoints": 
 
 def test_spoke_stores_the_three_files(tmp_path):
     acft, ctx = _ingest(tmp_path, SETTINGS)
-    changes = load("MissionPlanner").ingest(acft.doc, ctx)
+    changes = load("ArduPilot").ingest(acft.doc, ctx)
     assert changes == ["parameters: 1402 from t.parm", "waypoints: 2 items and home from t.waypoints",
                        "geofence: 1 polygons, 1 circles"]
     adh_doc.validate_document(acft.doc)
@@ -83,27 +83,27 @@ def test_spoke_stores_the_three_files(tmp_path):
 
 
 def test_spoke_without_settings_is_skipped(tmp_path):
-    ctx = Context("none", tmp_path, "MissionPlanner", source_tree.new("none"))
-    assert load("MissionPlanner").ingest({}, ctx) is None
+    ctx = Context("none", tmp_path, "ArduPilot", source_tree.new("none"))
+    assert load("ArduPilot").ingest({}, ctx) is None
 
 
 def test_spoke_warns_when_the_fence_is_off(tmp_path):
     acft, ctx = _ingest(tmp_path, SETTINGS)
     (ctx.work / "t.parm").write_text("A,1\n")
-    changes = load("MissionPlanner").ingest(acft.doc, ctx)
+    changes = load("ArduPilot").ingest(acft.doc, ctx)
     assert sum(c.startswith("geofence: FENCE_") for c in changes) == 2
 
 
 def test_spoke_refuses_a_fence_without_source(tmp_path):
     acft, ctx = _ingest(tmp_path, {"geofence": {"polygons": [{"file": "fence.poly", "kind": "inclusion"}]}})
     with pytest.raises(ValueError, match="source"):
-        load("MissionPlanner").ingest(acft.doc, ctx)
+        load("ArduPilot").ingest(acft.doc, ctx)
 
 
 def test_archive_package_holds_the_files_exactly(tmp_path):
     """The dataset hash survives the HDF5 round trip (a full-size parameter list, waypoints, a fence)."""
     acft, ctx = _ingest(tmp_path, SETTINGS)
-    load("MissionPlanner").ingest(acft.doc, ctx)
+    load("ArduPilot").ingest(acft.doc, ctx)
     acft.info["consumers"] = ["review", "archive"]
     out = package.pack(acft, "archive", tmp_path, tmp_path / "dist")
     pkg = package.open_package(out)
@@ -117,7 +117,7 @@ def test_archive_package_holds_the_files_exactly(tmp_path):
 
 def test_only_the_aircraft_parameters_go_in_the_aerolink_profile(tmp_path):
     acft, ctx = _ingest(tmp_path, SETTINGS)
-    load("MissionPlanner").ingest(acft.doc, ctx)
+    load("ArduPilot").ingest(acft.doc, ctx)
     from aeroplan import assets
 
     tiers = {e["name"]: consumers.tier("aerolink", e) for e in assets.register(acft.doc, create=False)
@@ -130,8 +130,8 @@ def test_only_the_aircraft_parameters_go_in_the_aerolink_profile(tmp_path):
 
 def test_export_writes_the_mission_planner_files(tmp_path):
     acft, ctx = _ingest(tmp_path, SETTINGS)
-    load("MissionPlanner").ingest(acft.doc, ctx)
-    paths = load("MissionPlanner").export(acft.doc, ctx, tmp_path / "out")
+    load("ArduPilot").ingest(acft.doc, ctx)
+    paths = load("ArduPilot").export(acft.doc, ctx, tmp_path / "out")
     assert sorted(p.name for p in paths) == ["t.parm", "t.waypoints", "t_fence_1_inclusion.poly"]
     assert (tmp_path / "out" / "t.waypoints").read_text() == WPL
     assert ff.parse_parm((tmp_path / "out" / "t.parm").read_text())["PARAM_0007"] == 1.75

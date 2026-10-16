@@ -1,0 +1,38 @@
+# OpenVSP spoke settings for the Currawong (tool settings, not aircraft data).
+# vsp_version: the OpenVSP version that the round-trip tests ran with (2026-10-08).
+# model: the member's OpenVSP model in work/openvsp/currawong/ (a copy of generated/currawong.vsp3).
+# wings, body: the ADH items (muas.instance) that go into OpenVSP. Each OpenVSP component has the name of its item.
+# reference_skin: the item whose CAD skin (CREO spoke, muas.skin) goes into the model as a reference mesh.
+vsp_version: 3.54.0
+model: currawong.vsp3
+wings: [wing_main, htail, fin]
+body: fuselage
+reference_skin: fuselage
+# analysis: `aeroplan sweep OpenVSP currawong` (the preliminary analysis, 2026-10-15).
+#   The flight condition (speed, trim alpha), the alpha and beta ranges and the moment reference point come from the flow5
+#   sweep of tools/flow5/settings/currawong.yaml and the MRP of node 1.2, so both tools run the same case. The flow5 results
+#   record no air properties, so the analysis uses ISA 1976 at altitude_m (sea level).
+#   sets: user sets of OpenVSP components. The reference skin is the Creo shrinkwrap mesh (the raw CAD geometry).
+#   geometry_sets: CompGeom (wetted area, volume) and parasite drag.
+#   runs: VSPAERO sweeps. thin = the set that VSPAERO solves as thin lifting surfaces (VLM). thick = the set that it
+#   solves as panels. The wake is fixed (wake_iterations 3): a relaxed wake gave a pitching moment that was not
+#   linear in alpha for the wings alone (tested 2026-10-15).
+#   optional: the run may fail without failing the validation. The raw Creo skin does not run in the VSPAERO panel method
+#   (2026-10-15): after the repair of `aeroplan.skin_body.repair_for_panel` the STL is a closed manifold mesh, but the
+#   CompGeom stage of VSPAERO adds 8 triangles and makes 5 edges with 4 triangles (self-intersections in the mesh).
+analysis:
+  altitude_m: 0.0
+  wake_iterations: 3
+  sets:
+    wings: [wing_main, htail, fin]
+    body: [fuselage]
+    skin: ["fuselage_skin (reference)"]
+    wings_body: [wing_main, htail, fin, fuselage]
+    wings_skin: [wing_main, htail, fin, "fuselage_skin (reference)"]
+  geometry_sets: {body: body, skin: skin, wings_body: wings_body, wings_skin: wings_skin}
+  runs:
+  - {name: wings, thin: wings}
+  - {name: body, thin: wings, thick: body}
+  - {name: skin, thin: wings, thick: skin, optional: true}
+  - {name: body_alone, thick: body}
+  - {name: skin_alone, thick: skin, optional: true}

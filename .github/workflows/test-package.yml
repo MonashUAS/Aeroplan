@@ -45,11 +45,11 @@ jobs:
 
       - name: Build the patched ADH copy
         run: |
-          python scripts/build_adh.py
+          python standards/adh/build_adh.py
 
       - name: Run the upstream ADH tests on the patched copy
         run: |
-          PYTHONPATH=packages/muas_adh/build/src pytest packages/muas_adh/upstream/tests
+          PYTHONPATH=standards/adh/build/src pytest standards/adh/upstream/tests
 
       - name: Run tests
         run: |

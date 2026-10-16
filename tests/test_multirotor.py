@@ -1,7 +1,7 @@
 """The multirotor path: hubs from a CAD arm, the seed, the CSV mass model, the Propalyser rotors, the EMST maths, the body-drag
 DAVE-ML, the demo shapes, the consumer check by vehicle kind and the datum rows. Every number here is synthetic.
 
-The EMST functions use numpy only, so these tests import `AeroSandbox/asb_worker.py` as a plain module. The tests that run the
+The EMST functions use numpy only, so these tests import `tools/aerosandbox/asb_worker.py` as a plain module. The tests that run the
 worker in the AeroSandbox Python skip without it (`python -m aeroplan setup AeroSandbox`).
 """
 import copy
@@ -86,7 +86,7 @@ SHEET = [["", "", "INSTRUCTIONS with\na new line", "", "", "", ""],
 
 
 def write_settings(root, spoke, name, data):
-    f = Path(root) / spoke / "settings" / f"{name}.yaml"
+    f = Path(root) / "tools" / spoke.lower() / "settings" / f"{name}.yaml"
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
@@ -103,8 +103,8 @@ def make_quad(tmp_path, *, sheet=True, propulsion=True, results=True):
         write_settings(tmp_path, "SpecSheet", "quad", SPEC_SETTINGS)
         load("SpecSheet").ingest(acft.doc, ctx("SpecSheet"))
     if propulsion:
-        (tmp_path / "Propalyser" / "work" / "quad").mkdir(parents=True, exist_ok=True)
-        make_propalyser_h5(tmp_path / "Propalyser" / "work" / "quad" / "sys_x.v2.h5")
+        (tmp_path / "work" / "propalyser" / "quad").mkdir(parents=True, exist_ok=True)
+        make_propalyser_h5(tmp_path / "work" / "propalyser" / "quad" / "sys_x.v2.h5")
         write_settings(tmp_path, "Propalyser", "quad", PROP_SETTINGS)
         load("Propalyser").ingest(acft.doc, ctx("Propalyser"))
     adh_doc.normalize(acft.doc)
@@ -121,7 +121,7 @@ def make_quad(tmp_path, *, sheet=True, propulsion=True, results=True):
                                     "full_throttle": worker.emst_full_throttle(m)}
             res["emst_endurance"] = worker.emst_scan(m, 10.0, 5.0)
             res["emst_sensitivity"] = worker.emst_sensitivity(m, 6, 0.01)
-        out = tmp_path / "AeroSandbox" / "work" / "quad" / "asb"
+        out = tmp_path / "work" / "aerosandbox" / "quad" / "asb"
         out.mkdir(parents=True)
         (out / "multirotor_results.json").write_text(json.dumps(res), encoding="utf-8")
         load("AeroSandbox").ingest(acft.doc, ctx("AeroSandbox"))
@@ -320,14 +320,14 @@ def test_propalyser_skips_with_a_note_without_the_file(tmp_path, capsys):
 
 def test_propalyser_rotor_that_does_not_exist_is_refused(tmp_path):
     acft = source_tree.new("quad")
-    (tmp_path / "Propalyser" / "work" / "quad").mkdir(parents=True)
-    make_propalyser_h5(tmp_path / "Propalyser" / "work" / "quad" / "sys_x.v2.h5")
+    (tmp_path / "work" / "propalyser" / "quad").mkdir(parents=True)
+    make_propalyser_h5(tmp_path / "work" / "propalyser" / "quad" / "sys_x.v2.h5")
     write_settings(tmp_path, "Propalyser", "quad", PROP_SETTINGS)
     with pytest.raises(ValueError, match="no muas.propeller"):
         load("Propalyser").ingest(acft.doc, Context("quad", tmp_path, "Propalyser", acft))
 
 
-# ----------------------------------------------------------------------------------- ArduPilot and MissionPlanner
+# ----------------------------------------------------------------------------------- ArduPilot (flight events and flight files)
 def test_ardupilot_flight_stub_waits_for_the_log(tmp_path, capsys):
     acft = source_tree.new("quad")
     st = {"releases": [], "flights": [{"event_id": "f1", "wait_for_log": True, "date": "FILL_IN", "log": "x.BIN",
@@ -346,8 +346,8 @@ def test_ardupilot_flight_stub_waits_for_the_log(tmp_path, capsys):
 
 def test_ardupilot_flight_takes_the_mass_model_of_the_document(tmp_path):
     acft, ctx = make_quad(tmp_path, propulsion=False, results=False)
-    (tmp_path / "ArduPilot" / "work" / "quad").mkdir(parents=True)
-    (tmp_path / "ArduPilot" / "work" / "quad" / "f1.BIN").write_bytes(b"synthetic log")
+    (tmp_path / "work" / "ardupilot" / "quad").mkdir(parents=True)
+    (tmp_path / "work" / "ardupilot" / "quad" / "f1.BIN").write_bytes(b"synthetic log")
     st = {"releases": [{"release_id": "r1", "firmware": "ArduCopter", "version": "4.5.0", "source": "test"}],
           "flights": [{"event_id": "f1", "wait_for_log": True, "date": "2026-02-03", "log": "f1.BIN", "firmware": "r1",
                        "aircraft_version": "0.1.0", "mass_kg": "document", "cg_m": "document", "segments": [], "source": "test"}]}
@@ -357,15 +357,15 @@ def test_ardupilot_flight_takes_the_mass_model_of_the_document(tmp_path):
     assert ev["mass"]["value"] == pytest.approx(2.3) and out
 
 
-def test_missionplanner_optional_parm_is_skipped_with_a_note(tmp_path, capsys):
+def test_ardupilot_optional_parm_is_skipped_with_a_note(tmp_path, capsys):
     acft = source_tree.new("quad")
-    write_settings(tmp_path, "MissionPlanner", "quad", {"optional": True, "firmware": "ArduCopter", "parameters": "q.parm"})
-    mp = load("MissionPlanner")
-    assert mp.ingest(acft.doc, Context("quad", tmp_path, "MissionPlanner", acft)) is None
+    write_settings(tmp_path, "ArduPilot", "quad", {"flight_files": {"optional": True, "firmware": "ArduCopter", "parameters": "q.parm"}})
+    mp = load("ArduPilot")
+    assert mp.ingest(acft.doc, Context("quad", tmp_path, "ArduPilot", acft)) is None
     assert "parameters skipped" in capsys.readouterr().out
-    write_settings(tmp_path, "MissionPlanner", "quad", {"firmware": "ArduCopter", "parameters": "q.parm"})
+    write_settings(tmp_path, "ArduPilot", "quad", {"flight_files": {"firmware": "ArduCopter", "parameters": "q.parm"}})
     with pytest.raises(Exception, match="not in"):
-        mp.ingest(acft.doc, Context("quad", tmp_path, "MissionPlanner", acft))
+        mp.ingest(acft.doc, Context("quad", tmp_path, "ArduPilot", acft))
 
 
 # ---------------------------------------------------------------------------------------------------------- EMST
@@ -703,7 +703,7 @@ def test_the_aero_dataset_constants_carry_their_source_and_placeholder_flag(tmp_
 
 def test_stale_results_for_another_reference_area_are_refused(tmp_path):
     acft, ctx = make_quad(tmp_path)
-    f = tmp_path / "AeroSandbox" / "work" / "quad" / "asb" / "multirotor_results.json"
+    f = tmp_path / "work" / "aerosandbox" / "quad" / "asb" / "multirotor_results.json"
     res = json.loads(f.read_text(encoding="utf-8"))
     res["inputs"]["s_ref_m2"] = 0.5
     f.write_text(json.dumps(res), encoding="utf-8")

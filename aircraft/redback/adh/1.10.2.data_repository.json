@@ -15,7 +15,7 @@
         "size": 2339,
         "locations": [
           {
-            "repo": "AeroSandbox/work/redback/asb/multirotor_results.json"
+            "repo": "work/aerosandbox/redback/asb/multirotor_results.json"
           }
         ],
         "derived_from": []
@@ -30,7 +30,7 @@
         "size": 3625,
         "locations": [
           {
-            "repo": "SpecSheet/sheets/redback/Redback Master SpreadSheet - Mk4 Propulsion Spec.csv"
+            "repo": "tools/specsheet/sheets/redback/Redback Master SpreadSheet - Mk4 Propulsion Spec.csv"
           }
         ],
         "derived_from": [],
@@ -46,7 +46,7 @@
         "size": 6797,
         "locations": [
           {
-            "repo": "SpecSheet/sheets/redback/Redback Master SpreadSheet - V2 Weight Breakdown.csv"
+            "repo": "tools/specsheet/sheets/redback/Redback Master SpreadSheet - V2 Weight Breakdown.csv"
           }
         ],
         "derived_from": []

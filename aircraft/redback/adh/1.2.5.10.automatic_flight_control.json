@@ -13,7 +13,7 @@
           "targets": [
             "prop_lift_1"
           ],
-          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 1 drives motor 1 (SERVO1_FUNCTION 33). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 1 drives motor 1 (SERVO1_FUNCTION 33). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
           "placeholder": true
         },
         {
@@ -22,7 +22,7 @@
           "targets": [
             "prop_lift_2"
           ],
-          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 2 drives motor 2 (SERVO2_FUNCTION 34). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 2 drives motor 2 (SERVO2_FUNCTION 34). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
           "placeholder": true
         },
         {
@@ -31,7 +31,7 @@
           "targets": [
             "prop_lift_3"
           ],
-          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 3 drives motor 3 (SERVO3_FUNCTION 35). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 3 drives motor 3 (SERVO3_FUNCTION 35). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
           "placeholder": true
         },
         {
@@ -40,7 +40,7 @@
           "targets": [
             "prop_lift_4"
           ],
-          "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 4 drives motor 4 (SERVO4_FUNCTION 36). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
+          "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). ArduCopter Quad X: output 4 drives motor 4 (SERVO4_FUNCTION 36). The ESC end points come from the contract B file (Propalyser spoke); the .parm refines them.",
           "placeholder": true
         }
       ],

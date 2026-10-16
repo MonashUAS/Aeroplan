@@ -39,7 +39,7 @@
         },
         "spring_N_per_m": 3000.0,
         "damping_N_per_m_s": 150.0,
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
         "placeholder": true
       },
       {
@@ -56,7 +56,7 @@
         },
         "spring_N_per_m": 3000.0,
         "damping_N_per_m_s": 150.0,
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
         "placeholder": true
       },
       {
@@ -73,7 +73,7 @@
         },
         "spring_N_per_m": 3000.0,
         "damping_N_per_m_s": 150.0,
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
         "placeholder": true
       },
       {
@@ -90,7 +90,7 @@
         },
         "spring_N_per_m": 3000.0,
         "damping_N_per_m_s": 150.0,
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Landing gear foot: stand-in, measure the gear. z = the lowest point of the airframe (-0.1000 m) less the leg length. Spring and damping: the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)",
         "placeholder": true
       }
     ],
@@ -276,7 +276,7 @@
           ]
         },
         "material": "body",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo body box (no CAD): the size is a stand-in, measure the frame.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo body box (no CAD): the size is a stand-in, measure the frame.",
         "placeholder": true
       },
       {
@@ -297,7 +297,7 @@
           "radius_m": 0.0125
         },
         "material": "arm",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
         "placeholder": true
       },
       {
@@ -318,7 +318,7 @@
           "radius_m": 0.0125
         },
         "material": "arm",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
         "placeholder": true
       },
       {
@@ -339,7 +339,7 @@
           "radius_m": 0.0125
         },
         "material": "arm",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
         "placeholder": true
       },
       {
@@ -360,7 +360,7 @@
           "radius_m": 0.0125
         },
         "material": "arm",
-        "source": "AeroSandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
+        "source": "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16). Demo arm tube from the body origin to the hub (no CAD): the radius is a stand-in, measure the tube.",
         "placeholder": true
       }
     ]

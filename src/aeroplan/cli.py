@@ -3,6 +3,7 @@
     aeroplan build <aircraft> --author NAME    run the spokes and write the source tree aircraft/<aircraft>/
     aeroplan check <aircraft>                  every check: ADH tree, datasets (DAVE-ML), datums, consumers
     aeroplan show <aircraft>                   print the ADH tree and the asset register
+    aeroplan show <aircraft> --md <file>       write the one-page summary of the aircraft (docs/reference/aircraft/<aircraft>.md)
     aeroplan pack <aircraft> --profile P       write dist/<aircraft>-<version>-<P>.muas (a ZIP package)
     aeroplan unpack <file.muas> <folder>       check a package and write its source tree into <folder>
     aeroplan verify <file.muas>                check a package: mimetype, every hash, the package hash
@@ -11,7 +12,7 @@
     aeroplan export <spoke> <aircraft> <out>  write the tool files of a spoke (Aerolink: the aerolink package)
     aeroplan spokes [<aircraft>]               list the spokes and the input in their work folders
     aeroplan setup <spoke> [<aircraft>]        make the tool runtime of a spoke on this machine (OpenVSP)
-    aeroplan schema --out schema               export the JSON Schema of the MUAS types
+    aeroplan schema --out standards/schema               export the JSON Schema of the MUAS types
 """
 from __future__ import annotations
 
@@ -59,6 +60,14 @@ def _show(args) -> int:
 
     acft = load_aircraft(args.aircraft)
     doc = acft.doc
+    if args.md:
+        from .summary import aircraft_markdown
+
+        out = Path(args.md)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(aircraft_markdown(acft).encode("utf-8"))
+        print(f"wrote {out}")
+        return 0
     if args.placeholders:
         for p in placeholders(doc):
             print(p)
@@ -225,6 +234,7 @@ def main(argv=None) -> int:
         c.add_argument("aircraft", nargs="?", default="currawong")
         if name == "show":
             c.add_argument("--placeholders", action="store_true", help="list every value marked placeholder")
+            c.add_argument("--md", metavar="FILE", help="write the one-page Markdown summary of the aircraft to FILE")
         c.set_defaults(fn=fn)
     pk = sub.add_parser("pack", help="write a .muas package of the source tree")
     pk.add_argument("aircraft")
@@ -267,7 +277,7 @@ def main(argv=None) -> int:
     su.add_argument("--proptimiser", help="AeroSandbox: a Proptimiser checkout to install, instead of the git source")
     su.set_defaults(fn=_setup)
     sc = sub.add_parser("schema", help="export the JSON Schema of the MUAS types")
-    sc.add_argument("--out", default="schema")
+    sc.add_argument("--out", default="standards/schema")
     sc.set_defaults(fn=_schema)
     args = p.parse_args(argv)
     try:

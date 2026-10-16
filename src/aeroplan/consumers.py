@@ -23,7 +23,7 @@ from . import adh_doc, assets
 PROFILES = ("aerolink", "review", "flight-record", "archive")
 INLINE_MAX = 4096
 MRP_CG_TOL_M = 1e-3          # Aerolink needs MRP = nominal CG within 1 mm
-#: the dataset name of the autopilot parameters of the aircraft (the MissionPlanner spoke)
+#: the dataset name of the autopilot parameters of the aircraft (the ArduPilot spoke)
 FLIGHT_PARAMETERS = "autopilot.parameters"
 PREVIEW = {"aerolink": "required", "review": "optional", "archive": "optional", "flight-record": None}
 

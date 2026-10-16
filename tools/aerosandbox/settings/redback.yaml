@@ -1,0 +1,92 @@
+# AeroSandbox spoke settings for the Redback (tool settings, not aircraft data).
+# kind: multirotor. The spoke seeds the aircraft from the `multirotor` block (no athena_outputs.txt) and runs the
+# multirotor jobs of tools/aerosandbox/asb_worker.py (multirotor_drag, emst_segments, emst_endurance, emst_sensitivity).
+# Every number that has no measurement is a stand-in: it sits in a block whose `source` says so.
+kind: multirotor
+
+multirotor:
+  source: "tools/aerosandbox/settings/redback.yaml (user facts of 2026-10-16)"
+  # The arm that the user measured in CAD (rear left arm, hub to the body origin).
+  #   distance 549.968 mm; direction angles to the CAD axes X 132.822, Y 85.000, Z 43.2582 deg.
+  #   Components d*cos(angle): X_cad = -373.8 mm, Y_cad = +47.9 mm, Z_cad = +400.6 mm.
+  # CAD axes: -Z is forward, +Y is up, X is right (right-handed). Design frame: x aft, y right, z up. So
+  #   x_design = +Z_cad = +0.4006 m (aft),  y_design = +X_cad = -0.3738 m (left),  z_design = +Y_cad = +0.0479 m (up).
+  # This arm is the rear left one. The other hubs are its mirror images: x = +/-0.4006, y = +/-0.3738, z = +0.0479.
+  # The code keeps the exact values of the angles (no rounding to mm).
+  # Hubs in the design frame (code output, m): M1 (-0.4006, +0.3738), M2 (+0.4006, -0.3738), M3 (-0.4006, -0.3738),
+  #   M4 (+0.4006, +0.3738), all at z = +0.0479. Adjacent hubs are 0.7476 m apart in y and 0.8012 m apart in x.
+  arm:
+    distance_mm: 549.968
+    angles_deg: {x: 132.822, y: 85.000, z: 43.2582}
+    design_from_cad: {x: z, y: x, z: y}
+    position: rear_left
+  # ArduPilot Quad X (AP_MotorsMatrix, FRAME_CLASS 1, FRAME_TYPE 1). spin_ardupilot is the turn direction seen from
+  # above. The code stores muas.propeller.spin as seen along the thrust vector from behind (from below for a lift
+  # rotor): ArduPilot ccw becomes cw there. See spec/multirotor_contract.md.
+  motors:
+    1: {position: front_right, spin_ardupilot: ccw}
+    2: {position: rear_left, spin_ardupilot: ccw}
+    3: {position: front_left, spin_ardupilot: cw}
+    4: {position: rear_right, spin_ardupilot: cw}
+  # MAD FLUXER PRO 22x6.6 MATT: 22 in = 0.5588 m (user fact). The disc thickness and opacity are for the demo view only.
+  rotor: {diameter_m: 0.5588, disc_thickness_m: 0.002, disc_alpha: 0.35}
+  # Demo shapes (no CAD): stand-ins, measure the frame. The size of the box also gives s_ref (its y times z).
+  body_box: {size_m: [0.30, 0.30, 0.20], centre_m: [0.0, 0.0, 0.0]}
+  arm_tube: {radius_m: 0.0125}
+  motor_shape: {radius_m: 0.0375, length_m: 0.05}
+  # Landing gear: four feet, stand-in positions (measure the gear). z = lowest airframe point less leg_length_m.
+  # Spring and damping: the stand-in values of the Currawong gear.
+  gear:
+    foot_x_m: 0.25
+    foot_y_m: 0.25
+    leg_length_m: 0.10
+    spring_N_per_m: 3000.0
+    damping_N_per_m_s: 150.0
+    spring_source: "the stand-in values of the Currawong ground contacts (aircraft/currawong, placeholder)"
+  initial_altitude_m: 0.0
+
+# multirotor_drag job: AeroBuildup of the body box and the arm tubes, the flow along +/-x, +/-y and +/-z.
+# speed_m_s is the AeroBuildup flow speed (an analysis input; the drag coefficient changes little with it).
+# The Hoerner values are the hand check of the same shapes.
+drag:
+  speed_m_s: 10.0
+  altitude_m: 0.0
+  box_edge_sections: 5
+  # combine: how the drag area of an axis is chosen from AeroBuildup and the Hoerner hand check (asb, hoerner or max).
+  # AeroBuildup is a slender-body method with no pressure drag on a flat front face, so the default is the larger one.
+  combine: max
+  hoerner:
+    source: "Hoerner, Fluid-Dynamic Drag, 1965, chapter 3 (drag of bluff bodies)"
+    cd_cylinder_crossflow: 1.2
+    cd_box_flat_face: 1.05
+  # rotor drag: the force per (rev/s of the rotor speed sum) per (m/s of velocity). Zero until the flight log fits it.
+  k_rotor_drag_kg: 0.0
+  k_rotor_drag_source: "stand-in 0: fit from the flight log"
+
+# EMST electrical model, Bershadsky, Haviland, Johnson, AIAA 2016-0581, section III.A.2, eq. (9) to (12).
+# Rotor load: the CT/CP table of the propulsion dataset (contract B, manufacturer basis), not the NACA 0015 BEMT of the paper.
+# Motor and ESC chain: the Propalyser chain (kappa, r_tot) of the contract B file.
+# The paper gives a range for Re only (9 to 45 mOhm, section II.B). Rb and Rw have no figure in it.
+electrical:
+  rb_ohm: {value: 0.015, placeholder: true,
+           source: "stand-in: battery internal resistance of the whole 12S3P pack. The paper (section II.C) gives no figure. The flight log fits it"}
+  rw_ohm: {value: 0.005, placeholder: true,
+           source: "stand-in: wiring resistance. The paper (section II.B) says it is small. Wire gauge and length are not known"}
+  re_ohm: {value: 0.027, placeholder: true,
+           source: "stand-in: the middle of the ESC resistance range of the paper, 9 to 45 mOhm (section II.B). Per ESC, added to r_tot of the chain, which holds the motor only until the log fits it"}
+  ia_A: {value: 0.5, placeholder: true,
+         source: "stand-in: avionics current at the battery voltage. The avionics load is not measured"}
+  ip_A: {value: 0.0, placeholder: false, source: "no payload current in the nominal configuration (no payload)"}
+  eta_e: {value: 1.0, placeholder: false,
+          source: "1: the manufacturer chart power includes the ESC (the paper uses 0.97, section III.A.2)"}
+  discharge_fraction: {value: 1.0, placeholder: true,
+                       source: "stand-in: the whole capacity is used. The paper allows a value below 1 (section III.A.2)"}
+
+# Analysis inputs of the EMST jobs (segment definitions, not aircraft data).
+analysis:
+  climb_rate_m_s: 2.0
+  forward_speeds_m_s: [5.0, 10.0, 15.0]
+  scan_max_m_s: 20.0
+  scan_step_m_s: 2.0
+  sensitivity_step: 0.01          # central difference, relative step (paper section III.A.5)
+  altitude_m: 0.0

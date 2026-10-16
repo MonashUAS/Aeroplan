@@ -12,7 +12,7 @@ from typing import List
 
 from lxml import etree
 
-SPEC = Path(__file__).resolve().parents[2] / "spec"
+SPEC = Path(__file__).resolve().parents[2] / "standards" / "spec"
 DTD_PATH = SPEC / "dave-ml" / "2p0" / "DAVEfunc.dtd"
 MATHML_DTD = SPEC / "mathml" / "2p0" / "mathml2.dtd"
 MATHML_URL = "http://www.w3.org/Math/DTD/mathml2/mathml2.dtd"

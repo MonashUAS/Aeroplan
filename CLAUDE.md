@@ -2,82 +2,42 @@
 
 AeroPlan is the ADH-based single source of truth (SSOT) for aircraft data. Each aircraft is a source tree in git,
 `aircraft/<aircraft>/`: one JSON file for each ADH node and each dataset. `aeroplan pack` makes a `.muas` package
-from it: a ZIP archive that holds one immutable, hashed snapshot (format muas 2.0.0). Tool spokes at the repository
-root move data between their tool and the source tree. Aerolink reads the `aerolink` package.
+from it: a ZIP archive that holds one immutable, hashed snapshot (format muas 2.0.0). Tool spokes in `tools/` move data
+between their tool and the source tree. Aerolink reads the `aerolink` package.
 
-Read README.md first. It holds the layout, the user workflow, the rules and the open items.
+Read README.md first, then `docs/README.md`. The decisions are in `docs/decisions/` (one Nygard ADR for each decision,
+numbered, with date). Read the ADR before you change a thing that it covers.
 
-## Architecture (user decisions)
+## Layout (ADR 0020)
 
-- 2026-10-08: The SSOT lives inside AeroPlan (`aircraft/`). The muas-fleet-data repository is deleted and must not be
-  used.
-- 2026-10-10: Git holds the source tree (`aircraft/<aircraft>/`, committed). The `.muas` package is built from it into
-  `dist/` (git ignores it) and is never edited in place. `aeroplan unpack` gives the source tree back.
-- Only ADH data goes into the source tree: the ADH tree, the asset register, small geometry and lookup tables, the
-  datasets. Large files (STL, STEP, `.fl5`, sweep output, logs) stay in `<spoke>/work/<aircraft>/` (git ignores it).
-  The register names each one (`asset:sha256:<hash>`, repo path, URL).
-- The asset register is `muas.assets` of 1.10.2 DataRepository. Every item names an asset by its ID, never by a path.
-  Storage tiers inline, embedded, linked. Packing profiles `aerolink`, `review`, `flight-record`, `archive`
-  (`consumers.py`). Flight events on 1.8.1.4 FlightTests, firmware on 1.2.9 AirVehicleSoftwareRelease.
-- Aerolink packaging uses glTF (`preview/aircraft.glb`) for the 3D parts. No STL output (2026-10-10).
-- One folder for each tool: `Prototype/` (published team specs, MTOW -> propulsion sizing targets), `AeroSandbox/` (initial sizing), `flow5/`, `SpecSheet/` (the weight sheet), `Propalyser/`, `CREO/` (CAD link), `OpenVSP/`,
-  `DAVEML/` (published DAVE-ML models), `ArduPilot/` (flight events), `MissionPlanner/` (flight files), `Aerolink/`. A new tool gets a new folder
-  with `spoke.py`, `README.md`, `settings/`, `work/`.
-- A new aircraft starts from the AeroSandbox sizing output, then moves forward to flow5. A published reference
-  model (the NASA F-16, `aircraft/f16/`) starts from the DAVEML spoke.
-- Manual changes come in through a spoke, by script only. Nobody edits the source tree by hand.
-- 2026-10-14: AeroSandbox runs in its own Python (`AeroSandbox/.venv`, made by `aeroplan setup AeroSandbox` with uv).
-  The spoke sends jobs to `AeroSandbox/asb_worker.py`, which imports aerosandbox and proptimiser (CasADi path, no JAX).
-  Only that worker file imports them. Tests that need it skip without it.
-- 2026-10-15: The Master Specification Sheet (`Currawong Master Specification Sheet.xlsx`) owns the mass model. The
-  `SpecSheet/` spoke writes the subassembly masses and the 1.2 roll-up (mass, CG, inertia, point masses) from it. It runs
-  after flow5, so flow5 ingest cannot keep its own mass model. The nominal configuration is the measured aircraft with no
-  payload. Payload layouts are named configurations in the notebooks only. The sheet is an xlsx in the repository today.
-  A link to the Google Sheet comes later.
-- 2026-10-15: The MRP stays the CoG of the flow5 T7 analysis until a new flow5 sweep of the sheet mass model. The aero
-  model is about that point. `reference.nominal_cg` and `mrp` do not move with the mass model. The datum check warns when
-  the mass CG differs from the MRP, and `pack --profile aerolink` refuses (MRP = CG within 1 mm). Currawong lists no
-  `aerolink` consumer until the re-sweep.
-- 2026-10-15: Notebooks in `AeroSandbox/notebooks/` run in `AeroSandbox/.venv` (kernel `aeroplan-asb`). They may import
-  aerosandbox and aeroplan (`AeroSandbox/lab.py`). They read the source tree and never write it. They are committed with
-  empty outputs. Proptimiser is optional in that Python.
-- 2026-10-15: The wing root leading edge sits at x = 0.000 in the design frame, as in the Creo assembly (the shrinkwrap
-  holds the wing panel there). flow5 had it at x = -0.080. The SpecSheet datum (`datum_x_m` = 0.0) is the same point.
-  The spoke warns when the document wing differs. A change of the wing position needs a new flow5 sweep.
-- 2026-10-15: The fuselage body (`geometry.body`) is a fit of the Creo shrinkwrap skin, cut by the CREO spoke
-  (`aeroplan.skin_body`). The skin (`muas.skin`, faceted STEP) stays the exact shape and goes to the OpenVSP analysis
-  (CompGeom, parasite drag, VSPAERO panel). `muas.skin.body_fit` records the method and the fit.
-- 2026-10-16: The flight files (ArduPilot `.parm`, `.waypoints`, geofence) go into the `.muas` as datasets of the autopilot node 1.2.5.10 (roles `parameters`, `waypoints`, `geofence`). The `MissionPlanner/` spoke reads them from `work/<aircraft>/`. The `aerolink` profile embeds them (`consumers.tier`). `flightfiles.py` parses and writes the formats. Aerolink extracts them and can write them into the autopilot.
-- 2026-10-16: Multirotor path. The Redback (X quadcopter) starts from `AeroSandbox/settings/redback.yaml` (`kind: multirotor`,
-  `aeroplan.multirotor.seed`), not from a sizing printout. `muas.reference.kind = multirotor` selects the Aerolink needs
-  (`consumers.FLIGHT_ITEMS_BY_KIND`): four lift rotors (`muas.propeller` role lift, `motor` 1 to 4, `system`), motor outputs
-  `motor1` to `motor4` (ArduPilot 33 to 36), no control surfaces. `spin` is the sense seen along the thrust vector (ArduPilot
-  CCW from above is `cw`). The SpecSheet spoke has a CSV mode with placement rules (hub, half_arm, origin). The AeroSandbox worker
-  has EMST jobs (Bershadsky 2016) with the Ct/Cp table as rotor load. The body drag is a forces-only DAVE-ML
-  (`multirotor_aero.py`). The contract for Aerolink is `spec/multirotor_contract.md`. The Mk4 propulsion CSV is an estimate
-  (sanity check only).
-- The web editor and viewer are shelved for now.
-- The changed file wins (2026-10-08): a geometry spoke writes an item only when its input file differs from the
-  asset that the item names. `muas.geometry_tool` names the spoke that wrote the geometry last.
-- OpenVSP runs in its own Python (`OpenVSP/.venv`, made by `aeroplan setup OpenVSP` with uv). The spoke sends jobs
-  to `OpenVSP/vsp_worker.py`, which imports only openvsp and numpy. Tests that need it skip without it.
+```
+aircraft/   source trees        tools/    one spoke for each tool (lower case)     standards/  adh/ schema/ spec/
+src/aeroplan/  core code        docs/     tutorials howto reference explanation decisions
+tests/      synthetic tests     work/     raw tool files, work/<tool>/<aircraft>/ (git ignores it)     dist/  packages
+```
+
+A new tool gets a new folder `tools/<tool>/` with `spoke.py`, `README.md` and `settings/`. The ArduPilot spoke holds the
+flight events and the flight files (ADR 0021). The Aerolink note `docs/multirotor_contract.md` copies
+`docs/reference/multirotor_contract.md`.
 
 ## Rules
 
 - ADH decides the design. Add a MUAS extension only where ADH is silent or broken, under the `muas` key, with
   `extra="forbid"`. A part with no WBS number of its own is a `subcomponent` of its ADH node. Never invent a WBS number.
-- `packages/muas_adh/upstream/` stays pristine. Fixes go in `packages/muas_adh/patches/`. A patch must not break an
-  upstream ADH test (CI runs them). `packages/muas_adh/upstream_commit.txt` names the upstream commit.
+- `standards/adh/upstream/` stays pristine. Fixes go in `standards/adh/patches/`. A patch must not break an
+  upstream ADH test (CI runs them). `standards/adh/upstream_commit.txt` names the upstream commit.
 - Store SI. Angles are radians in the ADH data. Every quantity carries units. Exception: a published reference model
   (DAVE-ML) keeps its own units (`units_system: as-source`), because its check cases use them.
 - MRP = the nominal-configuration CG (today the T7 CoG of the flow5 analysis), a fixed point in the design frame.
 - Never type an unsourced number. A stand-in value carries `placeholder: true` and names its source.
+- Only ADH data goes into the source tree. Nobody edits the source tree by hand: only spokes (and code) write it.
 - Copy data by hand between repos. No symlinks. No hard-coded cross-repo paths. AeroPlan imports no sibling repo.
   Aerolink has a hand copy of the package reader (src/aerolink/muas.py) and the glTF reader (visual/cad.py).
-- DAVE-ML must pass the vendored 2.0 DTD (`spec/dave-ml/2p0`).
+- DAVE-ML must pass the vendored 2.0 DTD (`standards/spec/dave-ml/2p0`).
 - Tests use synthetic numbers only. `tests/test_aircraft_files.py` runs every check, the pack and the unpack on each
   committed source tree.
 - Write prose in ASD-STE100 style.
+- Move tracked files with `git mv`. Never `git add -A`. Do not commit unless the user asks.
 - Commits and builds: author "Liam M.", git identity lmca0007.
 
 ## Code map
@@ -95,8 +55,9 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 | `checks.py` | `aeroplan check`: ADH, datasets, DAVE-ML (DTD, round trip, checkData), datums, consumers |
 | `daveml_adh.py` | DAVE-ML XML <-> ADH `DAVEfunc` form, `compare` (lossless round trip) |
 | `daveml_eval.py` | DAVE-ML evaluator (MathML, n-D tables) and the checkData runner |
-| `spokes.py` | Spoke loader and the spoke `Context` (work folder, settings, `source_ref`, `add_dataset`) |
+| `spokes.py` | Spoke loader and the spoke `Context` (work folder `work/<tool>/<aircraft>/`, settings, `source_ref`, `add_dataset`) |
 | `build.py` | `aeroplan build`, placeholder list |
+| `summary.py` | One-page Markdown summary of an aircraft (`aeroplan show <aircraft> --md <file>`) |
 | `datum.py` | Datum checks (planforms, reference, CAD meshes when present, stale assets) |
 | `geometry.py`, `parts.py`, `visual.py` | ADH shapes <-> tool shapes and meshes |
 | `step_mesh.py` | Triangles of a faceted STEP file (the Creo shrinkwrap skin), no CAD kernel |
@@ -108,28 +69,16 @@ Read README.md first. It holds the layout, the user workflow, the rules and the 
 
 ## Commands
 
+The full list is in `docs/reference/commands.md`. The common ones:
+
 ```
 pip install -e .[test]
 python -m pytest
-python -m aeroplan build currawong --author "Liam M."
 python -m aeroplan check currawong
-python -m aeroplan show currawong
+python -m aeroplan show currawong --md docs/reference/aircraft/currawong.md
+python -m aeroplan build currawong --author "Liam M."
 python -m aeroplan pack currawong --profile aerolink review archive
-python -m aeroplan unpack dist/currawong-<version>-archive.muas <folder>
-python -m aeroplan verify dist/currawong-<version>-aerolink.muas
-python -m aeroplan generate flow5 currawong
-python -m aeroplan sweep flow5 currawong     # flow5 headless: T7, alpha, beta, controls (about 11 min)
-python -m aeroplan sweep OpenVSP currawong   # CompGeom, parasite drag, VSPAERO (about 15 min after generate)
-python -m aeroplan setup OpenVSP             # once per computer
-python -m aeroplan setup AeroSandbox         # once per computer: Python, JupyterLab, kernel aeroplan-asb
-python -m aeroplan build currawong --author "Liam M." --consumers review archive   # after a sheet change
-AeroSandbox/.venv/bin/jupyter lab AeroSandbox/notebooks   # the notebooks
-python -m aeroplan generate OpenVSP currawong
-python -m aeroplan export Aerolink currawong <out>
-python -m aeroplan build redback --new --author "Liam M." --consumers review archive   # the quadcopter, then generate AeroSandbox, build again
-python -m aeroplan build f16 --author "Liam M."   # the NASA F-16 (DAVEML spoke, downloads when needed)
-python -m aeroplan schema --out schema      # after a model change
+python -m aeroplan setup OpenVSP         # once per computer
+python -m aeroplan setup AeroSandbox     # once per computer
+python -m aeroplan schema --out standards/schema   # after a model change
 ```
-
-The Currawong source tree came from the retired HDF5 file `aircraft/currawong.muas` (muas-adh 1.0.0) on 2026-10-10,
-by a one-time script that is not kept.
