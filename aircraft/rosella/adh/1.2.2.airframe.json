@@ -20,16 +20,16 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47940776690193193,
-                -0.47020018240337563,
+                -0.47758133914654866,
+                -0.47020000353265917,
                 -0.025471137578900176
               ],
               "p1": [
-                0.7635179347325782,
-                -0.47020018240337563,
+                0.7635179371843084,
+                -0.47020000353265917,
                 -0.025471137578900176
               ],
-              "radius_m": 0.026733343714406495
+              "radius_m": 0.02822477733676942
             },
             "material": "boom",
             "source": "Boom of the sizing result (outer radius, length).",
@@ -38,32 +38,32 @@
         ],
         "tube": {
           "radius": {
-            "value": 0.026733343714406495,
+            "value": 0.02822477733676942,
             "units": "m"
           },
           "inner_radius": {
-            "value": 0.02573334360550636,
+            "value": 0.027224777346450433,
             "units": "m"
           },
           "material": "roll-wrapped carbon tube",
           "p0": [
-            -0.47940776690193193,
-            -0.47020018240337563,
+            -0.47758133914654866,
+            -0.47020000353265917,
             -0.025471137578900176
           ],
           "p1": [
-            0.7635179347325782,
-            -0.47020018240337563,
+            0.7635179371843084,
+            -0.47020000353265917,
             -0.025471137578900176
           ],
-          "source": "H4_14S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
+          "source": "H4_10S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
           "placeholder": true
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
-            "role": "Rosella sizing result H4_14S (rosella.py)"
+            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
+            "role": "Rosella sizing result H4_10S (rosella.py)"
           }
         ]
       }
@@ -82,16 +82,16 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47940776690193193,
-                0.47020018240337563,
+                -0.47758133914654866,
+                0.47020000353265917,
                 -0.025471137578900176
               ],
               "p1": [
-                0.7635179347325782,
-                0.47020018240337563,
+                0.7635179371843084,
+                0.47020000353265917,
                 -0.025471137578900176
               ],
-              "radius_m": 0.026733343714406495
+              "radius_m": 0.02822477733676942
             },
             "material": "boom",
             "source": "Boom of the sizing result (outer radius, length).",
@@ -100,32 +100,32 @@
         ],
         "tube": {
           "radius": {
-            "value": 0.026733343714406495,
+            "value": 0.02822477733676942,
             "units": "m"
           },
           "inner_radius": {
-            "value": 0.02573334360550636,
+            "value": 0.027224777346450433,
             "units": "m"
           },
           "material": "roll-wrapped carbon tube",
           "p0": [
-            -0.47940776690193193,
-            0.47020018240337563,
+            -0.47758133914654866,
+            0.47020000353265917,
             -0.025471137578900176
           ],
           "p1": [
-            0.7635179347325782,
-            0.47020018240337563,
+            0.7635179371843084,
+            0.47020000353265917,
             -0.025471137578900176
           ],
-          "source": "H4_14S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
+          "source": "H4_10S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
           "placeholder": true
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
-            "role": "Rosella sizing result H4_14S (rosella.py)"
+            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
+            "role": "Rosella sizing result H4_10S (rosella.py)"
           }
         ]
       }

@@ -468,8 +468,8 @@
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
-            "role": "Rosella sizing result H4_14S (rosella.py)",
+            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
+            "role": "Rosella sizing result H4_10S (rosella.py)",
             "note": "copy of aircraft/currawong tail_boom"
           }
         ]

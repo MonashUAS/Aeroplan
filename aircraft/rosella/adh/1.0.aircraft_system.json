@@ -6,11 +6,11 @@
     "ext_version": "0.4.0",
     "instance": "aircraft_system",
     "build": {
-      "aeroplan_commit": "db7df70a9df64579927150906b4dcde84b04d363",
-      "aeroplan_dirty": true,
+      "aeroplan_commit": "aefc7ea17d72fddc9d80edd5e78dcd5d1c6b1d0a",
+      "aeroplan_dirty": false,
       "built": "2026-10-18",
       "author": "Liam M",
-      "version": "0.1.3",
+      "version": "0.1.5",
       "spokes": {
         "AeroSandbox": "8 changes"
       },

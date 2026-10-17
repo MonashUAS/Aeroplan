@@ -6,13 +6,13 @@
     "instance": "data_repository",
     "assets": [
       {
-        "id": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+        "id": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
         "kind": "file",
         "name": "AeroSandbox.best.json",
-        "role": "Rosella sizing result H4_14S (rosella.py)",
+        "role": "Rosella sizing result H4_10S (rosella.py)",
         "tool": "AeroSandbox",
         "media_type": "application/json",
-        "size": 36739,
+        "size": 36706,
         "locations": [
           {
             "repo": "work/aerosandbox/rosella/sizing/best.json"
@@ -34,7 +34,7 @@
           }
         ],
         "derived_from": [],
-        "built_against": "rosella@0.1.2",
+        "built_against": "rosella@0.1.4",
         "dataset": {
           "form": "tables",
           "model_description": {
@@ -66,9 +66,9 @@
           }
         ],
         "derived_from": [
-          "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c"
+          "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff"
         ],
-        "built_against": "rosella@0.1.2",
+        "built_against": "rosella@0.1.4",
         "dataset": {
           "form": "tables",
           "model_description": {
