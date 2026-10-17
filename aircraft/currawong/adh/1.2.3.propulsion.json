@@ -6,13 +6,13 @@
     "instance": "propulsion",
     "mass_properties": {
       "mass": {
-        "value": 1.800333333,
+        "value": 1.8003333333333333,
         "units": "kg"
       },
       "cg": {
         "frame": "design",
         "xyz": [
-          -0.5438422898090921,
+          -0.530116624372229,
           0.0,
           0.0
         ],
@@ -64,19 +64,19 @@
       {
         "tag": "PROPULSION-BAT",
         "mass": {
-          "value": 0.9283333333,
+          "value": 0.9283333333333333,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.5104392,
+            -0.4838207730606322,
             0.0,
             0.0
           ],
           "units": "m"
         },
-        "source": "1st Airframe: row 67 Battery (no source stated). x: CG Calcs 1 forward tank prop/bat. y = 0, z = 0: not in the sheet (stand-in)",
+        "source": "1st Airframe: row 67 Battery (no source stated). x: CG Calcs 1 forward tank prop/bat. y = 0, z = 0: not in the sheet (stand-in). Battery cage trim: moved +26.6 mm in x to reach the best flight CG with static margin 0.100 (middle of the requirement band) about the neutral point of work/aerosandbox/currawong/neutral_point.json. Flight day: the crew trims the CG with the battery cage",
         "placeholder": true
       },
       {
@@ -100,7 +100,7 @@
       {
         "tag": "PROPULSION-REST",
         "mass": {
-          "value": 0.1789999997,
+          "value": 0.179,
           "units": "kg"
         },
         "position": {

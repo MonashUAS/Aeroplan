@@ -27,7 +27,12 @@ SPEC (design frame: x aft, y right, z up, metres, degrees):
                 "sections": [{"y", "chord", "x_offset", "dihedral_deg", "twist_deg", "foil"}],
                 "foils": {name: [[x/c, z/c], ...]},          Selig order (upper TE -> LE -> lower TE)
                 "controls": [{"name", "eta": [a, b], "hinge_x_over_c"}]}],
-     "body": {"instance", "frames": [[[x, y, z], ...], ...]},  right half of each frame, top to bottom
+     "bodies": [{"instance", "frames": [[[x, y, z], ...], ...]}],  right half of each frame, top to bottom
+                                                                    ("body", one body, is the old key: it is also read)
+     "rotors": [{"instance", "p0", "axis", "diameter"}],  actuator disks (OpenVSP propeller in disk mode): `p0` the hub,
+                                                           `axis` the direction of the slipstream (opposite the thrust)
+     "parts": [{"name", "p0", "axis", "length", "radius"}],  round cylinders (lift booms, rotor discs): `p0` the start,
+                                                              `axis` a unit vector, `length` and `radius` in m
      "reference_meshes": [{"name", "stl"}]}
 
 The wing section rules are those of the flow5 planform in AeroPlan (aeroplan.geometry._edges): y is the projected
@@ -49,6 +54,7 @@ import openvsp as vsp
 
 PIVOT = 0.25          # twist axis, fraction of the chord (aeroplan.visual.PIVOT)
 REF_SUFFIX = " (reference)"
+PART_SUFFIX = " (part)"     # lift booms and rotor discs: write-only parts, ingest does not read them back
 
 
 # ------------------------------------------------------------------------------------------------------- helpers
@@ -197,13 +203,66 @@ def _write_body(b: dict) -> str:
     return g
 
 
+def _write_part(p: dict) -> str:
+    """A round cylinder from `p0` along `axis`: an OpenVSP fuselage with circle sections. The rotation turns the
+    fuselage axis x onto `axis`."""
+    a = np.asarray(p["axis"], float)
+    a = a / np.linalg.norm(a)
+    g = vsp.AddGeom("FUSELAGE")
+    vsp.SetGeomName(g, p["name"] + PART_SUFFIX)
+    xs = vsp.GetXSecSurf(g, 0)
+    while vsp.GetNumXSec(xs) > 2:                          # two sections: a straight cylinder, no spline overshoot
+        vsp.CutXSec(g, 1)
+    n = vsp.GetNumXSec(xs)
+    for i in range(n):
+        vsp.ChangeXSecShape(xs, i, vsp.XS_CIRCLE)
+        xsec = vsp.GetXSec(xs, i)
+        _set(xsec, "XLocPercent", "XSec", i / (n - 1))
+        vsp.SetXSecTanAngles(xsec, vsp.XSEC_BOTH_SIDES, 0.0, 0.0, 0.0, 0.0)      # the end tangent of a fuselage rounds the end: 0 keeps it straight
+        vsp.SetParmVal(vsp.GetXSecParm(xsec, "Circle_Diameter"), 2.0 * p["radius"])
+    vsp.Update()
+    _set(g, "Length", "Design", p["length"])
+    _place(g, p["p0"], a)
+    vsp.Update()
+    _check_errors(f"part {p['name']}")
+    return g
+
+
+def _place(g: str, p0, axis) -> None:
+    """Put the origin of a geom at `p0` and turn its x axis onto the unit vector `axis`. OpenVSP turns about z first,
+    then about y (measured): x -> (cos ry cos rz, sin rz, -sin ry cos rz)."""
+    a = np.asarray(axis, float)
+    a = a / np.linalg.norm(a)
+    for k, v in zip(("X_Rel_Location", "Y_Rel_Location", "Z_Rel_Location"), p0):
+        _set(g, k, "XForm", float(v))
+    _set(g, "Z_Rel_Rotation", "XForm", math.degrees(math.asin(float(a[1]))))
+    _set(g, "Y_Rel_Rotation", "XForm", math.degrees(math.atan2(-float(a[2]), float(a[0]))))
+
+
+def _write_rotor(r: dict) -> str:
+    """An actuator disk: a propeller in disk mode. Its x axis is the slipstream direction. The operating point (rpm, CT,
+    CP) is set for each run (job_vspaero)."""
+    g = vsp.AddGeom("PROP")
+    vsp.SetGeomName(g, r["instance"])
+    _set(g, "PropMode", "Design", float(vsp.PROP_DISK))
+    _set(g, "Diameter", "Design", float(r["diameter"]))
+    _place(g, r["p0"], r["axis"])
+    vsp.Update()
+    _check_errors(f"rotor {r['instance']}")
+    return g
+
+
 def job_write(spec: dict, path: str) -> dict:
     vsp.VSPRenew()
     vsp.ClearVSPModel()
     for w in spec.get("wings", []):
         _write_wing(w)
-    if spec.get("body"):
-        _write_body(spec["body"])
+    for b in spec.get("bodies") or ([spec["body"]] if spec.get("body") else []):
+        _write_body(b)
+    for p in spec.get("parts", []):
+        _write_part(p)
+    for r in spec.get("rotors", []):
+        _write_rotor(r)
     for m in spec.get("reference_meshes", []):
         g = vsp.ImportFile(m["stl"], vsp.IMPORT_STL, "")
         if not g:
@@ -322,17 +381,20 @@ def job_read(path: str, n_half: int = 13) -> dict:
     vsp.ReadVSPFile(path)
     vsp.Update()
     _check_errors(f"read {path}")
-    spec = {"wings": [], "body": None, "reference_meshes": [], "other": []}
+    spec = {"wings": [], "body": None, "bodies": [], "parts": [], "rotors": [], "reference_meshes": [], "other": []}
     for name, g in _geoms_by_name().items():
         t = vsp.GetGeomTypeName(g)
-        if name.endswith(REF_SUFFIX):
+        if name.endswith(PART_SUFFIX):
+            spec["parts"].append({"name": name[: -len(PART_SUFFIX)]})
+        elif name.endswith(REF_SUFFIX):
             spec["reference_meshes"].append({"name": name[: -len(REF_SUFFIX)]})
+        elif t == "Propeller":
+            spec["rotors"].append({"instance": name})
         elif t == "Wing":
             spec["wings"].append(_read_wing(g))
         elif t == "Fuselage":
-            if spec["body"] is not None:
-                raise ValueError("the OpenVSP model has two fuselages")
-            spec["body"] = _read_body(g, n_half)
+            spec["bodies"].append(_read_body(g, n_half))
+            spec["body"] = spec["body"] or spec["bodies"][0]
         else:
             spec["other"].append({"name": name, "type": t})
     return {"spec": spec}
@@ -497,6 +559,76 @@ def _read_polar(path: str) -> list:
     return rows
 
 
+def _set_rotors(geoms: dict, set_indexes: list, states: dict) -> dict:
+    """Put the rotors of `states` ({instance: {rpm, ct, cp}}) in the VSPAERO sets, and every other rotor out of them. Set
+    the operating point of each disk. Returns {instance: expected hub xyz}."""
+    props = [n for n, g in geoms.items() if vsp.GetGeomTypeName(g) == "Propeller"]
+    unknown = sorted(set(states) - set(props))
+    if unknown:
+        raise ValueError(f"the model has no rotor {unknown}")
+    if len(props) != vsp.GetNumActuatorDisks():
+        raise RuntimeError(f"{len(props)} propeller components but {vsp.GetNumActuatorDisks()} actuator disks: "
+                           "a rotor must be in disk mode")
+    disk_of = _disk_of_rotor({n: geoms[n] for n in props})
+    out = {}
+    for n in props:
+        g = geoms[n]
+        for i in set_indexes:
+            vsp.SetSetFlag(g, i, n in states)
+        if n not in states:
+            continue
+        for key, par in (("rpm", "RotorRPM"), ("ct", "RotorCT"), ("cp", "RotorCP")):
+            vsp.SetParmVal(vsp.GetParm(disk_of[n], par, "Rotor"), float(states[n][key]))
+        out[n] = [_get(g, a, "XForm") for a in ("X_Location", "Y_Location", "Z_Location")]
+    vsp.Update()
+    return out
+
+
+def _disk_of_rotor(props: dict) -> dict:
+    """{instance: actuator disk id}. OpenVSP gives no link from a disk to its component and the disks do not follow the
+    order of the components. Each component gets a unique diameter for a moment (steps of 0.1 mm); the disk with that
+    diameter is its disk. The diameters are restored."""
+    names = list(props)
+    d0 = {n: _get(props[n], "Diameter", "Design") for n in names}
+    for k, n in enumerate(names):
+        _set(props[n], "Diameter", "Design", d0[n] + (k + 1) * 1e-4)
+    vsp.Update()
+    disks = [vsp.FindActuatorDisk(k) for k in range(vsp.GetNumActuatorDisks())]
+    out = {}
+    for k, n in enumerate(names):
+        want = d0[n] + (k + 1) * 1e-4
+        hit = [d for d in disks if abs(vsp.GetParmVal(vsp.GetParm(d, "RotorDiameter", "Rotor")) - want) < 1e-9]
+        if len(hit) != 1:
+            raise RuntimeError(f"no unique actuator disk for the rotor {n} ({len(hit)} with diameter {want} m)")
+        out[n] = hit[0]
+    for n in names:
+        _set(props[n], "Diameter", "Design", d0[n])
+    vsp.Update()
+    return out
+
+
+def _check_rotor_file(path: str, expected: dict) -> list:
+    """The PropElement blocks that VSPAERO wrote (<case>.vspaero). Each expected rotor must be there, at its hub, with
+    its CT. Returns [{instance, xyz, normal, radius, rpm, ct, cp}]."""
+    lines = [ln.strip() for ln in open(path, encoding="utf-8", errors="replace").read().splitlines()]
+    found = []
+    for i, ln in enumerate(lines):
+        if ln.startswith("PropElement_"):
+            xyz = [float(x) for x in lines[i + 2].split()]
+            nrm = [float(x) for x in lines[i + 3].split()]
+            found.append({"xyz": xyz, "normal": nrm, "radius": float(lines[i + 4]), "hub_radius": float(lines[i + 5]),
+                          "rpm": float(lines[i + 6]), "ct": float(lines[i + 7]), "cp": float(lines[i + 8])})
+    if len(found) != len(expected):
+        raise RuntimeError(f"VSPAERO wrote {len(found)} rotors, the run has {len(expected)}: {path}")
+    used = []
+    for n, xyz in expected.items():
+        near = min(found, key=lambda f: sum((a - b) ** 2 for a, b in zip(f["xyz"], xyz)))
+        if sum((a - b) ** 2 for a, b in zip(near["xyz"], xyz)) > 1e-8:
+            raise RuntimeError(f"VSPAERO has no rotor at the hub of {n} {xyz}: {path}")
+        used.append({"instance": n} | near)
+    return used
+
+
 def job_vspaero(path: str, dir: str, name: str, sets: dict, thin, thick, case: dict) -> dict:
     """One VSPAERO sweep: thin surfaces (VLM) and thick surfaces (panel). Writes <dir>/<name>.* and the log."""
     import re
@@ -505,11 +637,12 @@ def job_vspaero(path: str, dir: str, name: str, sets: dict, thin, thick, case: d
     geoms = _open(path)
     idx = _user_sets(geoms, sets)
     os.makedirs(dir, exist_ok=True)
+    thin_i = idx[thin] if thin else -1
+    thick_i = idx[thick] if thick else -1
+    disks = _set_rotors(geoms, [i for i in (thin_i, thick_i) if i >= 0], case["rotors"]) if "rotors" in case else {}
     model = os.path.join(dir, name + ".vsp3")
     vsp.SetVSP3FileName(model)
     vsp.WriteVSPFile(model, vsp.SET_ALL)
-    thin_i = idx[thin] if thin else -1
-    thick_i = idx[thick] if thick else -1
     c = "VSPAEROComputeGeometry"
     vsp.SetAnalysisInputDefaults(c)
     vsp.SetIntAnalysisInput(c, "GeomSet", [thick_i])
@@ -547,7 +680,10 @@ def job_vspaero(path: str, dir: str, name: str, sets: dict, thin, thick, case: d
         m = re.search(rf"Number of {k} +tris: +(\d+)", text)
         if m:
             tris[k] = int(m.group(1))
-    return {"rows": _read_polar(polar), "seconds": seconds, "log": log, "polar": polar, "triangles": tris}
+    out = {"rows": _read_polar(polar), "seconds": seconds, "log": log, "polar": polar, "triangles": tris}
+    if "rotors" in case:
+        out["rotors"] = _check_rotor_file(model[: -len(".vsp3")] + ".vspaero", disks)
+    return out
 
 
 def main(argv: list) -> int:

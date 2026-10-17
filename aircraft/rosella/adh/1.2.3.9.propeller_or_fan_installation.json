@@ -1,0 +1,445 @@
+{
+  "wbs_no": "1.2.3.9",
+  "name": "PropellerOrFanInstallation",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "prop_cruise",
+    "fidelity": "L1",
+    "propeller": {
+      "role": "cruise",
+      "hub": {
+        "frame": "design",
+        "xyz": [
+          -0.6608515757022919,
+          0.0,
+          -0.035
+        ],
+        "units": "m"
+      },
+      "thrust_axis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "spin": "cw",
+      "diameter": {
+        "value": 0.508,
+        "units": "m"
+      }
+    },
+    "datasets": [
+      {
+        "role": "propulsion",
+        "ref": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c"
+      }
+    ],
+    "visual": [
+      {
+        "part": "propeller_cruise",
+        "generator": "disc",
+        "units": "m",
+        "shape": {
+          "centre": [
+            -0.6608515757022919,
+            0.0,
+            -0.035
+          ],
+          "axis": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "radius_m": 0.254,
+          "thickness_m": 0.004,
+          "alpha": 0.3
+        },
+        "material": "rotor",
+        "source": "Demo disc of the cruise propeller diameter (no CAD).",
+        "placeholder": true
+      }
+    ],
+    "propulsion_system": {
+      "system_id": "currawongcustom",
+      "basis": "mixed",
+      "p_max": {
+        "value": 2200.2094742172785,
+        "units": "kg * m ** 2 / s ** 3"
+      },
+      "diameter": {
+        "value": 0.508,
+        "units": "m"
+      },
+      "blades": 2,
+      "ixx": {
+        "value": 0.0008,
+        "units": "kg * m ** 2"
+      },
+      "model": "Currawong V1 (Proptimiser, commit 588118a)",
+      "motor": {
+        "model": "X5220 IPE V1.0 220KV",
+        "kv": {
+          "value": 23.03834612632515,
+          "units": "A * rad * s ** 2 / kg / m ** 2"
+        },
+        "r": {
+          "value": 0.037,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "i0": {
+          "value": 2.0,
+          "units": "A"
+        },
+        "kappa": 1.0663825697522735,
+        "r_tot": {
+          "value": 0.1560714276186098,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "pole_pairs": 7,
+        "mass": {
+          "value": 0.436,
+          "units": "kg"
+        },
+        "imax_continuous": {
+          "value": 72.4,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 50.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "esc": {
+        "model": "AMPX 80A (5-14S) V2.0 CAN",
+        "protocol": "DroneCAN / CyphalCAN",
+        "pwm_low": {
+          "value": 0.00105,
+          "units": "s"
+        },
+        "pwm_high": {
+          "value": 0.0019399999999999999,
+          "units": "s"
+        },
+        "imax_continuous": {
+          "value": 80.0,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 64.0,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "battery": {
+        "model": "NXE 22.2v 4500mAh 50C Hard Case LiPo (SKU 4500HC506SXT90)",
+        "cells_s": 12,
+        "cells_p": 1,
+        "capacity": {
+          "value": 16200.0,
+          "units": "A * s"
+        },
+        "v_nominal": {
+          "value": 44.4,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_min": {
+          "value": 3.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "cell_v_max": {
+          "value": 4.2,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "mass": {
+          "value": 1.262,
+          "units": "kg"
+        }
+      },
+      "warnings": [
+        "Ct(J) and Cp(J) are the Proptimiser model scaled to the static test. The J > 0 part is not measured.",
+        "The rpm is a model estimate from the torque (kappa 1.066, R_tot 0.156 ohm from the vendor datasheet; V_bus 44.4 V +/- 3.5 V from the cell limits).",
+        "Type B inputs at their default: air_density (ISA value, not measured), load_cell_rel, torque_sensor_rel.",
+        "No idle rows. The tare comes from the rows at the lowest throttle (20 %).",
+        "Air density is the ISA sea-level value. Add the test block to run.yaml to use the measured value.",
+        "The stand throttle (%) is taken as the normalized ESC command (linear in PWM between pwm_low and pwm_high).",
+        "The rows of this run were typed by hand. Thrust and torque have coarse steps.",
+        "M1 (model table against the rows (command 30 % and above)): The RMS gap 0.077 (max 0.161) exceeds the combined band 0.009. Gaps are in power fraction.",
+        "C1 (thrust and torque calibration): No calibration date in run.yaml. The intervals hold only the default sensor gain errors.",
+        "D3 skip: The rpm channel of this run is missing. The rpm is a model estimate.",
+        "D4 skip: The rpm channel of this run is missing. The rpm is a model estimate.",
+        "P4 inconclusive: Figure of merit, peak eta, tip Mach (95 % intervals)",
+        "P8 skip: No valid electrical data (current must exceed 1 A and voltage must reach 23.0 V). Efficiency and the battery link are not available.",
+        "R2 inconclusive: Ct0 goes with 1/n^2 and Cp0 with 1/n^3, so the intervals of Ct0 and Cp0 are wide.",
+        "Copied from aircraft/currawong prop_cruise: the Currawong nose motor and propeller. The hub x follows the sized CG."
+      ],
+      "source": {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+        "role": "Rosella sizing result H4_14S (rosella.py)",
+        "note": "copy of aircraft/currawong prop_cruise"
+      },
+      "placeholder": true
+    }
+  },
+  "description": "Currawong cruise propeller of the system currawongcustom. Diameter: the contract B file. Hub: hand config propulsion.thrust_xyz. Spin: hand config propulsion.spin (CAD blade pitch).",
+  "subcomponents": [
+    {
+      "name": "Lift rotor 5",
+      "description": "Lift rotor, ArduPilot motor 5, front right",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_5",
+        "fidelity": "L1",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              -0.4194077669019319,
+              0.47020018240337563,
+              -0.005471137578900175
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            0.14804865503968964,
+            0.9889800785359324
+          ],
+          "spin": "cw",
+          "diameter": {
+            "value": 0.6603999988563377,
+            "units": "m"
+          },
+          "motor": 5,
+          "system": "rosella_lift"
+        },
+        "visual": [
+          {
+            "part": "rotor_5",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                -0.4194077669019319,
+                0.47020018240337563,
+                -0.005471137578900175
+              ],
+              "axis": [
+                0.0,
+                0.14804865503968964,
+                0.9889800785359324
+              ],
+              "radius_m": 0.33019999942816886,
+              "thickness_m": 0.004,
+              "alpha": 0.3
+            },
+            "material": "rotor",
+            "source": "Demo rotor disc of the sized diameter (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ],
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift rotor 6",
+      "description": "Lift rotor, ArduPilot motor 6, rear left",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_6",
+        "fidelity": "L1",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              0.7035179347325782,
+              -0.47020018240337563,
+              -0.005471137578900175
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            -0.14804865503968964,
+            0.9889800785359324
+          ],
+          "spin": "cw",
+          "diameter": {
+            "value": 0.6603999988563377,
+            "units": "m"
+          },
+          "motor": 6,
+          "system": "rosella_lift"
+        },
+        "visual": [
+          {
+            "part": "rotor_6",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.7035179347325782,
+                -0.47020018240337563,
+                -0.005471137578900175
+              ],
+              "axis": [
+                0.0,
+                -0.14804865503968964,
+                0.9889800785359324
+              ],
+              "radius_m": 0.33019999942816886,
+              "thickness_m": 0.004,
+              "alpha": 0.3
+            },
+            "material": "rotor",
+            "source": "Demo rotor disc of the sized diameter (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ],
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift rotor 7",
+      "description": "Lift rotor, ArduPilot motor 7, front left",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_7",
+        "fidelity": "L1",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              -0.4194077669019319,
+              -0.47020018240337563,
+              -0.005471137578900175
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            0.14804865503968964,
+            0.9889800785359324
+          ],
+          "spin": "ccw",
+          "diameter": {
+            "value": 0.6603999988563377,
+            "units": "m"
+          },
+          "motor": 7,
+          "system": "rosella_lift"
+        },
+        "visual": [
+          {
+            "part": "rotor_7",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                -0.4194077669019319,
+                -0.47020018240337563,
+                -0.005471137578900175
+              ],
+              "axis": [
+                0.0,
+                0.14804865503968964,
+                0.9889800785359324
+              ],
+              "radius_m": 0.33019999942816886,
+              "thickness_m": 0.004,
+              "alpha": 0.3
+            },
+            "material": "rotor",
+            "source": "Demo rotor disc of the sized diameter (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ],
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift rotor 8",
+      "description": "Lift rotor, ArduPilot motor 8, rear right",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "prop_lift_8",
+        "fidelity": "L1",
+        "propeller": {
+          "role": "lift",
+          "hub": {
+            "frame": "design",
+            "xyz": [
+              0.7035179347325782,
+              0.47020018240337563,
+              -0.005471137578900175
+            ],
+            "units": "m"
+          },
+          "thrust_axis": [
+            0.0,
+            -0.14804865503968964,
+            0.9889800785359324
+          ],
+          "spin": "ccw",
+          "diameter": {
+            "value": 0.6603999988563377,
+            "units": "m"
+          },
+          "motor": 8,
+          "system": "rosella_lift"
+        },
+        "visual": [
+          {
+            "part": "rotor_8",
+            "generator": "disc",
+            "units": "m",
+            "shape": {
+              "centre": [
+                0.7035179347325782,
+                0.47020018240337563,
+                -0.005471137578900175
+              ],
+              "axis": [
+                0.0,
+                -0.14804865503968964,
+                0.9889800785359324
+              ],
+              "radius_m": 0.33019999942816886,
+              "thickness_m": 0.004,
+              "alpha": 0.3
+            },
+            "material": "rotor",
+            "source": "Demo rotor disc of the sized diameter (no CAD). Turns about the thrust axis through the hub.",
+            "placeholder": true
+          }
+        ],
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    }
+  ]
+}

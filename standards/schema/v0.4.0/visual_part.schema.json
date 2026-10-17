@@ -91,7 +91,8 @@
             "tube",
             "box",
             "cylinder",
-            "disc"
+            "disc",
+            "body"
           ],
           "type": "string"
         },
@@ -100,7 +101,7 @@
         }
       ],
       "default": null,
-      "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom): from the ADH items. box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
+      "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom), body: from the ADH items (body: the lofted ADH `geometry.body` of the same item). box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
       "title": "Generator"
     },
     "hinge": {

@@ -21,6 +21,7 @@ python -m pytest
 | `aeroplan spokes <aircraft>` | Lists the spokes and the files in their work folders |
 | `aeroplan setup OpenVSP` | Makes the OpenVSP Python on this machine (`--vsp <folder>` when it does not find OpenVSP) |
 | `aeroplan setup AeroSandbox` | Makes the AeroSandbox Python (`--proptimiser <checkout>`, or the git source in the settings) |
+| `rosella.py optimise\|ladder\|evaluate\|order-sheet\|rotor-check` | Quadplane sizing in `tools/aerosandbox` (AeroSandbox Python). See [Size a quadplane](../howto/size-a-quadplane.md) |
 | `aeroplan schema --out standards/schema` | Exports the JSON Schema of the MUAS types. Run it after a model change |
 
 Examples:
@@ -30,7 +31,8 @@ python -m aeroplan build currawong --author "Liam M." --consumers review archive
 python -m aeroplan build redback --new --author "Liam M." --consumers review archive
 python -m aeroplan build f16 --author "Liam M."     # the NASA F-16 (DAVEML spoke, downloads when needed)
 python -m aeroplan pack currawong --profile aerolink review archive
-tools/aerosandbox/.venv/bin/jupyter lab tools/aerosandbox/notebooks   # the notebooks (Scripts/jupyter.exe on Windows)
+tools/aerosandbox/.venv/bin/python tools/aerosandbox/rosella.py optimise --config H4 --cells 12   # Rosella sizing (Scripts/python.exe on Windows)
+tools/aerosandbox/.venv/bin/jupyter lab tools/aerosandbox/notebooks   # the notebooks (Scripts/jupyter.exe on Windows). Setup installs the kernel in the user folder.
 ```
 
 Profiles: `aerolink`, `review`, `flight-record`, `archive`.

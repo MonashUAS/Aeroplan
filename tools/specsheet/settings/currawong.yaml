@@ -64,3 +64,15 @@ subassemblies:
       Cruise ESC: esc
       Battery: bat
       Propellor: prop
+# battery_trim (optional): on flight day the crew trims the CG with the battery cage. The spoke moves the point mass `move`
+#   in x so that the mass CG sits at the best flight CG, x_best = x_np - SM_goal * c_ref. x_np is the AeroSandbox VLM neutral
+#   point (file `neutral_point`, written by tools/aerosandbox/neutral_point.py). SM_goal is the middle of the node 1.2
+#   requirements static_margin_min and static_margin_max. c_ref is muas.reference c_ref. The move is clamped to +/- travel_m
+#   from the sheet x. The build fails when the margin reached is outside the band. MRP and nominal_cg do not move (ADR 0013):
+#   only the mass CG moves.
+battery_trim:
+  move: PROPULSION-BAT          # the battery cage moves fore and aft
+  travel_m: 0.050               # hard limit +/-50 mm from the sheet x (user, 2026-10-17)
+  neutral_point: work/aerosandbox/currawong/neutral_point.json
+  source: "Flight day: the crew trims the CG with the battery cage"
+

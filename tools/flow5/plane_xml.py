@@ -72,6 +72,17 @@ def _f(v: float) -> str:
     return format(float(v), ".7g")
 
 
+def fit_counts(values: List[int] | None, n: int, default: int = 2) -> List[int]:
+    """A list of `n` panel counts from the settings list `values`. The list is kept when it has `n` entries. Else every
+    entry gets the rounded mean of the list (at least 1), so the mesh size stays near the settings. An empty list gives
+    `default`. A shorter list must never cut the body: `zip` did drop the frames after the end of the list."""
+    if not values:
+        return [default] * n
+    if len(values) == n:
+        return [int(v) for v in values]
+    return [max(1, int(round(sum(values) / len(values))))] * n
+
+
 def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dict[str, Any] | None,
                 masses: List[Dict[str, Any]], mesh: Dict[str, Any]) -> None:
     """Write a flow5 plane XML.
@@ -101,13 +112,13 @@ def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dic
         _sub(b, "Position", ", ".join(_f(v) for v in pos))
         _sub(b, "Type", bm.get("type", "FLATPANELS"))
         n_pts = len(body["frames"][0])
-        stripes = bm.get("panel_stripes") or [2] * n_pts
+        stripes = fit_counts(bm.get("panel_stripes"), n_pts)
         ps = _sub(b, "Panel_Stripes")
         for i, s in enumerate(stripes):
             _sub(ps, f"stripe_{i}", s)
         _sub(_sub(b, "Inertia"), "Volume_Mass", 0)
         nurbs = _sub(b, "NURBS")
-        xp = bm.get("x_panels") or [2] * len(body["frames"])
+        xp = fit_counts(bm.get("x_panels"), len(body["frames"]))
         for fr, nx in zip(body["frames"], xp):
             f = _sub(nurbs, "frame")
             _sub(f, "Angle", 0)

@@ -89,3 +89,29 @@ alpha for the wings alone.
   sheds at its sharp edges. Use CL and Cm of the runs, not CDi.
 - The skin holds the CAD wing panel. The ADH wing must sit on it (same x), or the thin wing and the panel overlap.
 
+## Rotors as actuator disks (Rosella, 2026-10-18)
+
+The `rotors` list of the settings puts each ADH propeller (`muas.propeller`) in the model as one OpenVSP propeller in disk
+mode. The hub, the diameter and the axis come from ADH. The disk axis is the slipstream direction, that is opposite the
+ADH `thrust_axis`. The disks are write only: `ingest` does not read them back.
+
+The operating point of each disk comes from `disk_states` of the settings. Each entry names the prefix of three outputs
+in the performance record of node 1.2: `<prefix>_rpm`, `_thrust` and `_shaft_power`. The spoke makes
+CT = T / (rho n^2 D^4) and CP = P / (rho n^3 D^5). The sign of the rpm follows `muas.propeller.spin`.
+A run with `state: <name>` switches on the disks of that state. A run without `state` has no disks.
+If an output is not in ADH, the run gives a warning and does not run. The AeroSandbox spoke writes the hover
+outputs (`rotor_<case>_<f|r>_...`) and the nose propeller outputs (`cruise_laps_...`, `cruise_survey_...`).
+
+Facts that were measured (tests/test_openvsp.py, `test_actuator_disk_runs_in_vspaero`):
+- OpenVSP gives no link from a disk to its component. The worker gives each component a unique diameter for a moment
+  to find its disk, then checks the hub positions in the `.vspaero` file of the run.
+- A positive RotorRPM turns the air about the slipstream direction.
+- `aeroplan sweep` needs no flow5 sweep when `analysis.condition` has `source: adh`.
+
+Limits:
+- VSPAERO is a potential-flow solver. A wing in the vertical slipstream of a lift rotor gets only the small
+  potential-flow force. The download from plate-like pressure drag is not in the result. Do not use the hover point run
+  for the hover download of the wing.
+- VSPAERO needs a free stream speed above zero. The hover point run uses 1 m/s.
+- Coaxial pairs (H8) need a `disk_states` entry for each rotor. The model has no interaction between two disks.
+

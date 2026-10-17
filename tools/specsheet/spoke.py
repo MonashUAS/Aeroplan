@@ -29,6 +29,7 @@ the flow5 T7 analysis, because the aero model is about that point. The datum che
 from __future__ import annotations
 
 import csv
+import json
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
@@ -202,6 +203,8 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
     """One entry for each subassembly: {group, cfg, point_masses[{tag, mass_kg, xyz, source, placeholder}]}."""
     ws_name, pos_name = st["weights_sheet"], st["positions_sheet"]
     datum = float(st["datum_x_m"])
+    if abs(datum) > DATUM_TOL_M:
+        raise ValueError(f"settings datum_x_m is {datum:+.4f} m. ADR 0023: it must be 0.0 (the wing root leading edge)")
     stands_in: Dict[str, float] = {}
     out = []
     for gname, cfg in st["subassemblies"].items():
@@ -263,6 +266,77 @@ def build_point_masses(data: Dict[str, Any], st: Dict[str, Any],
             stands_in[gname] = _weighted_x(list(rows.values()), datum) if rows else 0.0
         out.append({"group": gname, "cfg": cfg, "point_masses": pms})
     return out
+
+
+def trim_inputs(doc: Dict[str, Any], st: Dict[str, Any], root: Path) -> Optional[Dict[str, Any]]:
+    """Inputs of the battery trim, or None when the settings have no `battery_trim` key. The neutral point comes from the
+    AeroSandbox file. The static margin band and c_ref come from the document (no typed number)."""
+    bt = st.get("battery_trim")
+    if not bt:
+        return None
+    path = root / bt["neutral_point"]
+    if not path.is_file():
+        raise ValueError(f"battery_trim: the neutral point file {bt['neutral_point']} is missing. Run "
+                         "tools/aerosandbox/neutral_point.py for the aircraft first")
+    npd = json.loads(path.read_text(encoding="utf-8"))
+    air = adh_doc.node(doc, "1.2")
+    band = {}
+    for req in air.get("requirements") or []:
+        tgt = (req.get("muas") or {}).get("target") or {}
+        if tgt.get("key") in ("static_margin_min", "static_margin_max"):
+            band[tgt["key"]] = float(tgt["value"])
+    if len(band) != 2:
+        raise ValueError("battery_trim: node 1.2 needs the requirements static_margin_min and static_margin_max")
+    try:
+        c_ref = float(air["muas"]["reference"]["c_ref"]["value"])
+    except KeyError:
+        raise ValueError("battery_trim: node 1.2 has no muas.reference c_ref") from None
+    return {"x_np": float(npd["x_np_m"]), "c_ref": c_ref, "sm_min": band["static_margin_min"],
+            "sm_max": band["static_margin_max"], "np_file": bt["neutral_point"]}
+
+
+def apply_battery_trim(subs: List[Dict[str, Any]], st: Dict[str, Any], trim: Dict[str, Any]) -> Dict[str, Any]:
+    """Move the battery point mass fore or aft so that the mass CG sits at the best flight CG
+    x_best = x_np - SM_goal c_ref. SM_goal is the middle of the requirement band. The move is clamped to +/- travel_m.
+    Only the mass CG moves (ADR 0013). Raises ValueError for a missing tag or a margin outside the band."""
+    bt = st["battery_trim"]
+    pms = [p for s in subs for p in s["point_masses"]]
+    bat = [p for p in pms if p["tag"] == bt["move"]]
+    if len(bat) != 1:
+        raise ValueError(f"battery_trim: the point mass {bt['move']!r} is not in the mass model (found {len(bat)})")
+    bat = bat[0]
+    travel = float(bt["travel_m"])
+    m_tot = sum(p["mass_kg"] for p in pms)
+    mx_other = sum(p["mass_kg"] * p["xyz"][0] for p in pms if p is not bat)
+    sm_goal = 0.5 * (trim["sm_min"] + trim["sm_max"])
+    x_best = trim["x_np"] - sm_goal * trim["c_ref"]
+    x_before = (mx_other + bat["mass_kg"] * bat["xyz"][0]) / m_tot
+    dx_free = (x_best * m_tot - mx_other) / bat["mass_kg"] - bat["xyz"][0]
+    dx = max(-travel, min(travel, dx_free))
+    clamped = abs(dx_free) > travel + 1e-12
+    bat["xyz"][0] += dx
+    cg = (mx_other + bat["mass_kg"] * bat["xyz"][0]) / m_tot
+    sm = (trim["x_np"] - cg) / trim["c_ref"]
+    bat["source"] += (f". Battery cage trim: moved {dx * 1000:+.1f} mm in x to reach the best flight CG with static margin "
+                      f"{sm_goal:.3f} (middle of the requirement band) about the neutral point of {trim['np_file']}"
+                      f"{' (clamped at the travel limit)' if clamped else ''}. {bt.get('source', '')}")
+    rep = {"x_np_m": trim["x_np"], "c_ref_m": trim["c_ref"], "sm_goal": sm_goal, "x_best_m": x_best, "dx_m": dx,
+           "dx_free_m": dx_free, "clamped": clamped, "cg_before_m": x_before, "sm_before": (trim["x_np"] - x_before) / trim["c_ref"],
+           "cg_m": cg, "sm": sm}
+    if not trim["sm_min"] - 1e-9 <= sm <= trim["sm_max"] + 1e-9:
+        raise ValueError(f"battery_trim: the static margin reached ({sm:.4f}) is outside the band {trim['sm_min']} to "
+                         f"{trim['sm_max']}. The battery moved {dx * 1000:+.1f} mm (limit +/-{travel * 1000:.0f} mm)")
+    return rep
+
+
+def trim_lines(rep: Dict[str, Any], st: Dict[str, Any]) -> List[str]:
+    lines = [f"battery trim: x_np {rep['x_np_m']:+.4f} m, SM goal {rep['sm_goal']:.3f}, x_best {rep['x_best_m']:+.4f} m, "
+             f"battery dx {rep['dx_m'] * 1000:+.1f} mm; CG {rep['cg_before_m']:+.4f} -> {rep['cg_m']:+.4f} m, "
+             f"static margin {rep['sm_before']:.4f} -> {rep['sm']:.4f}"]
+    if rep["clamped"]:
+        lines.append(f"WARNING: battery trim clamped at +/-{float(st['battery_trim']['travel_m']) * 1000:.0f} mm "
+                     f"(free move {rep['dx_free_m'] * 1000:+.1f} mm). Static margin reached {rep['sm']:.4f}, goal {rep['sm_goal']:.3f}")
+    return lines
 
 
 def _slug(*parts: str) -> str:
@@ -376,11 +450,17 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         return _ingest_csv(doc, ctx, st, path, data)
     subs = build_point_masses(data, st, lambda inst: adh_doc.find(doc, inst)["muas"]["planform"])
     changes, flat = [], []
+    trim = trim_inputs(doc, st, ctx.root)
+    if trim:
+        trep = apply_battery_trim(subs, st, trim)
+        changes += trim_lines(trep, st)
+        for line in trim_lines(trep, st):
+            print(line)
     le = _root_le_x(doc, st)
     if le is not None and abs(le - float(st["datum_x_m"])) > DATUM_TOL_M:
-        changes.append(f"WARNING: the sheet datum (wing root leading edge) is x = {float(st['datum_x_m']):+.4f} m in the "
-                       f"settings, but the wing_main root leading edge is at x = {le:+.4f} m in the document. "
-                       "Every sheet position is off by the difference until you change datum_x_m or the wing")
+        raise ValueError(f"the sheet datum (wing root leading edge) is x = {float(st['datum_x_m']):+.4f} m in the "
+                         f"settings, but the wing_main root leading edge is at x = {le:+.4f} m in the document. "
+                         "ADR 0023: the wing root leading edge is x = 0 in every aircraft. Fix the wing, not the datum")
     for s in subs:
         pms = s["point_masses"]
         roll = mass_model.rollup(pms)

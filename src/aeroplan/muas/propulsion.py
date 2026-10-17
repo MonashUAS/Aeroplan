@@ -45,7 +45,7 @@ class PropellerInstallation(MuasModel):
     """Mount of a propeller or rotor in the design frame (WBS 1.2.3.9).
 
     A multirotor has one installation for each lift rotor (the first one on the WBS node, the others as
-    subcomponents of it). `motor` is the autopilot motor number (ArduPilot MOTn, 1 to 8) and `system` names the
+    subcomponents of it). `motor` is the autopilot motor number (ArduPilot MOTn, 1 to 12; a quadplane lift rotor starts at 5) and `system` names the
     propulsion system (`muas.propulsion_system.system_id`) that drives the rotor. The system data and the Ct/Cp
     dataset are stored once, on one item."""
 
@@ -54,7 +54,7 @@ class PropellerInstallation(MuasModel):
     thrust_axis: List[float] = Field(min_length=3, max_length=3, description="Unit vector, design frame")
     spin: Spin
     diameter: Quantity
-    motor: Optional[int] = Field(None, ge=1, le=8, description="Autopilot motor number (ArduPilot MOTn). "
+    motor: Optional[int] = Field(None, ge=1, le=12, description="Autopilot motor number (ArduPilot MOTn). "
                                  "Needed for a lift rotor")
     system: Optional[str] = Field(None, min_length=1, description="system_id of the propulsion system")
 

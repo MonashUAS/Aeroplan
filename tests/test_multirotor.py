@@ -699,7 +699,7 @@ def test_the_consumer_check_follows_the_vehicle_kind(tmp_path):
     fixed = make_full_doc()
     assert consumers.vehicle_kind(fixed) == "fixed_wing"
     assert any("propeller node muas.propeller" in m for m in consumers.missing_for_flight(fixed))
-    assert set(consumers.FLIGHT_ITEMS_BY_KIND) == {"fixed_wing", "multirotor"} and "control_surface" not in consumers.FLIGHT_ITEMS_MULTIROTOR
+    assert set(consumers.FLIGHT_ITEMS_BY_KIND) == {"fixed_wing", "multirotor", "quadplane"} and "control_surface" not in consumers.FLIGHT_ITEMS_MULTIROTOR
 
 
 @pytest.mark.parametrize("edit, word", [
@@ -836,3 +836,26 @@ def test_the_emst_jobs_in_the_worker_python_equal_the_numpy_functions(tmp_path):
     assert [s["name"] for s in r["segments"]] == ["hover", "climb", "forward", "forward"]
     assert runner.run({"job": "emst_endurance", "spec": spec, "rho_kg_m3": 1.225})["emst_endurance"]["rows"]
     assert runner.run({"job": "emst_sensitivity", "spec": spec, "rho_kg_m3": 1.225})["emst_sensitivity"]["parameters"]["mass_kg"]
+
+
+def test_the_quadplane_cant_is_a_tangential_tilt_with_the_sign_of_the_spin():
+    """Rosella lift rotors (synthetic numbers): each axis tilts about the radial axis (CG to hub) by the cant. The tilt
+    moments add up to zero in hover, and the yaw moment of one rotor is T sin(cant) rho with the sign of its reaction torque."""
+    cant, y_b, x_f, x_r, x_cg = math.radians(7.0), 0.6, -0.5, 0.8, 0.1
+    rep = {"names": {"x_f": x_f, "x_r": x_r}, "design": {"cant": cant, "y_b": y_b}, "R_m": 0.3, "config": "H4",
+           "items": [{"name": "lift_front", "z": 0.0}, {"name": "lift_rear", "z": 0.0}], "airframe": {"x_cg_m": x_cg}}
+    rotors = asb_spoke._rotors(rep, {})
+    assert len(rotors) == 4
+    hover_moment = 0.0
+    for r in rotors:
+        ax = np.asarray(r["axis"])
+        rx, ry = r["hub"][0] - x_cg, r["hub"][1]
+        rho = math.hypot(rx, ry)
+        assert np.linalg.norm(ax) == pytest.approx(1.0)
+        assert ax[2] == pytest.approx(math.cos(cant))
+        assert ax[0] * rx + ax[1] * ry == pytest.approx(0.0, abs=1e-12)                 # no radial part
+        m_z = rx * ax[1] - ry * ax[0]                                                    # per unit thrust, about the CG
+        sign = 1.0 if r["turn_ardupilot"] == "cw" else -1.0                             # cw seen from above: reaction +z
+        assert m_z == pytest.approx(sign * math.sin(cant) * rho)
+        hover_moment += m_z
+    assert hover_moment == pytest.approx(0.0, abs=1e-12)

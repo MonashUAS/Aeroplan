@@ -1,0 +1,94 @@
+{
+  "wbs_no": "1.2.5.10",
+  "name": "AutomaticFlightControl",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "autopilot",
+    "autopilot": {
+      "firmware": "ArduPlane",
+      "outputs": [
+        {
+          "channel": 1,
+          "function": "aileron",
+          "targets": [
+            "aileron_l",
+            "aileron_r"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 2,
+          "function": "elevator",
+          "targets": [
+            "elevator"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 3,
+          "function": "throttle",
+          "targets": [
+            "prop_cruise"
+          ],
+          "pwm_min_us": 1050,
+          "pwm_max_us": 1940,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 4,
+          "function": "rudder",
+          "targets": [
+            "rudder"
+          ],
+          "sign": 1,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (autopilot, from the retired hand config). Was: hand config autopilot (Aerolink settings flightgear.servo, Propalyser esc_setup)",
+          "placeholder": true
+        },
+        {
+          "channel": 5,
+          "function": "motor5",
+          "targets": [
+            "prop_lift_5"
+          ],
+          "source": "ArduPlane quadplane (Q_ENABLE): output 5 drives lift motor 5 (SERVO5_FUNCTION 37). The ESC end points come with the maker part: the lift motors and ESCs are sized values.",
+          "placeholder": true
+        },
+        {
+          "channel": 6,
+          "function": "motor6",
+          "targets": [
+            "prop_lift_6"
+          ],
+          "source": "ArduPlane quadplane (Q_ENABLE): output 6 drives lift motor 6 (SERVO6_FUNCTION 38). The ESC end points come with the maker part: the lift motors and ESCs are sized values.",
+          "placeholder": true
+        },
+        {
+          "channel": 7,
+          "function": "motor7",
+          "targets": [
+            "prop_lift_7"
+          ],
+          "source": "ArduPlane quadplane (Q_ENABLE): output 7 drives lift motor 7 (SERVO7_FUNCTION 39). The ESC end points come with the maker part: the lift motors and ESCs are sized values.",
+          "placeholder": true
+        },
+        {
+          "channel": 8,
+          "function": "motor8",
+          "targets": [
+            "prop_lift_8"
+          ],
+          "source": "ArduPlane quadplane (Q_ENABLE): output 8 drives lift motor 8 (SERVO8_FUNCTION 40). The ESC end points come with the maker part: the lift motors and ESCs are sized values.",
+          "placeholder": true
+        }
+      ],
+      "notes": [
+        "Quadplane H4: outputs 1 to 4 are the Currawong surfaces and throttle (copied). Lift motors 5 to 8 on the outputs of the same number. Frame class and motor order: see the warnings of the lift propulsion system."
+      ]
+    }
+  }
+}

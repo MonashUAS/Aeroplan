@@ -9,7 +9,14 @@ Settings (committed): tools/openvsp/settings/<aircraft>.yaml
     vsp_version     the OpenVSP version that the tests ran with (setup warns on another version)
     model           the file name of the member's model in the work folder
     wings           the ADH items (muas.instance) with a planform that go into OpenVSP
-    body            the ADH item with the fuselage body
+    bodies          the ADH items with a body (fuselage, tail boom): each is one OpenVSP fuselage component
+                    (`body: <item>` is the old key for one body)
+    rotors          the ADH items with a `muas.propeller` (lift rotors, the nose propeller): each is one actuator disk
+                    (an OpenVSP propeller in disk mode, axis = the slipstream direction). Write only
+    disk_states     the operating points of the disks: {state: {rotor item: prefix of the sizing outputs}}. The outputs
+                    <prefix>_rpm, _thrust and _shaft_power are in the performance record of node 1.2 (AeroSandbox spoke)
+    parts           the ADH items whose `muas.visual` tube or disc goes in as a round cylinder (lift booms, rotor discs).
+                    Write only: ingest does not read them back
     reference_skin  the item whose CAD skin (muas.skin) goes into the model as a reference mesh
 
 What generate writes (work/<aircraft>/generated/): <aircraft>.vsp3 and <skin item>_skin.stl (the skin in the design
@@ -22,7 +29,7 @@ and the VSPAERO runs (thin = VLM set, thick = panel set). The trim point and the
 What ingest writes, only for the items that differ from the document (the changed file wins):
   - wings: `muas.planform` sections, position and angles, `geometry.lifting_surface`, the foils
   - control surfaces: `muas.control_surface` eta_span and hinge_x_over_c
-  - body: `geometry.body`
+  - bodies: `geometry.body`
   - `muas.geometry_tool = "OpenVSP"` and an OpenVSP pointer on each changed item. The air vehicle gets the pointer of
     the model it read. When the model sha256 equals that pointer, ingest reads nothing.
 Before it writes, ingest puts the ADH shape of each item on the OpenVSP surface. A gap above SHAPE_TOL stops the build:
@@ -94,6 +101,85 @@ def _mirror(pf: Dict[str, Any]) -> bool:
     return pf.get("symmetric", True) and (pf["kind"] != "FIN" or pf.get("two_sided", True))
 
 
+def body_items(st: Dict[str, Any]) -> List[str]:
+    """The ADH items with a body: `bodies` (list), or the old `body` (one item)."""
+    return list(st.get("bodies") or ([st["body"]] if st.get("body") else []))
+
+
+def part_cylinders(doc: Dict[str, Any], items: List[str]) -> List[Dict[str, Any]]:
+    """Round cylinders from the `muas.visual` tubes (p0, p1, radius_m) and discs (centre, axis, radius_m, thickness_m)."""
+    out = []
+    for inst in items:
+        for v in adh_doc.find(doc, inst)["muas"].get("visual") or []:
+            s = v["shape"]
+            if v["generator"] == "tube":
+                p0, p1 = np.asarray(s["p0"], float), np.asarray(s["p1"], float)
+                out.append({"name": v["part"], "p0": p0.tolist(), "axis": ((p1 - p0) / np.linalg.norm(p1 - p0)).tolist(),
+                            "length": float(np.linalg.norm(p1 - p0)), "radius": float(s["radius_m"])})
+            elif v["generator"] == "disc":
+                ax = np.asarray(s["axis"], float)
+                ax = ax / np.linalg.norm(ax)
+                t = float(s["thickness_m"])
+                out.append({"name": v["part"], "p0": (np.asarray(s["centre"], float) - 0.5 * t * ax).tolist(),
+                            "axis": ax.tolist(), "length": t, "radius": float(s["radius_m"])})
+    return out
+
+
+def rotor_geoms(doc: Dict[str, Any], items: List[str]) -> List[Dict[str, Any]]:
+    """The actuator disks: hub, slipstream direction (opposite the ADH thrust axis) and diameter of each rotor."""
+    out = []
+    for inst in items:
+        p = adh_doc.find(doc, inst)["muas"]["propeller"]
+        t = np.asarray(p["thrust_axis"], float)
+        out.append({"instance": inst, "p0": [float(x) for x in p["hub"]["xyz"]], "axis": (-t / np.linalg.norm(t)).tolist(),
+                    "diameter": float(p["diameter"]["value"])})
+    return out
+
+
+def sizing_outputs(doc: Dict[str, Any]) -> Dict[str, float]:
+    """{name: value} of the outputs of the performance records of node 1.2 (SI; rotor speed in rpm)."""
+    out = {}
+    for rec in adh_doc.node(doc, "1.2").get("performance") or []:
+        for tool in rec.get("tools") or []:
+            for o in (tool.get("data_exchange") or {}).get("outputs") or []:
+                if isinstance(o.get("value"), (int, float)):
+                    out[o["name"]] = float(o["value"])
+    return out
+
+
+def disk_coefficients(thrust_n: float, power_w: float, rpm: float, diameter_m: float, rho: float) -> Tuple[float, float]:
+    """(CT, CP) of an actuator disk: T / (rho n^2 D^4) and P / (rho n^3 D^5), n in rev/s."""
+    n = rpm / 60.0
+    return thrust_n / (rho * n ** 2 * diameter_m ** 4), power_w / (rho * n ** 3 * diameter_m ** 5)
+
+
+# VSPAERO: a positive RotorRPM turns the air about the +x axis of the disk, that is about the slipstream direction
+# (measured 2026-10-18: it gives a negative CMx on the wing). ADH `cw` turns about the thrust axis, so about -slipstream.
+SPIN_SIGN = {"cw": -1.0, "ccw": 1.0}
+
+
+def disk_states(doc: Dict[str, Any], st: Dict[str, Any], rho: float) -> Tuple[Dict[str, Any], Dict[str, List[str]]]:
+    """({state: {rotor item: {rpm, ct, cp, thrust_N}}}, {state: [missing output names]}) from `disk_states` of the
+    settings and the sizing outputs. The rpm carries the sign of the spin. A state with a missing output is not built."""
+    outputs = sizing_outputs(doc)
+    states: Dict[str, Any] = {}
+    missing: Dict[str, List[str]] = {}
+    for state, rotors in (st.get("disk_states") or {}).items():
+        need = [f"{pre}_{k}" for pre in rotors.values() for k in ("rpm", "thrust", "shaft_power")]
+        lack = [n for n in need if n not in outputs]
+        if lack:
+            missing[state] = lack
+            continue
+        states[state] = {}
+        for inst, pre in rotors.items():
+            p = adh_doc.find(doc, inst)["muas"]["propeller"]
+            rpm, thrust, power = (outputs[f"{pre}_{k}"] for k in ("rpm", "thrust", "shaft_power"))
+            ct, cp = disk_coefficients(thrust, power, rpm, float(p["diameter"]["value"]), rho)
+            states[state][inst] = {"rpm": SPIN_SIGN[str(getattr(p["spin"], "value", p["spin"]))] * rpm, "ct": ct, "cp": cp,
+                                   "thrust_N": thrust}
+    return states, missing
+
+
 def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any]) -> Dict[str, Any]:
     wings = []
     for inst in st["wings"]:
@@ -104,24 +190,26 @@ def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any]) -> Dict[str, Any]:
                       "sections": [{k: s[k] for k in SECTION_KEYS + ("foil",)} for s in pf["sections"]],
                       "foils": {k: v.tolist() for k, v in foils_of(item).items()},
                       "controls": _controls(doc, inst, pf["sections"])})
-    spec: Dict[str, Any] = {"wings": wings, "body": None, "reference_meshes": []}
-    if st.get("body"):
-        body = adh_doc.find(doc, st["body"])["geometry"]["body"]
-        spec["body"] = {"instance": st["body"], "frames": [f.tolist() for f in body_frames(body)]}
-    return spec
+    bodies = [{"instance": b, "frames": [f.tolist() for f in body_frames(adh_doc.find(doc, b)["geometry"]["body"])]}
+              for b in body_items(st)]
+    return {"wings": wings, "body": bodies[0] if bodies else None, "bodies": bodies,
+            "parts": part_cylinders(doc, st.get("parts") or []), "rotors": rotor_geoms(doc, st.get("rotors") or []),
+            "reference_meshes": []}
 
 
 # ------------------------------------------------------------------------------------------------- shape gate
 def _shape_sets(wings: Dict[str, Tuple[Dict[str, Any], Dict[str, np.ndarray]]],
-                frames: Optional[Tuple[str, List[np.ndarray]]]) -> List[Dict[str, Any]]:
+                frames: Optional[List[Tuple[str, List[np.ndarray]]]]) -> List[Dict[str, Any]]:
     sets = []
     for inst, (pf, foils) in wings.items():
         pts = section_points(planform_wing(pf), foils)
         n = len(pts)
         u0 = np.concatenate([np.full(len(p), (i + 1) / (n + 1)) for i, p in enumerate(pts)])
         sets.append({"geom": inst, "points": np.vstack(pts).tolist(), "u0": u0.tolist()})
-    if frames:
-        sets.append({"geom": frames[0], "points": np.vstack(frames[1]).tolist()})
+    if frames and isinstance(frames[0], str):       # one body as (instance, frames): the old form
+        frames = [frames]
+    for inst, fr in frames or []:
+        sets.append({"geom": inst, "points": np.vstack(fr).tolist()})
     return sets
 
 
@@ -168,19 +256,21 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
     files.insert(0, path)
     wings = {w["instance"]: (adh_doc.find(doc, w["instance"])["muas"]["planform"],
                              {k: np.asarray(v) for k, v in w["foils"].items()}) for w in spec["wings"]}
-    frames = (spec["body"]["instance"], [np.asarray(f) for f in spec["body"]["frames"]]) if spec["body"] else None
-    if frames and len(frames[1]) > 30:          # projecting every point of a dense body takes minutes: sample the frames
-        keep = sorted(set(range(0, len(frames[1]), 4)) | {len(frames[1]) - 1})
-        frames = (frames[0], [frames[1][i] for i in keep])
-        print(f"OpenVSP: shape check of the body on {len(keep)} of {len(spec['body']['frames'])} frames "
-              "(ingest checks all frames).")
+    frames = []
+    for b in spec["bodies"]:
+        fr = [np.asarray(f) for f in b["frames"]]
+        if len(fr) > 30:        # projecting every point of a dense body takes minutes: sample the frames
+            keep = sorted(set(range(0, len(fr), 4)) | {len(fr) - 1})
+            print(f"OpenVSP: shape check of {b['instance']} on {len(keep)} of {len(fr)} frames (ingest checks all frames).")
+            fr = [fr[i] for i in keep]
+        frames.append((b["instance"], fr))
     for inst, gap in shape_gaps(path, wings, frames).items():
         print(f"OpenVSP: largest gap from the ADH shape of {inst} to the OpenVSP surface: {gap * 1e6:.2f} um")
-    if skin is not None and spec["body"]:
+    if skin is not None and spec["bodies"]:
         u = np.linspace(0.02, 0.98, 49)
         w = np.linspace(0.0, 1.0, 37)
         uu, ww = np.meshgrid(u, w)
-        pts = runner.run({"job": "probe", "path": str(path), "geom": spec["body"]["instance"],
+        pts = runner.run({"job": "probe", "path": str(path), "geom": st["reference_skin"],
                           "u": uu.ravel().tolist(), "w": ww.ravel().tolist()})["points"]
         d = distance_to_mesh(np.array(pts), skin)
         print(f"OpenVSP: gap from the OpenVSP fuselage to the CAD skin: largest {d.max() * 1e3:.1f} mm, "
@@ -272,11 +362,15 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         if diff:
             changes += diff
             changed_items.append(id(item))
-    frames = None
-    if st.get("body"):
-        if not spec["body"] or spec["body"]["instance"] != st["body"]:
-            raise ValueError(f"OpenVSP model {path.name}: no fuselage named {st['body']!r}")
-        frames = (st["body"], [np.asarray(f, float) for f in spec["body"]["frames"]])
+    frames = []
+    read_bodies = {b["instance"]: b for b in spec["bodies"]}
+    for b in body_items(st):
+        if b not in read_bodies:
+            raise ValueError(f"OpenVSP model {path.name}: no fuselage named {b!r}")
+        frames.append((b, [np.asarray(f, float) for f in read_bodies[b]["frames"]]))
+    extra = sorted(set(read_bodies) - set(body_items(st)))
+    if extra:
+        raise ValueError(f"OpenVSP model {path.name}: fuselages {extra} are not in the settings")
     gaps = shape_gaps(path, new_wings, frames)
     bad = {k: v for k, v in gaps.items() if v > SHAPE_TOL}
     if bad:
@@ -314,16 +408,15 @@ def ingest(doc: Dict[str, Any], ctx: Context):
                     changes.append(f"{name}: eta_span {old[0]} -> {eta}, hinge_x_over_c {old[1]:g} -> "
                                    f"{cs['hinge_x_over_c']:g}")
 
-    # body
-    if frames:
-        item = adh_doc.find(doc, st["body"])
+    # bodies
+    for inst, fr in frames:
+        item = adh_doc.find(doc, inst)
         old = body_frames(item["geometry"]["body"])
-        if len(old) != len(frames[1]) or any(a.shape != b.shape or np.abs(a - b).max() > VALUE_TOL
-                                             for a, b in zip(old, frames[1])):
-            item["geometry"]["body"] = body_adh(frames[1])
+        if len(old) != len(fr) or any(a.shape != b.shape or np.abs(a - b).max() > VALUE_TOL for a, b in zip(old, fr)):
+            item["geometry"]["body"] = body_adh(fr)
             item["muas"]["geometry_tool"] = NAME
             set_sources(item, NAME, [ref])
-            changes.append(f"{st['body']}: body of {len(frames[1])} frames from OpenVSP (was {len(old)} frames)")
+            changes.append(f"{inst}: body of {len(fr)} frames from OpenVSP (was {len(old)} frames)")
 
     set_sources(air, NAME, [ref])
     if not changes:
@@ -394,6 +487,28 @@ def _flow5_reference(ctx: Context) -> Dict[str, Any]:
             "inputs": res.get("inputs") or {}}
 
 
+def _adh_reference(cond: Dict[str, Any], outputs: Dict[str, float]) -> Dict[str, Any]:
+    """The flight condition from the settings and the ADH sizing outputs (no flow5 sweep): speed from the output named
+    by `speed_output`; the alpha and beta ranges and the alpha of the beta sweep are choices of the analysis."""
+    name = cond["speed_output"]
+    if name not in outputs:
+        raise ValueError(f"the ADH sizing outputs have no {name!r} (the speed of the analysis): run `aeroplan build` again")
+    return {"sweep": None, "speed_m_s": outputs[name], "alpha_deg": float(cond["beta_alpha_deg"]),
+            "ranges": {"alpha_deg": cond["alpha_deg"], "beta_deg": cond["beta_deg"]}, "summaries": {}, "inputs": {},
+            "source": f"ADH sizing output {name}"}
+
+
+def point_summary(row: Dict[str, float], case: Dict[str, Any], alpha_deg: float) -> Dict[str, Any]:
+    """The forces (N, body axes of OpenVSP: x aft, y right, z up) and moments (N m, about the MRP) of one VSPAERO point.
+    CF and CM are per q S, q S b or q S c with q from the speed of the case."""
+    q = 0.5 * case["rho"] * case["vinf"] ** 2
+    s, b, c = case["sref"], case["bref"], case["cref"]
+    return {"speed_m_s": case["vinf"], "alpha_deg": alpha_deg, "q_Pa": q,
+            "force_N": {a: row[f"CF{a}tot"] * q * s for a in ("x", "y", "z")},
+            "moment_Nm": {"x": row["CMxtot"] * q * s * b, "y": row["CMytot"] * q * s * c, "z": row["CMztot"] * q * s * b},
+            "rotor_thrust_N": sum(v["thrust_N"] for v in (case.get("rotors") or {}).values())}
+
+
 def _range(r: List[float]) -> List[float]:
     start, end, step = float(r[0]), float(r[1]), float(r[2])
     return [start, end, int(round((end - start) / step)) + 1]
@@ -419,7 +534,10 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
         raise ValueError("node 1.2 has no muas.reference: run the flow5 ingest first")
     s_ref, b_ref, c_ref = (float(ref[k]["value"]) for k in ("s_ref", "b_ref", "c_ref"))
     mrp = [float(v) for v in ref["mrp"]["point"]["xyz"]]
-    f5 = _flow5_reference(ctx)
+    cond = an.get("condition") or {}
+    outputs = sizing_outputs(doc)
+    f5 = _adh_reference(cond, outputs) if cond.get("source") == "adh" else _flow5_reference(ctx)
+    states, missing = disk_states(doc, st, ISA_DENSITY)
     rg = f5["ranges"]
     alpha_rng, beta_rng = _range(rg["alpha_deg"]), _range(rg["beta_deg"])
     mach = f5["speed_m_s"] / ISA_SOUND_SPEED
@@ -441,10 +559,11 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
             timespec="seconds"), "model": model.name, "model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
         "aircraft_version": ctx.acft.version if ctx.acft is not None else None, "tool": runner.run({"job": "version"})["version"],
         "condition": {"speed_m_s": f5["speed_m_s"], "mach": mach, "alpha_trim_deg": f5["alpha_deg"],
-                      "atmosphere": "ISA 1976 sea level", "rho_kg_m3": ISA_DENSITY, "source": f"flow5 sweep {f5['sweep']}"},
+                      "atmosphere": "ISA 1976 sea level", "rho_kg_m3": ISA_DENSITY,
+                      "source": f5.get("source") or f"flow5 sweep {f5['sweep']}"},
         "reference": {"s_ref_m2": s_ref, "b_ref_m": b_ref, "c_ref_m": c_ref, "mrp_xyz_m": mrp},
         "ranges": {"alpha_deg": alpha_rng, "beta_deg": beta_rng}, "geometry": {}, "runs": {}, "summaries": {},
-        "failed": {}, "warnings": {}, "notes": list(an.get("notes") or [])}
+        "points": {}, "disk_states": states, "failed": {}, "warnings": {}, "notes": list(an.get("notes") or [])}
     if dry_run:
         result.update({"dry_run": True, "planned_runs": [r["name"] for r in runs], "sets": sets})
         return result
@@ -471,8 +590,31 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
     raw = dest / "raw"
     for r in runs:
         got = {}
-        for kind, case in (("alpha", {**base, "alpha": alpha_rng, "beta": [0.0, 0.0, 1]}),
-                           ("beta", {**base, "alpha": [f5["alpha_deg"]] * 2 + [1], "beta": beta_rng})):
+        run_base = dict(base)
+        if r.get("state") and r["state"] not in states:
+            if r["state"] not in missing:
+                raise ValueError(f"run {r['name']}: the settings have no disk_states entry {r['state']!r}")
+            result["warnings"][r["name"]] = (f"no operating point {r['state']}: the ADH sizing outputs lack "
+                                             f"{', '.join(missing[r['state']])} (run `aeroplan build` again)")
+            continue
+        if st.get("rotors"):
+            run_base["rotors"] = states[r["state"]] if r.get("state") else {}
+        if r.get("speed_m_s"):
+            run_base.update({"vinf": float(r["speed_m_s"]), "mach": float(r["speed_m_s"]) / ISA_SOUND_SPEED})
+        if r.get("point"):
+            a0 = float(r.get("alpha_deg", 0.0))
+            try:
+                res = runner.run({"job": "vspaero", "path": str(model), "dir": str(raw), "name": r["name"], "sets": sets,
+                                  "thin": r.get("thin"), "thick": r.get("thick"),
+                                  "case": {**run_base, "alpha": [a0, a0, 1], "beta": [0.0, 0.0, 1]}}, timeout=timeout)
+                res.pop("ok", None)
+                result["runs"][r["name"]] = {"point": res}
+                result["points"][r["name"]] = point_summary(res["rows"][0], run_base, a0)
+            except runner.OpenVSPError as e:
+                (result["warnings"] if r.get("optional") else result["failed"])[r["name"]] = str(e).splitlines()[0]
+            continue
+        for kind, case in (("alpha", {**run_base, "alpha": alpha_rng, "beta": [0.0, 0.0, 1]}),
+                           ("beta", {**run_base, "alpha": [f5["alpha_deg"]] * 2 + [1], "beta": beta_rng})):
             try:
                 res = runner.run({"job": "vspaero", "path": str(model), "dir": str(raw), "name": f"{r['name']}_{kind}",
                                   "sets": sets, "thin": r.get("thin"), "thick": r.get("thick"), "case": case},
@@ -489,9 +631,10 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
                 (result["warnings"] if r.get("optional") else result["failed"])[r["name"]] = (
                     "VSPAERO returned NaN: the panel solution did not converge")
                 result["summaries"].pop(r["name"], None)
-    result["flow5"] = {"sweep": f5["sweep"], "alpha": (f5["summaries"].get("alpha") or {}),
-                       "t7": (f5["summaries"].get("t7_reference") or {})}
-    result["validation"] = {"ok": not result["failed"] and bool(result["summaries"]), "failed": result["failed"],
+    if f5.get("sweep"):
+        result["flow5"] = {"sweep": f5["sweep"], "alpha": (f5["summaries"].get("alpha") or {}),
+                           "t7": (f5["summaries"].get("t7_reference") or {})}
+    result["validation"] = {"ok": not result["failed"] and bool(result["summaries"] or result["points"]), "failed": result["failed"],
                             "warnings": result["warnings"]}
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "results.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
@@ -521,6 +664,11 @@ def format_sweep(res: Dict[str, Any]) -> str:
         out.append(f"    {'flow5 ' + f5['sweep']:20s}   " + "".join(
             f"{v:9.4f}" if v is not None else f"{'':>9s}" for v in (a.get("CLa"), a.get("Cma"), None, None,
                                                                     t.get("NP_x"), t.get("Cnb"), None, None)))
+    for run, p in res.get("points", {}).items():
+        out.append(f"  point run {run}: V {p['speed_m_s']:.2f} m/s, alpha {p['alpha_deg']:.1f} deg, rotor thrust "
+                   f"{p['rotor_thrust_N']:.1f} N; wing and body force x/y/z "
+                   + " ".join(f"{p['force_N'][a]:+.2f}" for a in "xyz") + " N, moment x/y/z "
+                   + " ".join(f"{p['moment_Nm'][a]:+.2f}" for a in "xyz") + " N m")
     for k, v in res.get("failed", {}).items():
         out.append(f"  FAILED {k}: {v}")
     for k, v in res.get("warnings", {}).items():
@@ -530,9 +678,7 @@ def format_sweep(res: Dict[str, Any]) -> str:
 
 
 def _n_half(doc: Dict[str, Any], st: Dict[str, Any]) -> int:
-    if not st.get("body"):
-        return 13
-    return len(body_frames(adh_doc.find(doc, st["body"])["geometry"]["body"])[0])
+    return max([len(body_frames(adh_doc.find(doc, b)["geometry"]["body"])[0]) for b in body_items(st)] or [13])
 
 
 def setup(ctx: Context, vsp: Optional[str] = None) -> Dict[str, str]:

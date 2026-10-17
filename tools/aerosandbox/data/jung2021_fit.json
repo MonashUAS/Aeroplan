@@ -1,0 +1,1 @@
+{"c_max_fit": {"slope": 0.0932, "intercept_m": 0.002418, "units": "c_max[m] = slope * D[m] + intercept_m", "source": "Jung et al. 2021, Fig. 10 regression c_max[in] = 0.0932 D[in] + 0.0952 (intercept 0.0952 in times 0.0254 m/in)", "r2": 0.98}}

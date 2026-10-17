@@ -129,8 +129,8 @@ def _surface_checks(rep: DatumReport, air: Dict, pf: Optional[Dict]) -> None:
         rep.add("c_ref against the main wing mean aerodynamic chord", ref["c_ref"]["value"], pr["mac_m"],
                 0.01 * pr["mac_m"], "m", "muas.reference c_ref, wing_main planform")
     for perf in air.get("performance") or []:
-        if perf.get("name") != "sizing":
-            continue
+        if perf.get("name") != "sizing" or perf["tools"][0]["data_exchange"].get("model_identifier") != "athena":
+            continue                  # only the Athena printout has the wing area, span and m_total to compare
         outs = {o["name"]: o["value"] for o in perf["tools"][0]["data_exchange"]["outputs"]}
         rep.add("wing area: initial sizing (Athena) less flow5", outs["Wing area"] - pr["area_m2"], None, None, "m^2",
                 "sizing output Wing area, wing_main planform")
@@ -179,6 +179,20 @@ def _multirotor_checks(rep: DatumReport, doc: Dict) -> None:
         rep.add(f"rotor tip clearance {a} to {b}", g, None, None, "m", "hub distance less the disc radii")
 
 
+def _origin_check(rep: DatumReport, doc: Dict, pf: Optional[Dict]) -> None:
+    """ADR 0023: the design frame starts at the root leading edge of `wing_main`. A wing at x other than 0 fails."""
+    from .consumers import vehicle_kind
+
+    if pf is None:
+        why = ("a multirotor has no main wing, ADR 0018 applies" if vehicle_kind(doc) == "multirotor" else
+               "no wing_main: a published reference model (units_system as-source) or an aircraft with no main wing")
+        rep.add("origin: skipped (ADR 0023)", 0.0, None, None, "-", why)
+        return
+    x_le = pf["position"]["xyz"][0] + pf["sections"][0]["x_offset"]
+    rep.add("origin: main wing root LE x (ADR 0023)", x_le, 0.0, MM, "m",
+            "wing_main planform position + first section x_offset; the origin is the wing root LE")
+
+
 def datum_checks(doc: Dict, root) -> DatumReport:
     from . import adh_doc
     from .consumers import MRP_CG_TOL_M, vehicle_kind
@@ -190,6 +204,7 @@ def datum_checks(doc: Dict, root) -> DatumReport:
     ref = am.get("reference")
     wing = _get(doc, "wing_main")
     pf = (wing or {}).get("muas", {}).get("planform")
+    _origin_check(rep, doc, pf)
     _surface_checks(rep, air, pf)
 
     mp = am.get("mass_properties")

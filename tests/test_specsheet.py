@@ -32,6 +32,7 @@ def q(value, units):
 def make_full_doc():
     """The test aircraft of the OpenVSP tests with a valid 1.2 reference (MRP at x = 0.2 m)."""
     doc = make_doc()
+    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.0     # ADR 0023: wing root LE at x = 0
     air = adh_doc.node(doc, "1.2")
     air["muas"]["reference"] = {
         "s_ref": q(0.9, "m^2"), "b_ref": q(2.8, "m"), "c_ref": q(0.33, "m"), "nominal_cg": {"xyz": [0.2, 0.0, 0.0]},
@@ -165,29 +166,105 @@ def test_the_mrp_gap_is_a_warning_and_stops_aerolink(tmp_path):
     assert not any("muas.reference mrp" in m for m in missing_for_flight(doc))
 
 
-def test_the_datum_shifts_every_position(tmp_path):
+def test_a_datum_other_than_zero_is_refused(tmp_path):
     write_book(tmp_path / "sheet.xlsx")
-    doc = make_full_doc()
     d = sheet.read_workbook(tmp_path / "sheet.xlsx", SETTINGS)
-    moved = {**SETTINGS, "datum_x_m": -0.08}
-    base = {s["group"]: s["point_masses"] for s in sheet.build_point_masses(d, SETTINGS, planform_of(doc))}
-    shifted = {s["group"]: s["point_masses"] for s in sheet.build_point_masses(d, moved, planform_of(doc))}
-    for group in base:
-        for a, b in zip(base[group], shifted[group]):
-            assert b["xyz"][0] == pytest.approx(a["xyz"][0] - 0.08)
+    with pytest.raises(ValueError, match="ADR 0023"):
+        sheet.build_point_masses(d, {**SETTINGS, "datum_x_m": -0.08}, planform_of(make_full_doc()))
 
 
-def test_a_datum_that_differs_from_the_wing_root_is_a_warning(tmp_path):
-    doc, changes = ingest(tmp_path)           # the synthetic wing root leading edge is at x = 0.1, the datum at 0.0
+def test_a_wing_not_at_x_zero_is_refused(tmp_path):
+    write_book(tmp_path / "sheet.xlsx")
+    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
+    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
+    doc = make_full_doc()
+    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.1
     assert sheet._root_le_x(doc, SETTINGS) == pytest.approx(0.1)
-    assert any(c.startswith("WARNING: the sheet datum") for c in changes)
+    with pytest.raises(ValueError, match="ADR 0023"):
+        sheet.ingest(doc, Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc)))
 
 
 def test_a_matching_datum_gives_no_warning(tmp_path):
-    write_book(tmp_path / "sheet.xlsx")
-    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
-    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump({**SETTINGS, "datum_x_m": 0.1}),
-                                                                   encoding="utf-8")
-    doc = make_full_doc()
-    changes = sheet.ingest(doc, Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc)))
+    doc, changes = ingest(tmp_path)
+    assert sheet._root_le_x(doc, SETTINGS) == pytest.approx(0.0)
     assert not any(c.startswith("WARNING") for c in changes)
+
+
+# ---------------------------------------------------------------------------------------------- battery trim
+def trim_subs(tmp_path, **over):
+    write_book(tmp_path / "sheet.xlsx")
+    st = {**SETTINGS, "battery_trim": {"move": "BODY-A", "travel_m": 0.05, "neutral_point": "np.json", "source": "synthetic"}}
+    st["battery_trim"].update(over)
+    d = sheet.read_workbook(tmp_path / "sheet.xlsx", st)
+    return st, sheet.build_point_masses(d, st, planform_of(make_full_doc()))
+
+
+def band(x_np, lo=0.05, hi=0.15):
+    return {"x_np": x_np, "c_ref": 0.33, "sm_min": lo, "sm_max": hi, "np_file": "np.json"}
+
+
+def cg_of(subs):
+    pms = [p for s in subs for p in s["point_masses"]]
+    return sum(p["mass_kg"] * p["xyz"][0] for p in pms) / sum(p["mass_kg"] for p in pms)
+
+
+def test_trim_inside_the_travel_gives_the_goal_margin(tmp_path):
+    st, subs = trim_subs(tmp_path)                      # the synthetic CG is at x = 0.02 m, "BODY-A" weighs 0.1 kg
+    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.10 * 0.33 + 0.003))
+    assert not rep["clamped"] and abs(rep["dx_m"]) < 0.05
+    assert rep["sm"] == pytest.approx(0.10, abs=1e-12) and cg_of(subs) == pytest.approx(rep["cg_m"])
+    assert "Battery cage trim" in subs[0]["point_masses"][0]["source"]
+
+
+def test_trim_outside_the_travel_stops_at_the_limit(tmp_path):
+    st, subs = trim_subs(tmp_path)
+    x0 = subs[0]["point_masses"][0]["xyz"][0]
+    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.25 * 0.33 + 0.02, 0.0, 0.5))      # goal 0.25, needs more than 50 mm
+    assert rep["clamped"] and rep["dx_m"] == pytest.approx(0.05)
+    assert subs[0]["point_masses"][0]["xyz"][0] == pytest.approx(x0 + 0.05)
+    assert rep["sm"] != pytest.approx(rep["sm_goal"]) and 0.0 <= rep["sm"] <= 0.5          # the margin reached is reported
+    lines = sheet.trim_lines(rep, st)
+    assert any(line.startswith("WARNING") for line in lines)
+    st, subs = trim_subs(tmp_path)
+    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.25 * 0.33 - 0.02, 0.0, 0.5))
+    assert rep["dx_m"] == pytest.approx(-0.05)
+
+
+def test_trim_with_a_margin_outside_the_band_fails(tmp_path):
+    st, subs = trim_subs(tmp_path)
+    with pytest.raises(ValueError, match="outside the band"):
+        sheet.apply_battery_trim(subs, st, band(0.02 + 0.10 * 0.33 + 0.5))
+
+
+def test_trim_needs_the_tag_and_the_file(tmp_path):
+    st, subs = trim_subs(tmp_path, move="NOPE")
+    with pytest.raises(ValueError, match="not in the mass model"):
+        sheet.apply_battery_trim(subs, st, band(0.1))
+    doc = make_full_doc()
+    with pytest.raises(ValueError, match="neutral point file"):
+        sheet.trim_inputs(doc, st, tmp_path)
+    assert sheet.trim_inputs(doc, SETTINGS, tmp_path) is None            # no key: the old behaviour
+
+
+# ------------------------------------------------------------------------------------ origin check (ADR 0023)
+def origin_rows(doc, tmp_path):
+    return [c for c in datum_checks(doc, tmp_path).checks if c.name.startswith("origin:")]
+
+
+def test_the_origin_check_passes_at_x_zero(tmp_path):
+    rows = origin_rows(make_full_doc(), tmp_path)
+    assert len(rows) == 1 and rows[0].status == "pass"
+
+
+def test_a_wing_at_x_001_fails_the_origin_check(tmp_path):
+    doc = make_full_doc()
+    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.01
+    rows = origin_rows(doc, tmp_path)
+    assert rows[0].status == "fail" and not datum_checks(doc, tmp_path).ok
+
+
+def test_a_tree_with_no_main_wing_skips_the_origin_check(tmp_path):
+    doc = make_full_doc()
+    adh_doc.find(doc, "wing_main")["muas"]["instance"] = "not_the_main_wing"      # stands for a multirotor or a reference model
+    rows = origin_rows(doc, tmp_path)
+    assert len(rows) == 1 and rows[0].status == "info" and "skipped" in rows[0].name

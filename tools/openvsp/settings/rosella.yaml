@@ -1,0 +1,48 @@
+# OpenVSP spoke settings for the Rosella quadplane (tool settings, not aircraft data).
+# vsp_version: the OpenVSP version of the Currawong round-trip tests (2026-10-08).
+# model: the member's OpenVSP model in work/openvsp/rosella/ (a copy of generated/rosella.vsp3).
+# wings, bodies: the ADH items (muas.instance) that go into OpenVSP. Each OpenVSP component has the name of its item.
+#   fuselage is a superellipse body. tail_boom is the round tube from the fuselage to the tail.
+# parts: the lift booms, as round cylinders (write only; ingest does not read them).
+# rotors: the lift rotors and the nose propeller, each as one actuator disk (write only). The disk axis is the slipstream.
+# disk_states: the operating point of each disk, from the performance record of node 1.2 (AeroSandbox sizing):
+#   <prefix>_rpm, _thrust and _shaft_power. hover = the landing hover case H_L (f = front rotor of a boom, r = rear).
+#   cruise = the nose propeller at the lap speed. The cruise outputs come with the next `aeroplan build rosella`.
+# No reference_skin: the Rosella has no CAD skin.
+# analysis: `aeroplan sweep OpenVSP rosella`.
+#   condition: the speed is the ADH output cruise_speed_laps. The alpha and beta ranges are choices of this analysis
+#     (deg: start, end, step). The beta sweep runs at beta_alpha_deg.
+#   runs with `state` switch on the disks of that state. A run without `state` has no disk.
+#   point: one VSPAERO point, reported as forces (N) and moments (N m) about the MRP. The hover point runs at
+#     speed_m_s = 1 m/s, because VSPAERO needs a free stream speed above zero. The lift rotors blow down on the
+#     wing from the disks. VSPAERO is a potential-flow solver: it gives only the potential-flow force on the wing, not the
+#     plate-like pressure drag (download) of the slipstream. Forward flight and hover use the same model.
+vsp_version: 3.54.0
+model: rosella.vsp3
+wings: [wing_main, htail, fin]
+bodies: [fuselage, tail_boom]
+parts: [boom_left, boom_right]
+rotors: [prop_cruise, prop_lift_5, prop_lift_6, prop_lift_7, prop_lift_8]
+disk_states:
+  hover:
+    prop_lift_5: rotor_H_L_f
+    prop_lift_6: rotor_H_L_r
+    prop_lift_7: rotor_H_L_f
+    prop_lift_8: rotor_H_L_r
+  cruise:
+    prop_cruise: cruise_laps
+analysis:
+  altitude_m: 0.0
+  wake_iterations: 3
+  condition: {source: adh, speed_output: cruise_speed_laps, alpha_deg: [-4, 8, 2], beta_deg: [-6, 6, 3], beta_alpha_deg: 2}
+  sets:
+    wings: [wing_main, htail, fin]
+    body: [fuselage, tail_boom]
+    wings_body: [wing_main, htail, fin, fuselage, tail_boom]
+  geometry_sets: {body: body, wings_body: wings_body}
+  runs:
+  - {name: wings, thin: wings}
+  - {name: body, thin: wings, thick: body}
+  - {name: body_alone, thick: body}
+  - {name: wings_nose_disk, thin: wings, state: cruise}
+  - {name: hover_disks, thin: wings, state: hover, point: true, speed_m_s: 1.0, alpha_deg: 0.0}

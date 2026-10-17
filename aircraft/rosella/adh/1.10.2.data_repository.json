@@ -1,0 +1,91 @@
+{
+  "wbs_no": "1.10.2",
+  "name": "DataRepository",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "data_repository",
+    "assets": [
+      {
+        "id": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+        "kind": "file",
+        "name": "AeroSandbox.best.json",
+        "role": "Rosella sizing result H4_14S (rosella.py)",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 36739,
+        "locations": [
+          {
+            "repo": "work/aerosandbox/rosella/sizing/best.json"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c",
+        "kind": "dataset",
+        "name": "propulsion.currawongcustom",
+        "role": "Ct/Cp table and throttle map",
+        "tool": "Propalyser",
+        "media_type": "application/json",
+        "size": 3279,
+        "locations": [
+          {
+            "repo": "aircraft/rosella/datasets/propulsion.currawongcustom.json"
+          }
+        ],
+        "derived_from": [],
+        "built_against": "rosella@0.1.2",
+        "dataset": {
+          "form": "tables",
+          "model_description": {
+            "generation_tool": "Propalyser (contract B v2)",
+            "model_name": "currawongcustom",
+            "description": "Currawong V1 (Proptimiser, commit 588118a)"
+          },
+          "fidelity": "L0",
+          "units_system": "SI",
+          "placeholder": false,
+          "notes": [
+            "basis mixed"
+          ]
+        },
+        "dataset_role": "propulsion",
+        "note": "Copy of the dataset of aircraft/currawong (Currawong nose propeller)."
+      },
+      {
+        "id": "asset:sha256:75eb46c3db9d66903c43c01205feb07f4ca2eb3499b4a78fe5c4ed5616101dd3",
+        "kind": "dataset",
+        "name": "propulsion.rosella_lift_bemt",
+        "role": "BEMT samples of the scaled lift blade",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 3338,
+        "locations": [
+          {
+            "repo": "aircraft/rosella/datasets/propulsion.rosella_lift_bemt.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c"
+        ],
+        "built_against": "rosella@0.1.2",
+        "dataset": {
+          "form": "tables",
+          "model_description": {
+            "generation_tool": "Proptimiser BEMT (NeuralFoil sections) via tools/aerosandbox/rosella.py",
+            "model_name": "MAD_FLUXER_22x6_6 scaled",
+            "description": "CT and CP samples of the lift blade at the scales and shaft speeds of the sizing table (hover and 2.5 m/s climb)"
+          },
+          "fidelity": "L1",
+          "units_system": "SI",
+          "placeholder": true,
+          "notes": [
+            "Sea-level density 1.225 kg/m3. CT = T/(rho n^2 D^4), CP = Q omega/(rho n^3 D^5), n in rev/s, D = 2 R_ref scale. A scaled copy of a measured blade: a model value, not a measurement.",
+            "Not the Aerolink propulsion table (no throttle map): the dataset role is other."
+          ]
+        },
+        "dataset_role": "other"
+      }
+    ]
+  }
+}

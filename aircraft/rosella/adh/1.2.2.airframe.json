@@ -1,0 +1,134 @@
+{
+  "wbs_no": "1.2.2",
+  "name": "Airframe",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "airframe"
+  },
+  "subcomponents": [
+    {
+      "name": "Lift boom left",
+      "description": "Lift boom, left side: a carbon tube clamped to the wing, a rotor at each end",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "boom_left",
+        "fidelity": "L1",
+        "visual": [
+          {
+            "part": "boom_left",
+            "generator": "tube",
+            "units": "m",
+            "shape": {
+              "p0": [
+                -0.47940776690193193,
+                -0.47020018240337563,
+                -0.025471137578900176
+              ],
+              "p1": [
+                0.7635179347325782,
+                -0.47020018240337563,
+                -0.025471137578900176
+              ],
+              "radius_m": 0.026733343714406495
+            },
+            "material": "boom",
+            "source": "Boom of the sizing result (outer radius, length).",
+            "placeholder": true
+          }
+        ],
+        "tube": {
+          "radius": {
+            "value": 0.026733343714406495,
+            "units": "m"
+          },
+          "inner_radius": {
+            "value": 0.02573334360550636,
+            "units": "m"
+          },
+          "material": "roll-wrapped carbon tube",
+          "p0": [
+            -0.47940776690193193,
+            -0.47020018240337563,
+            -0.025471137578900176
+          ],
+          "p1": [
+            0.7635179347325782,
+            -0.47020018240337563,
+            -0.025471137578900176
+          ],
+          "source": "H4_14S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
+          "placeholder": true
+        },
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift boom right",
+      "description": "Lift boom, right side: a carbon tube clamped to the wing, a rotor at each end",
+      "muas": {
+        "ext_version": "0.4.0",
+        "instance": "boom_right",
+        "fidelity": "L1",
+        "visual": [
+          {
+            "part": "boom_right",
+            "generator": "tube",
+            "units": "m",
+            "shape": {
+              "p0": [
+                -0.47940776690193193,
+                0.47020018240337563,
+                -0.025471137578900176
+              ],
+              "p1": [
+                0.7635179347325782,
+                0.47020018240337563,
+                -0.025471137578900176
+              ],
+              "radius_m": 0.026733343714406495
+            },
+            "material": "boom",
+            "source": "Boom of the sizing result (outer radius, length).",
+            "placeholder": true
+          }
+        ],
+        "tube": {
+          "radius": {
+            "value": 0.026733343714406495,
+            "units": "m"
+          },
+          "inner_radius": {
+            "value": 0.02573334360550636,
+            "units": "m"
+          },
+          "material": "roll-wrapped carbon tube",
+          "p0": [
+            -0.47940776690193193,
+            0.47020018240337563,
+            -0.025471137578900176
+          ],
+          "p1": [
+            0.7635179347325782,
+            0.47020018240337563,
+            -0.025471137578900176
+          ],
+          "source": "H4_14S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
+          "placeholder": true
+        },
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+            "role": "Rosella sizing result H4_14S (rosella.py)"
+          }
+        ]
+      }
+    }
+  ]
+}

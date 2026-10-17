@@ -1,0 +1,45 @@
+# Jung et al. 2021, Unmanned Systems 9(4) 321-332, DOI 10.1142/S2301385021500163 (CC BY 4.0). Units SI: D_m m, c_m m, beta_rad rad.
+# KPROP_22: chord and twist from Table 4 (original model, exact). Fig. 6 plots against section number 1-10 only, so r_over_R is a PLACEHOLDER: equal spacing 0.1 to 1.0 (stations are not stated in the paper).
+# T-motor rows: digitised by eye from a 220 dpi render of Fig. 9(a) (chord) and Fig. 11(a) (twist). Read accuracy: r/R +-0.01, chord +-2 mm, twist +-0.7 deg. Twist uses the chord station r/R.
+# D_m is the nominal diameter in inches times 0.0254.
+blade,D_m,r_over_R,c_m,beta_rad,source,digitised
+KPROP_22,0.5588,0.10,0.07265,0.27751,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.20,0.08008,0.32376,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.30,0.05838,0.28414,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.40,0.04773,0.25098,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.50,0.04143,0.22218,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.60,0.03618,0.20159,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.70,0.03159,0.18640,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.80,0.02863,0.16860,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,0.90,0.02629,0.13840,Table 4 original model (r/R placeholder),false
+KPROP_22,0.5588,1.00,0.02156,0.10297,Table 4 original model (r/R placeholder),false
+Tmotor_18,0.4572,0.170,0.0300,0.3316,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.260,0.0410,0.3578,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.350,0.0450,0.2915,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.440,0.0440,0.2426,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.530,0.0420,0.2094,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.610,0.0380,0.1815,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.700,0.0340,0.1606,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.780,0.0290,0.1431,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.870,0.0250,0.1309,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_18,0.4572,0.960,0.0170,0.1047,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.216,0.0610,0.2723,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.300,0.0740,0.2845,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.390,0.0740,0.2391,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.470,0.0710,0.2025,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.550,0.0670,0.1728,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.630,0.0600,0.1553,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.710,0.0540,0.1484,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.800,0.0470,0.1326,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.880,0.0390,0.1134,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_29,0.7366,0.960,0.0300,0.0995,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.220,0.0770,0.3648,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.300,0.0940,0.3211,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.380,0.0970,0.2653,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.460,0.0940,0.2234,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.550,0.0880,0.1868,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.620,0.0800,0.1710,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.710,0.0710,0.1484,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.790,0.0620,0.1292,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.870,0.0540,0.1134,Fig. 9(a) chord and Fig. 11(a) twist,true
+Tmotor_40,1.0160,0.950,0.0400,0.0960,Fig. 9(a) chord and Fig. 11(a) twist,true

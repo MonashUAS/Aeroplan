@@ -201,13 +201,13 @@
         "derived_from": []
       },
       {
-        "id": "asset:sha256:3ba315fff0db39889ef0f36ca25eb62523e7ab4f73bf58c97e6e7618da370a78",
+        "id": "asset:sha256:a8995f0cd85ce77fe7a453350dbc952b0801b2f83b5ab78bc83f6be4c5f7c37e",
         "kind": "file",
         "name": "SpecSheet.Currawong_Master_Specification_Sheet.xlsx",
         "role": "mass model: weight log and CG sheet",
         "tool": "SpecSheet",
         "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "size": 342216,
+        "size": 359026,
         "locations": [
           {
             "repo": "tools/specsheet/sheets/currawong/Currawong Master Specification Sheet.xlsx"
@@ -235,7 +235,7 @@
           "asset:sha256:f8a9889894e4559ef0768594468a6f15f763fc847a081501246d060403b32d58",
           "asset:sha256:fd4550861e1ca71c13f3778373fffe6dfbcc0bb2dc1b548da4ab77624dc1a69b"
         ],
-        "built_against": "currawong@0.2.15",
+        "built_against": "currawong@0.2.18",
         "dataset": {
           "form": "daveml-adh",
           "model_description": {
@@ -479,7 +479,7 @@
         "derived_from": [
           "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d"
         ],
-        "built_against": "currawong@0.2.15",
+        "built_against": "currawong@0.2.18",
         "dataset": {
           "form": "tables",
           "model_description": {

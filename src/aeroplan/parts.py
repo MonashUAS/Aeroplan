@@ -7,6 +7,7 @@ For each entry:
     hinge, so the CAD rudder fits behind it.
   - generator "tube" with `tube`: the boom, from the aft end of the fuselage to the root quarter chord of the
     horizontal tail. Rule of Aerolink 6f7edb7 visual/airframe.py.
+  - generator "body": the lofted ADH `geometry.body` of the item (a fuselage with no CAD, for example the Rosella fuselage).
   - generators box, tube, cylinder, disc with `shape`: demo shapes from numbers (the body, arms, motors and rotor
     discs of a multirotor). No CAD. A disc part carries `alpha` in its node extras (semi-transparent view).
 
@@ -110,6 +111,8 @@ def part_meshes(doc: Dict[str, Any], root: Path) -> PartSet:
         inst = item["muas"]["instance"]
         if v["generator"] == "planform":
             tri = _planform_part(item, out)
+        elif v["generator"] == "body":
+            tri = body_mesh(item["geometry"]["body"])
         elif v.get("shape") is not None:
             tri = _shape_part(v)
         else:

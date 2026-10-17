@@ -95,7 +95,7 @@ def setup(proptimiser: Optional[str] = None, git: Optional[Dict[str, str]] = Non
     subprocess.run(uv + ["pip", "install", "--quiet", "--python", str(vpy), *WORKER_NEEDS, *NOTEBOOK_NEEDS], check=True)
     log(f"Install AeroPlan from {REPO} (editable, for the notebooks)")
     subprocess.run(uv + ["pip", "install", "--quiet", "--python", str(vpy), "-e", str(REPO)], check=True)
-    subprocess.run([str(vpy), "-m", "ipykernel", "install", "--sys-prefix", "--name", KERNEL,
+    subprocess.run([str(vpy), "-m", "ipykernel", "install", "--user", "--name", KERNEL,
                     "--display-name", "AeroPlan AeroSandbox"], check=True, capture_output=True)
     if src is None:
         log("WARNING: no Proptimiser source (--proptimiser <folder>, or url and rev in the settings): "

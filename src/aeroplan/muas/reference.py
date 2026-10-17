@@ -50,10 +50,11 @@ DEFAULT_SIGNS: Dict[str, str] = {
 class ReferenceData(MuasModel):
     design_frame: Literal["x_aft_y_right_z_up_m_noseDatum", "x_aft_y_right_z_up_m_flow5Origin",
                           "x_aft_y_right_z_up_m_bodyOrigin"] = "x_aft_y_right_z_up_m_noseDatum"
-    kind: Optional[Literal["multirotor"]] = Field(
+    kind: Optional[Literal["multirotor", "quadplane"]] = Field(
         None, description="Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the "
-        "frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. The vehicle "
-        "kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)")
+        "frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. quadplane: "
+        "a fixed wing (s_ref, b_ref, c_ref are the wing) with lift rotors on booms (propeller role lift, motor 5 and up) "
+        "and one cruise propeller. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)")
     body_frame: Literal["FRD"] = "FRD"
     euler: Literal["3-2-1/NED"] = "3-2-1/NED"
     s_ref: Quantity

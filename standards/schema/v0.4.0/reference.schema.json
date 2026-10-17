@@ -125,7 +125,10 @@
     "kind": {
       "anyOf": [
         {
-          "const": "multirotor",
+          "enum": [
+            "multirotor",
+            "quadplane"
+          ],
           "type": "string"
         },
         {
@@ -133,7 +136,7 @@
         }
       ],
       "default": null,
-      "description": "Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)",
+      "description": "Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. quadplane: a fixed wing (s_ref, b_ref, c_ref are the wing) with lift rotors on booms (propeller role lift, motor 5 and up) and one cruise propeller. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)",
       "title": "Kind"
     },
     "mrp": {

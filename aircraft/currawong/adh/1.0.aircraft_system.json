@@ -6,18 +6,18 @@
     "ext_version": "0.4.0",
     "instance": "aircraft_system",
     "build": {
-      "aeroplan_commit": "fbbd20b9ee4c16d6b4659fa6c13d8ee0de8aa6de",
+      "aeroplan_commit": "db7df70a9df64579927150906b4dcde84b04d363",
       "aeroplan_dirty": true,
-      "built": "2026-10-15",
+      "built": "2026-10-18",
       "author": "Liam M.",
-      "version": "0.2.16",
+      "version": "0.2.19",
       "spokes": {
         "AeroSandbox": "1 changes",
-        "flow5": "5 changes",
+        "flow5": "6 changes",
         "SpecSheet": "8 changes",
         "Propalyser": "1 changes",
         "CREO": "10 changes",
-        "OpenVSP": "1 changes"
+        "OpenVSP": "0 changes"
       },
       "placeholder_items": [
         "aircraft_system.air_vehicle.muas.mass_properties",

@@ -11,6 +11,8 @@
   preview/aircraft.glb                  the glTF view of the parts
 ```
 
+The design frame in `aircraft.adh.json` has its origin at the root leading edge of `wing_main`, x aft (ADR 0023). `aeroplan check` fails when this wing is not at x = 0. A multirotor keeps ADR 0018.
+
 | Profile | Embedded | Linked |
 |---|---|---|
 | `aerolink` | ADH JSON, aero and propulsion datasets, flight files, glTF | everything else |

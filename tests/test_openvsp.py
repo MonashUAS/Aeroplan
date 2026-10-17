@@ -131,6 +131,33 @@ def test_spec_groups_a_left_right_pair():
     assert len(spec["body"]["frames"]) == 9
 
 
+def two_body_doc():
+    """The synthetic document with a second body: a round tube behind the fuselage, as a subcomponent of the empennage."""
+    doc = make_doc()
+    emp = adh_doc.node(doc, "1.2.2.4", create=True)
+    adh_doc.muas(emp, "empennage")
+    boom = [np.array([[0.8, 0.0, -0.01]] * 13)]
+    for x in (0.85, 1.2, 1.55):
+        a = np.linspace(0.0, np.pi, 13)
+        boom.append(np.column_stack([np.full(13, x), 0.02 * np.sin(a), -0.01 + 0.02 * np.cos(a)]))
+    boom.append(np.array([[1.6, 0.0, -0.01]] * 13))
+    adh_doc.put_subcomponent(emp, {"name": "Tail boom", "geometry": {"body": body_adh(boom)},
+                                   "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": "tail_boom"}})
+    adh_doc.validate_document(doc)
+    return doc, boom
+
+
+def test_spec_holds_a_list_of_bodies_and_the_old_key():
+    doc, boom = two_body_doc()
+    spec = vsp.spec_from_doc(doc, {"wings": ["wing_main"], "bodies": ["fuselage", "tail_boom"]})
+    assert [b["instance"] for b in spec["bodies"]] == ["fuselage", "tail_boom"]
+    assert len(spec["bodies"][1]["frames"]) == len(boom)
+    assert spec["body"]["instance"] == "fuselage"
+    old = vsp.spec_from_doc(doc, {"wings": ["wing_main"], "body": "fuselage"})
+    assert [b["instance"] for b in old["bodies"]] == ["fuselage"]
+    assert vsp.spec_from_doc(doc, {"wings": ["wing_main"]})["bodies"] == []
+
+
 def test_distance_to_mesh():
     tri = np.array([[[0, 0, 0], [1, 0, 0], [0, 1, 0]]], float)
     d = distance_to_mesh(np.array([[0.2, 0.2, 1.0], [2.0, 0.0, 0.0], [-1.0, -1.0, 0.0]]), tri)
@@ -422,3 +449,106 @@ def test_vspaero_vlm_lift_rises_with_alpha(written, tmp_path):
                     "thick": None, "case": case}, timeout=600)
     cl = [row["CLtot"] for row in r["rows"]]
     assert len(cl) == 3 and all(np.isfinite(cl)) and cl[0] < cl[1] < cl[2]
+
+
+@needs_openvsp
+def test_two_bodies_round_trip_with_no_gap(tmp_path):
+    doc, boom = two_body_doc()
+    spec = vsp.spec_from_doc(doc, {"wings": ["wing_main", "htail", "fin"], "bodies": ["fuselage", "tail_boom"]})
+    path = tmp_path / "t2.vsp3"
+    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    back = runner.run({"job": "read", "path": str(path)})["spec"]
+    assert back["other"] == []
+    assert sorted(b["instance"] for b in back["bodies"]) == ["fuselage", "tail_boom"]
+    by = {b["instance"]: b for b in back["bodies"]}
+    for b in spec["bodies"]:
+        fa, fb = np.array(b["frames"]), np.array(by[b["instance"]]["frames"])
+        assert fa.shape == fb.shape and np.abs(fa - fb).max() <= EXACT
+    gaps = vsp.shape_gaps(path, {}, [(b["instance"], [np.asarray(f) for f in b["frames"]]) for b in spec["bodies"]])
+    assert set(gaps) == {"fuselage", "tail_boom"} and max(gaps.values()) <= SHAPE, gaps
+
+
+@needs_openvsp
+def test_parts_are_cylinders_on_their_axis(tmp_path):
+    """A boom along x and a rotor disc with a tilted axis: the surface points lie on the cylinder, the model reads back."""
+    c, ax, rad, thick = np.array([0.3, 0.5, 0.1]), np.array([0.0, 0.2, 0.98]), 0.3, 0.01
+    ax = ax / np.linalg.norm(ax)
+    spec = {"wings": [], "bodies": [], "reference_meshes": [], "parts": [
+        {"name": "boom_x", "p0": [0.0, -0.5, 0.1], "axis": [1.0, 0.0, 0.0], "length": 1.0, "radius": 0.02},
+        {"name": "disc", "p0": (c - 0.5 * thick * ax).tolist(), "axis": ax.tolist(), "length": thick, "radius": rad}]}
+    path = tmp_path / "parts.vsp3"
+    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    back = runner.run({"job": "read", "path": str(path)})["spec"]
+    assert sorted(p["name"] for p in back["parts"]) == ["boom_x", "disc"] and back["other"] == [] and back["bodies"] == []
+    u, w = np.meshgrid(np.linspace(0.05, 0.95, 9), np.linspace(0.0, 1.0, 13))
+    for name, centre, axis, length, r in (("boom_x (part)", [0.5, -0.5, 0.1], [1, 0, 0], 1.0, 0.02), ("disc (part)", c, ax, thick, rad)):
+        pts = np.array(runner.run({"job": "probe", "path": str(path), "geom": name, "u": u.ravel().tolist(),
+                                   "w": w.ravel().tolist()})["points"]) - np.asarray(centre)
+        along = pts @ np.asarray(axis, float)
+        radial = np.linalg.norm(pts - np.outer(along, axis), axis=1)
+        assert np.abs(along).max() <= 0.5 * length + 1e-6 and radial.max() <= r + 1e-4 and radial.max() >= 0.9 * r
+
+
+# ------------------------------------------------------------------------------------------------ actuator disks
+def test_disk_coefficients_invert_to_thrust_and_power():
+    ct, cp = vsp.disk_coefficients(30.0, 250.0, 2800.0, 0.66, 1.225)
+    n = 2800.0 / 60.0
+    assert ct * 1.225 * n ** 2 * 0.66 ** 4 == pytest.approx(30.0, rel=1e-12)
+    assert cp * 1.225 * n ** 3 * 0.66 ** 5 == pytest.approx(250.0, rel=1e-12)
+
+
+def fake_rotor_doc(monkeypatch, outputs):
+    """A document stand-in: two rotors (one cw, one ccw, thrust up) and the sizing outputs of node 1.2."""
+    def prop(spin, x, y):
+        return {"muas": {"propeller": {"hub": {"xyz": [x, y, 0.1]}, "thrust_axis": [0.0, 0.0, 1.0],
+                                       "diameter": {"value": 0.5}, "spin": spin}}}
+    items = {"r_a": prop("cw", 0.0, 0.4), "r_b": prop("ccw", 0.6, -0.4)}
+    air = {"performance": [{"tools": [{"data_exchange": {"outputs": [{"name": k, "value": v} for k, v in outputs.items()]}}]}]}
+    monkeypatch.setattr(vsp.adh_doc, "find", lambda doc, inst: items[inst])
+    monkeypatch.setattr(vsp.adh_doc, "node", lambda doc, wbs: air)
+    return {}
+
+
+def test_disk_states_take_the_sizing_outputs_and_the_spin_sign(monkeypatch):
+    out = {"h_f_rpm": 3000.0, "h_f_thrust": 20.0, "h_f_shaft_power": 200.0,
+           "h_r_rpm": 2000.0, "h_r_thrust": 10.0, "h_r_shaft_power": 90.0}
+    doc = fake_rotor_doc(monkeypatch, out)
+    st = {"disk_states": {"hover": {"r_a": "h_f", "r_b": "h_r"}, "cruise": {"r_a": "c"}}}
+    states, missing = vsp.disk_states(doc, st, 1.2)
+    assert missing == {"cruise": ["c_rpm", "c_thrust", "c_shaft_power"]} and set(states) == {"hover"}
+    a, b = states["hover"]["r_a"], states["hover"]["r_b"]
+    assert a["rpm"] == -3000.0 and b["rpm"] == 2000.0                    # cw: against the slipstream axis, ccw: with it
+    assert a["ct"] == pytest.approx(vsp.disk_coefficients(20.0, 200.0, 3000.0, 0.5, 1.2)[0]) and b["thrust_N"] == 10.0
+    g = vsp.rotor_geoms(doc, ["r_a"])[0]
+    assert g["axis"] == [-0.0, -0.0, -1.0] and g["p0"] == [0.0, 0.4, 0.1] and g["diameter"] == 0.5   # slipstream down
+
+
+@needs_openvsp
+def test_actuator_disk_runs_in_vspaero(tmp_path):
+    """A disk ahead of a wing: VSPAERO has the disk at its hub with its CT, the slipstream adds lift, more thrust adds more,
+    and the spin sign turns the roll moment."""
+    doc = make_doc()
+    spec = vsp.spec_from_doc(doc, {"wings": ["wing_main"]})
+    x0 = spec["wings"][0]["position"][0]
+    spec["rotors"] = [{"instance": "disk", "p0": [x0 - 0.3, 0.3, 0.0], "axis": [1.0, 0.0, 0.0], "diameter": 0.3}]
+    path = tmp_path / "disk.vsp3"
+    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    back = runner.run({"job": "read", "path": str(path)})["spec"]
+    assert [r["instance"] for r in back["rotors"]] == ["disk"] and back["other"] == []
+    case = {"sref": 1.0, "bref": 2.0, "cref": 0.3, "xcg": x0, "ycg": 0.0, "zcg": 0.0, "mach": 0.04, "vinf": 14.0, "rho": 1.225,
+            "wake_iter": 3, "fixed_wake": True, "ncpu": 2, "alpha": [4.0, 4.0, 1], "beta": [0.0, 0.0, 1]}
+
+    def run(name, rotors):
+        res = runner.run({"job": "vspaero", "path": str(path), "dir": str(tmp_path / name), "name": name,
+                          "sets": {"w": ["wing_main"]}, "thin": "w", "thick": None, "case": {**case, "rotors": rotors}}, timeout=600)
+        return res["rows"][0], res["rotors"]
+    none, used0 = run("none", {})
+    low, used1 = run("low", {"disk": {"rpm": 3000.0, "ct": 0.05, "cp": 0.04}})
+    high, _ = run("high", {"disk": {"rpm": 3000.0, "ct": 0.15, "cp": 0.12}})
+    neg, _ = run("neg", {"disk": {"rpm": -3000.0, "ct": 0.15, "cp": 0.12}})
+    assert used0 == [] and len(used1) == 1
+    assert used1[0]["xyz"] == pytest.approx([x0 - 0.3, 0.3, 0.0], abs=1e-9) and used1[0]["ct"] == pytest.approx(0.05)
+    assert used1[0]["radius"] == pytest.approx(0.15) and used1[0]["normal"] == pytest.approx([1.0, 0.0, 0.0])
+    assert none["CLtot"] < low["CLtot"] < high["CLtot"]
+    # the swirl turns the roll moment with the sign of the rpm (positive rpm: lower CMx, measured 2026-10-18); the lift changes by a few per cent
+    assert high["CMxtot"] < neg["CMxtot"] and high["CLtot"] == pytest.approx(neg["CLtot"], rel=0.1)

@@ -1,6 +1,7 @@
 """The mass model: point masses -> mass, CG and inertia. Design frame (x aft, y right, z up), SI.
 
-Only numpy. A point mass has no inertia of its own, so the inertia is the parallel-axis sum.
+Only numpy. A point mass has no inertia of its own by default, so the inertia is the parallel-axis sum. An item can
+carry `inertia_own` (its inertia about its own CG, axes parallel to the design frame). The roll-up then adds it.
 Product convention of `muas.mass`: Ixy = +sum(m x y).
 """
 from __future__ import annotations
@@ -16,8 +17,34 @@ def _arrays(point_masses: Sequence[Dict[str, Any]]):
     return m, r
 
 
+_OWN_KEYS = ("ixx", "iyy", "izz", "ixy", "ixz", "iyz")
+
+
+def _own(point_masses: Sequence[Dict[str, Any]]) -> np.ndarray:
+    """The own inertia of each item as an array (n, 6), order ixx iyy izz ixy ixz iyz. An item with no `inertia_own`
+    gives zeros. `inertia_own` is a dict (ixx, iyy, izz needed, products optional) or a list of three diagonal terms."""
+    out = np.zeros((len(point_masses), 6))
+    for i, p in enumerate(point_masses):
+        own = p.get("inertia_own")
+        if own is None:
+            continue
+        if isinstance(own, dict):
+            missing = [k for k in _OWN_KEYS[:3] if k not in own]
+            if missing:
+                raise ValueError(f"item {i}: inertia_own needs {missing}")
+            out[i] = [float(own.get(k, 0.0)) for k in _OWN_KEYS]
+        else:
+            if len(own) != 3:
+                raise ValueError(f"item {i}: inertia_own as a list needs three terms (ixx, iyy, izz)")
+            out[i, :3] = [float(v) for v in own]
+        if out[i, :3].min() < 0:
+            raise ValueError(f"item {i}: inertia_own has a negative diagonal term")
+    return out
+
+
 def rollup(point_masses: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    """Mass, CG and inertia about the CG of point masses {mass_kg, xyz}. Axes are parallel to the design frame."""
+    """Mass, CG and inertia about the CG of point masses {mass_kg, xyz, inertia_own (optional)}. Axes are parallel to
+    the design frame. The own inertia of an item is about its own CG and adds to the parallel-axis term."""
     m, r = _arrays(point_masses)
     if len(m) == 0 or m.sum() <= 0:
         raise ValueError("the mass model has no mass")
@@ -25,9 +52,10 @@ def rollup(point_masses: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     cg = (m[:, None] * r).sum(axis=0) / total
     d = r - cg
     x, y, z = d[:, 0], d[:, 1], d[:, 2]
-    inertia = {"ixx": float((m * (y ** 2 + z ** 2)).sum()), "iyy": float((m * (x ** 2 + z ** 2)).sum()),
-               "izz": float((m * (x ** 2 + y ** 2)).sum()), "ixy": float((m * x * y).sum()),
-               "ixz": float((m * x * z).sum()), "iyz": float((m * y * z).sum())}
+    own = _own(point_masses).sum(axis=0)
+    inertia = {"ixx": float((m * (y ** 2 + z ** 2)).sum() + own[0]), "iyy": float((m * (x ** 2 + z ** 2)).sum() + own[1]),
+               "izz": float((m * (x ** 2 + y ** 2)).sum() + own[2]), "ixy": float((m * x * y).sum() + own[3]),
+               "ixz": float((m * x * z).sum() + own[4]), "iyz": float((m * y * z).sum() + own[5])}
     return {"mass_kg": total, "cg": [float(v) for v in cg], "inertia": inertia}
 
 

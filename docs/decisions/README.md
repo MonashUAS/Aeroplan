@@ -25,3 +25,5 @@ One short file for each decision (Nygard format). A new decision gets the next n
 | [0019](0019-web-editor-shelved.md) | 2026-10-10 | The web editor and viewer are shelved |
 | [0020](0020-repository-layout-a.md) | 2026-10-17 | Repository layout A |
 | [0021](0021-merge-ardupilot-and-missionplanner.md) | 2026-10-17 | One ArduPilot spoke for flight events and flight files |
+| [0022](0022-quadplane-path.md) | 2026-10-17 | Quadplane path |
+| [0023](0023-design-frame-origin-at-the-wing-le.md) | 2026-10-17 | The design frame starts at the root leading edge of the main wing |

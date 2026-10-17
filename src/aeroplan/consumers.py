@@ -48,8 +48,15 @@ FLIGHT_ITEMS_MULTIROTOR = {
     "autopilot": "1.2.5.10 muas.autopilot (outputs motor1 to motor4 with the ESC end points)",
     "ground_contacts": "1.2.2 muas.ground_contacts",
 }
+#: what Aerolink would need to fly a quadplane (reference.kind quadplane). Aerolink has no quadplane contract yet, so
+#: a quadplane lists `review` and `archive` only. The list is the fixed-wing one, with lift rotors on motor outputs 5 and up.
+FLIGHT_ITEMS_QUADPLANE = {**FLIGHT_ITEMS,
+                          "propeller": "one cruise propeller (muas.propeller role cruise) and the lift rotors "
+                                       "(role lift, motor 5 and up)",
+                          "autopilot": "1.2.5.10 muas.autopilot (servo map: surfaces, throttle, motor5 and up)"}
 #: the items by vehicle kind (muas.reference.kind; absent means fixed_wing)
-FLIGHT_ITEMS_BY_KIND = {"fixed_wing": FLIGHT_ITEMS, "multirotor": FLIGHT_ITEMS_MULTIROTOR}
+FLIGHT_ITEMS_BY_KIND = {"fixed_wing": FLIGHT_ITEMS, "multirotor": FLIGHT_ITEMS_MULTIROTOR,
+                        "quadplane": FLIGHT_ITEMS_QUADPLANE}
 #: datasets Aerolink needs (role -> what gives it)
 FLIGHT_DATASETS = {
     "aero": "air_vehicle aero model (dataset role aero: DAVE-ML in ADH form)",
@@ -79,7 +86,7 @@ def tier(profile: str, e: Dict[str, Any]) -> str:
 
 
 def vehicle_kind(doc: Dict[str, Any]) -> str:
-    """fixed_wing or multirotor: `muas.reference.kind` of the air vehicle (absent means fixed_wing)."""
+    """fixed_wing, multirotor or quadplane: `muas.reference.kind` of the air vehicle (absent means fixed_wing)."""
     if adh_doc.has_node(doc, "1.2"):
         ref = (adh_doc.node(doc, "1.2").get("muas") or {}).get("reference") or {}
         return ref.get("kind") or "fixed_wing"

@@ -55,17 +55,42 @@ to it (plots go to `work/<aircraft>/lab/`). They are committed with empty output
 
 ```
 python -m aeroplan setup AeroSandbox                         # once: Python, JupyterLab, kernel "AeroPlan AeroSandbox"
-tools/aerosandbox/.venv/bin/jupyter lab tools/aerosandbox/notebooks      # or pick the kernel in VS Code
+tools/aerosandbox/.venv/bin/jupyter lab tools/aerosandbox/notebooks      # Windows: .venv\Scripts\jupyter.exe
 ```
+
+The setup puts the kernel in the user folder (`jupyter kernelspec list` shows it), so VS Code lists it. Reload the VS Code window
+after the setup. If the kernel is still missing, use **Python: Select Interpreter** and choose `.venv\Scripts\python.exe`.
 
 | Notebook | What it shows |
 |---|---|
 | `01_geometry_and_mass.ipynb` | Three-view, 3D view with the point masses, top view with the CG and MRP, mass by subassembly and source, inertia against flow5 T7, static margin of each configuration |
 | `02_flow5_vs_aerosandbox.ipynb` | The gap ladder: inputs, slopes at the T7 point (VLM, AeroBuildup, flow5), what flow5 implies for wing and tail, sections (NeuralFoil), trim, drag build-up, power budget |
 | `03_gap_study.ipynb` | The causes of the gap: method matrix (VLM mesh and wake, LiftingLine, NonlinearLiftingLine, AeroBuildup, with and without the boom), downwash at the tail against DATCOM, the tail alone against lifting-line theory, neutral point build-up, drag at the same CL. The numbers of `docs/methods_report.md` |
+| `04_rosella_sizing.ipynb` | The Rosella sizing results (three views, 3D view, mass, CG, inertia, energy, H4 and H8 against S, boom margins, control authority) and a window for your own parts (Evaluate, Re-optimise booms, Save to `settings/rosella.manual.json`). It reads `work/aerosandbox/rosella/sizing/` |
 
 `lab.load()` gives the airplane, the spec, the point masses, the flow5 DAVE-ML model and the mass configurations. The notebooks do
 not need Proptimiser. Proptimiser is optional in the venv: without it `cruise_trim` and `static_check` say what is missing.
+
+## Quadplane sizing (Rosella)
+
+`rosella.py` sizes the lift propulsion and the lift booms of a quadplane (ADR 22). It runs in the AeroSandbox Python. It uses `settings/rosella.yaml`, `data/motor_survey.csv` and the Currawong tree. It is one script. It writes to `work/aerosandbox/rosella/` only.
+
+| Item | Place |
+|---|---|
+| Settings | `settings/rosella.yaml` (every value has a source or `placeholder: true`) |
+| Motor survey | `data/motor_survey.csv`: maker, KV, mass, Rm, I0, Imax and the maker URL. The script fits the motor mass, Rm and I0 on it |
+| Manual configurations | `settings/rosella.manual.json` (machine file, written by the notebook Save button) |
+| Results | `work/aerosandbox/rosella/sizing/<config>_<S>S.json`, `best.json`, the order sheets. The ladder files are in `ladder/<case>/L<k>.json` |
+
+```
+python rosella.py optimise [--config H4] [--cells 12] [--upto L4] [--set key=value]
+python rosella.py ladder [--config H4] [--cells 12] [--from L0] [--upto L4]
+python rosella.py evaluate NAME [--level L4]
+python rosella.py order-sheet [--case H4_12S]
+python rosella.py rotor-check
+```
+
+The task steps are in [Size a quadplane](../../docs/howto/size-a-quadplane.md). The ladder levels are L0 momentum, L1 CT and CP tables, L2 plus structure, stiffness, clearance and control, L3 BEMT at the hover take-off state, L4 BEMT at all states. The tests are in `tests/test_rosella.py`.
 
 ## Known limits
 

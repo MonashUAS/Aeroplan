@@ -83,9 +83,9 @@ class VisualPart(MuasModel):
 
     part: str = Field(min_length=1, description="Part name, for example 'aileron_l'")
     mesh: Optional[SourceRef] = Field(None, description="The CAD mesh, when the part comes from CAD")
-    generator: Optional[Literal["planform", "tube", "box", "cylinder", "disc"]] = Field(
-        None, description="How a tool makes the mesh when no CAD mesh exists. planform, tube (boom): from the ADH "
-        "items. box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)")
+    generator: Optional[Literal["planform", "tube", "box", "cylinder", "disc", "body"]] = Field(
+        None, description="How a tool makes the mesh when no CAD mesh exists. planform, tube (boom), body: from the ADH "
+        "items (body: the lofted ADH `geometry.body` of the same item). box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)")
     units: str = Field("m", description="Units of the CAD mesh")
     transform: Optional[Transform] = None
     hinge: Optional[List[List[float]]] = Field(None, description="Two points of the hinge axis, design frame, m")
@@ -156,12 +156,32 @@ class Tube(MuasModel):
     """A round tube between two items (for example the tail boom). The ADH `geometry.body` of the same item holds the
     shape. This record gives the inputs of that shape, its source and its placeholder flag."""
 
-    radius: Quantity
-    from_instance: str = Field(min_length=1, description="The tube starts at the aft end of the body of this item")
-    to_instance: str = Field(min_length=1, description="The tube ends at the root quarter chord of the planform of "
-                             "this item")
+    radius: Quantity = Field(description="Outer radius")
+    from_instance: Optional[str] = Field(None, min_length=1, description="The tube starts at the aft end of the body of "
+                                         "this item")
+    to_instance: Optional[str] = Field(None, min_length=1, description="The tube ends at the root quarter chord of the "
+                                       "planform of this item")
+    inner_radius: Optional[Quantity] = Field(None, description="Bore radius of a hollow tube (the wall is radius less "
+                                             "inner_radius)")
+    material: Optional[str] = Field(None, min_length=1, description="For example a roll-wrapped carbon tube")
+    p0: Optional[List[float]] = Field(None, min_length=3, max_length=3, description="First end point, design frame, m. "
+                                      "Used when the tube has no from_instance and to_instance (a lift boom)")
+    p1: Optional[List[float]] = Field(None, min_length=3, max_length=3, description="Second end point, design frame, m")
     source: str = Field(min_length=1)
     placeholder: bool = False
+
+    @model_validator(mode="after")
+    def _ends(self):
+        self.radius.require("length", "radius")
+        by_item = self.from_instance is not None and self.to_instance is not None
+        by_point = self.p0 is not None and self.p1 is not None
+        if by_item == by_point or (self.from_instance is None) != (self.to_instance is None) or (self.p0 is None) != (self.p1 is None):
+            raise ValueError("a tube has either from_instance and to_instance, or p0 and p1")
+        if self.inner_radius is not None:
+            self.inner_radius.require("length", "inner_radius")
+            if not 0.0 < self.inner_radius.value < self.radius.value:
+                raise ValueError("inner_radius must be above 0 and below radius")
+        return self
 
 
 class Table(MuasModel):

@@ -70,6 +70,8 @@ Build-up from the checked parts, `h_n = h_ac + V_H (a_t / a_w)(1 - de/da)` (h_ac
 | VLM 16x12 (full run) | 0.109 | -0.060 | -0.001 |
 | flow5 | 0.223 | +0.285 | +0.344 |
 
+Note (2026-10-17): these NP values use the old flow5 wing frame, where the MAC LE sits at x = -0.080 m. The source tree has the wing root LE at x = 0 (ADR 0015, ADR 0023). With the tree frame the VLM 16x12 neutral point is 0.182 m (`tools/aerosandbox/neutral_point.py`).
+
 The T7 CoG is at 63.3 % MAC. The sheet CG (x 0.1098 m) is at 57.5 % MAC.
 
 Result: the methods that pass the tail check (VLM, Helmbold with DATCOM) put the neutral point at x 0.11 to 0.13 m.

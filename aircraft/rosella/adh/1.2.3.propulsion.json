@@ -1,0 +1,104 @@
+{
+  "wbs_no": "1.2.3",
+  "name": "Propulsion",
+  "description": "Rosella propulsion: the Currawong nose propeller (cruise) and the sized lift rotors",
+  "muas": {
+    "ext_version": "0.4.0",
+    "instance": "propulsion",
+    "datasets": [
+      {
+        "role": "other",
+        "ref": "asset:sha256:75eb46c3db9d66903c43c01205feb07f4ca2eb3499b4a78fe5c4ed5616101dd3"
+      }
+    ],
+    "propulsion_system": {
+      "system_id": "rosella_lift",
+      "basis": "sizing estimate",
+      "p_max": {
+        "value": 1113.5066914845959,
+        "units": "kg * m ** 2 / s ** 3"
+      },
+      "diameter": {
+        "value": 0.6603999988563377,
+        "units": "m"
+      },
+      "blades": 2,
+      "ixx": {
+        "value": 0.0024814238363194464,
+        "units": "kg * m ** 2"
+      },
+      "model": "Rosella lift rotor: MAD_FLUXER_22x6_6 scaled to 0.6604 m (Proptimiser scale 1.1818)",
+      "motor": {
+        "model": "sized motor (not a maker part)",
+        "kv": {
+          "value": 12.251544872678675,
+          "units": "A * rad * s ** 2 / kg / m ** 2"
+        },
+        "r": {
+          "value": 0.1166437943509162,
+          "units": "kg * m ** 2 / A ** 2 / s ** 3"
+        },
+        "i0": {
+          "value": 0.8570554027034817,
+          "units": "A"
+        },
+        "mass": {
+          "value": 0.29117419630399644,
+          "units": "kg"
+        },
+        "imax_continuous": {
+          "value": 30.095686228441405,
+          "units": "A"
+        }
+      },
+      "esc": {
+        "model": "sized ESC (not a maker part)",
+        "imax_continuous": {
+          "value": 36.114823474129686,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 58.800000000000004,
+          "units": "kg * m ** 2 / A / s ** 3"
+        }
+      },
+      "battery": {
+        "model": "sized pack (not a maker part)",
+        "cells_s": 14,
+        "cells_p": 1,
+        "capacity": {
+          "value": 27874.255933931516,
+          "units": "A * s"
+        },
+        "v_nominal": {
+          "value": 51.800000000000004,
+          "units": "kg * m ** 2 / A / s ** 3"
+        },
+        "mass": {
+          "value": 2.5331579326192073,
+          "units": "kg"
+        }
+      },
+      "warnings": [
+        "Estimate from the H4_14S sizing. Motor, ESC and battery are sized values, not maker parts.",
+        "Propeller inertia: a rod of the propeller mass and length D (stand-in).",
+        "Blade count 2: from the Proptimiser design MAD_FLUXER_22x6_6.",
+        "The cant sign (front rotors lean to +y, rear rotors to -y) is a stand-in. rosella.py gives the size only.",
+        "H4: motors 5 to 8 follow the ArduPilot Quad X order (front right, rear left, front left, rear right)."
+      ],
+      "source": {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+        "role": "Rosella sizing result H4_14S (rosella.py)"
+      },
+      "placeholder": true
+    },
+    "sources": [
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:6714ad0f0a4af4cd07084b036f70784891fbe0a57264949267ed985c7abc2c7c",
+        "role": "Rosella sizing result H4_14S (rosella.py)"
+      }
+    ]
+  }
+}

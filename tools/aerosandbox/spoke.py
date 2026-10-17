@@ -21,6 +21,14 @@ changes no ADH data.
 The sizing stage comes before flow5. Its geometry values do not set the flow5 geometry. The datum report lists the
 differences.
 
+Quadplane (settings `kind: quadplane`, Rosella): `ingest` reads the sizing result of tools/aerosandbox/rosella.py
+(`build_from: optimised` is work/aerosandbox/<aircraft>/sizing/best.json, any other value is the manual config of that
+name in work/aerosandbox/<aircraft>/manual/<name>.json) and writes the whole tree. It copies the Currawong wing,
+ailerons, empennage and tail boom. It adds the new fuselage, the lift booms, the cruise propeller and the lift rotors,
+the lift propulsion system, the point masses, the roll-up (mass, CG, inertia), the quadplane reference (MRP = the sized
+CG), the `sizing` record and the motor outputs 5 and up. See `_ingest_quadplane`. Run the sizing first:
+`python tools/aerosandbox/rosella.py optimise`.
+
 Multirotor (settings `kind: multirotor`): there is no Athena printout. `ingest` seeds the aircraft from the `multirotor`
 block of the settings (aeroplan.multirotor.seed: reference, four lift rotors, motor outputs, ground contacts, demo
 shapes) and reads `work/<aircraft>/asb/multirotor_results.json`, when it exists, into the body-drag aero dataset
@@ -34,17 +42,22 @@ work/<aircraft>/proptimiser/ (copy them by hand). Their sha256 go into the resul
 from __future__ import annotations
 
 import copy
+import importlib.util
+import math
 import re
 import hashlib
 import json
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
-from aeroplan import adh_doc, multirotor, multirotor_aero
+import numpy as np
+
+from aeroplan import adh_doc, assets, mass_model, multirotor, multirotor_aero, source_tree
 from aeroplan.daveml_adh import from_xml
 from aeroplan.dml_validate import validate_dml
-from aeroplan.geometry import planform_reference
+from aeroplan.geometry import body_adh, body_frames, planform_reference
 from aeroplan.spokes import Context, set_sources
 
 from . import runner, spec as asb_spec
@@ -212,10 +225,514 @@ def _ingest_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]):
     return changes
 
 
+# ======================================================================================================== quadplane
+SIZING_FILE = "best.json"
+RHO0 = 1.225                       # kg/m3, the air of the Proptimiser tables (rosella.py RHO0)
+G0 = 9.80665
+LIFT_SYSTEM = "rosella_lift"
+#: view values of the demo rotor discs (drawing only, no sizing meaning): thickness (m) and alpha
+DISC_THICKNESS_M, DISC_ALPHA = 0.004, 0.3
+#: the copied Currawong nodes. Each copy keeps its child nodes (ailerons under the wing, stabilizer under the empennage).
+COPIED = ("1.2.2.3", "1.2.2.4")
+#: segments of the energy record (names in the sizing result)
+SEGMENTS = ("vtol_takeoff_climb", "transitions", "fw_climb", "transit_laps_rtl", "survey", "deploy_hover", "landing",
+            "reserve")
+#: ArduPilot SERVOn_FUNCTION of the motor outputs (motor1 to motor8 are 33 to 40, motor9 to motor12 are 82 to 85)
+MOTOR_FUNCTION = {**{k: 32 + k for k in range(1, 9)}, **{k: 73 + k for k in range(9, 13)}}
+#: where each point mass of the sizing result comes from (rosella.py Case.build, section "mass list")
+ORIGIN = {
+    "wing": "kept from the Currawong wing mass (WINGS point masses, weighed)",
+    "tail": "kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+    "tail_boom": "kept from the Currawong tail boom (TAIL-BOOM point mass, weighed)",
+    "avionics": "kept from the Currawong avionics (AVIONICS-REST point mass)",
+    "avionics_vtol": "settings fixed_mass_kg.avionics (stand-in for the VTOL autopilot, GPS, receiver, telemetry)",
+    "fuselage": "settings fuselage.mass_kg_per_m2 times the shell area of the new fuselage (stand-in)",
+    "payload_cargo": "settings mission.payload.cargo_kg (aircraft/redback 1.2.17 cargo)",
+    "payload_camera": "settings mission.payload.camera_kg (SIYI A8 mini)",
+    "landing_gear": "settings kept_from_currawong.landing_gear_kg (stand-in for VTOL skids)",
+    "cruise_motor": "kept from the Currawong nose motor (X5220), moved with the nose propeller hub",
+    "cruise_esc": "kept from the Currawong cruise ESC, moved with the nose propeller hub",
+    "cruise_prop": "kept from the Currawong cruise propeller, moved with the nose propeller hub",
+    "cruise_rest": "kept from the Currawong propulsion rest mass, moved with the nose propeller hub",
+    "battery": "AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack (settings battery), cells and capacity from the sizing",
+    "boom": "carbon tube: density times the tube section times the boom length (settings material)",
+    "boom_clamp": "settings fixed_mass_kg.boom_clamp_each (stand-in)",
+    "lift_front": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (Eq. 2) and mount, at the front end of a boom",
+    "lift_rear": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (Eq. 2) and mount, at the rear end of a boom",
+    "cables": "copper area from the peak current times the run lengths (rosella.py), with insulation factor (stand-in)",
+}
+
+
+def _rosella():
+    """tools/aerosandbox/rosella.py as a module (it imports numpy only at the top). The spoke uses its fuselage rule."""
+    path = Path(__file__).resolve().parent / "rosella.py"
+    spec = importlib.util.spec_from_file_location("rosella_sizing", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _quad_result(ctx: Context, st: Dict[str, Any]):
+    """(path, result, case name) of the sizing result that `build_from` names. best.json wraps {case, level, result}. A
+    manual config (`evaluate NAME`) is a bare result."""
+    src = st.get("build_from", "optimised")
+    path = ctx.work / "sizing" / SIZING_FILE if src == "optimised" else ctx.work / "manual" / f"{src}.json"
+    if not path.is_file():
+        raise ValueError(f"{path.relative_to(ctx.root).as_posix()} is missing: run `python tools/aerosandbox/rosella.py "
+                         + ("optimise" if src == "optimised" else f"evaluate {src}") + "` first")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    rep = data["result"] if "result" in data else data
+    if not rep.get("converged"):
+        raise ValueError(f"{path.name}: the sizing did not converge ({rep.get('error')}). The tree takes a converged result only")
+    return path, rep, data.get("case", src)
+
+
+def _q(value: float, units: str) -> Dict[str, Any]:
+    return {"value": float(value), "units": units}
+
+
+def _pos(xyz) -> Dict[str, Any]:
+    return {"frame": "design", "xyz": [float(c) for c in xyz], "units": "m"}
+
+
+def _clean_copy(item: Dict[str, Any]) -> Dict[str, Any]:
+    """A copy of a Currawong node (or subcomponent) for another aircraft: no mass roll-up, no raw-file pointers (CAD
+    meshes, flow5 files, skin), no geometry tool. The Currawong CAD views are left out. The ADH shapes stay."""
+    it = copy.deepcopy(item)
+    m = it.get("muas")
+    if m is not None:
+        for k in ("mass_properties", "point_masses", "sources", "datasets", "skin", "geometry_tool", "propulsion_system",
+                  "provenance"):
+            m.pop(k, None)
+        vis = [v for v in m.get("visual") or [] if "mesh" not in v]
+        if vis:
+            m["visual"] = vis
+        else:
+            m.pop("visual", None)
+    if "wbs_no" in it:
+        for k in adh_doc.child_keys(it):
+            it[k] = _clean_copy(it[k])
+    if it.get("subcomponents"):
+        it["subcomponents"] = [_clean_copy(s) for s in it["subcomponents"]]
+    return it
+
+
+def _graft(doc: Dict[str, Any], wbs: str, node: Dict[str, Any]) -> None:
+    """Put a copied WBS node (with its child nodes) in the document in place of the node of the same number."""
+    dst = adh_doc.node(doc, wbs, create=True)
+    dst.clear()
+    dst.update(node)
+
+
+def _fuselage_frames(rosella, st: Dict[str, Any], x_hub: float, tail_boom_body: Dict[str, Any]) -> List[np.ndarray]:
+    """The frames of the new fuselage: the rule of rosella.Airframe.new_fuselage_frames, with the hub x of the result."""
+    fake = SimpleNamespace(st=st, x_hub=float(x_hub), tail_boom_frames=[f.tolist() for f in body_frames(tail_boom_body)])
+    return [np.array(f, float) for f in rosella.Airframe.new_fuselage_frames(fake)]
+
+
+def _own_inertia(name: str, m: float, names: Dict[str, float], fuselage_length: float):
+    """The own inertia of the items that rosella.py gives one (same rules as Case.build, section "mass list")."""
+    if name == "tail_boom":
+        k = 0.92 ** 2 / 12.0
+        return {"ixx": 0.0, "iyy": m * k, "izz": m * k}
+    if name == "fuselage":
+        k = fuselage_length ** 2 / 12.0
+        return {"ixx": 0.0, "iyy": m * k, "izz": m * k}
+    if name == "battery":
+        return {"ixx": m * 0.02 / 12.0, "iyy": m * 0.13 / 12.0, "izz": m * 0.13 / 12.0}
+    if name == "boom":
+        k = names["L_boom"] ** 2 / 12.0
+        return {"ixx": 0.0, "iyy": m * k, "izz": m * k}
+    return None
+
+
+def _rotors(rep: Dict[str, Any], st: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Every lift rotor: ArduPilot motor number, hub, thrust axis, spin. H4: motors 5 to 8 in the Quad X order of
+    multirotor.QUAD_X. H8: the same four stations, motors 5 to 8 on the upper rotors and 9 to 12 on the lower rotors."""
+    n, d = rep["names"], rep["design"]
+    z_hub = {it["name"]: it["z"] for it in rep["items"]}
+    D = 2.0 * rep["R_m"]
+    out = []
+    for q, (pos, turn) in multirotor.QUAD_X.items():
+        sx, sy = multirotor.SIGNS[pos]
+        end = "lift_front" if sx < 0 else "lift_rear"
+        x = n["x_f"] if sx < 0 else n["x_r"]
+        # the cant is one tilt about the radial axis (CG to hub), so the tilt force is tangential and gives a yaw
+        # moment of T sin(cant) rho. Its sign follows the spin: a cw rotor (seen from above) pushes the airframe
+        # nose-left (+z) by its reaction torque, so its tilt force does the same. The tilts cancel in hover.
+        rx, ry = x - rep["airframe"]["x_cg_m"], sy * d["y_b"]
+        rho, s_tilt = math.hypot(rx, ry), 1.0 if turn == "cw" else -1.0
+        axis = [-s_tilt * math.sin(d["cant"]) * ry / rho, s_tilt * math.sin(d["cant"]) * rx / rho, math.cos(d["cant"])]
+        levels = [("upper", 0.0, 4 + q, turn)]
+        if rep["config"] == "H8":
+            levels.append(("lower", -float(st["rotors"]["coaxial"]["spacing_over_D"]) * D, 8 + q,
+                           "cw" if turn == "ccw" else "ccw"))
+        for tag, dz, motor, t in levels:
+            out.append({"motor": motor, "position": pos, "level": tag, "turn_ardupilot": t,
+                        "spin": multirotor.spin_from_ardupilot(t), "hub": [x, sy * d["y_b"], z_hub[end] + dz], "axis": axis})
+    return sorted(out, key=lambda r: r["motor"])
+
+
+def _lift_table(ctx: Context, st: Dict[str, Any]):
+    """The BEMT samples of the scaled lift blade as a table (tables/lift_samples.json of rosella.py), or (None, why)."""
+    path = ctx.work / "tables" / "lift_samples.json"
+    if not path.is_file():
+        return None, f"{path.relative_to(ctx.root).as_posix()} is missing"
+    d = json.loads(path.read_text(encoding="utf-8"))
+    if d["key"].get("design") != st["proptimiser_design"]:
+        return None, f"the BEMT samples are for {d['key'].get('design')}, the settings name {st['proptimiser_design']}"
+    R0 = float(st["proptimiser_reference_radius_m"])
+    cols: Dict[str, List[float]] = {k: [] for k in ("omega_rad_s", "v_x_m_s", "scale", "J", "CT", "CP", "T_N", "Q_Nm")}
+    for w, V, s, T, Q in d["samples"]:
+        n_, D = w / (2.0 * math.pi), 2.0 * R0 * s
+        row = (w, V, s, V / (n_ * D), T / (RHO0 * n_ ** 2 * D ** 4), Q * w / (RHO0 * n_ ** 3 * D ** 5), T, Q)
+        for k, v in zip(cols, row):
+            cols[k].append(float(v))
+    units = {"omega_rad_s": "rad/s", "v_x_m_s": "m/s", "scale": "nd", "J": "nd", "CT": "nd", "CP": "nd", "T_N": "N",
+             "Q_Nm": "N*m"}
+    return {"lift_bemt": {"columns": cols, "units": units}}, path
+
+
+def _blade_count(ctx: Context, st: Dict[str, Any]) -> int:
+    """N of the Proptimiser design file in work/<aircraft>/proptimiser/designs/, else 2 (the Redback FLUXER blade)."""
+    import yaml
+
+    f = ctx.work / "proptimiser" / "designs" / f"{st['proptimiser_design']}.yaml"
+    if f.is_file():
+        return int((yaml.safe_load(f.read_text(encoding="utf-8")).get("blade") or {}).get("N", 2))
+    return 2
+
+
+def _sizing_discipline(rep: Dict[str, Any], case: str, st: Dict[str, Any], tw: float) -> Dict[str, Any]:
+    n, d = rep["names"], rep["design"]
+    o = []
+
+    def out(name, value, units):
+        o.append({"name": name, "value": float(value), "units": units, "units_basis": "SI model output"})
+
+    out("take_off_mass", n["M"], "kg")
+    out("energy_total", rep["energy_total_Wh"], "Wh")
+    out("energy_nominal_battery", rep["energy_nominal_Wh"], "Wh")
+    for k in SEGMENTS:
+        out(f"energy_{k}", rep["energy_Wh"][k], "Wh")
+        out(f"time_{k}", rep["time_s"][k], "s")
+    out("cells_s", rep["cells_s"], "nd")
+    out("battery_capacity", d["cap_Ah"], "A*h")
+    out("rotor_diameter", rep["D_m"] if "D_m" in rep else rep["D_in"] * 0.0254, "m")   # old result files hold D_in
+    out("rotor_scale_over_reference", d["scale"], "nd")
+    out("motor_kv", d["kv"], "rpm/V")
+    out("motor_peak_torque", d["q_cap"], "N*m")
+    out("motor_peak_current", n["I_pk"], "A")
+    out("thrust_to_weight_at_full_throttle", tw, "nd")
+    out("boom_outer_radius", d["r_boom"], "m")
+    out("boom_wall", d["t_boom"], "m")
+    out("boom_length", n["L_boom"], "m")
+    out("boom_y", d["y_b"], "m")
+    out("boom_clamp_x", n["x_c"], "m")
+    out("boom_dx", d["dx"], "m")
+    out("rotor_cant", d["cant"], "rad")
+    out("boom_f1", rep["f1_Hz"], "Hz")
+    out("hover_1P", rep["f_hover_1P_Hz"], "Hz")
+    out("control_roll", rep["control"]["roll"], "rad/s^2")
+    out("control_pitch", rep["control"]["pitch"], "rad/s^2")
+    out("control_yaw", rep["control"]["yaw"], "rad/s^2")
+    out("control_required_roll_pitch", rep["control"]["alpha_req"], "rad/s^2")
+    out("neutral_point_x", rep["airframe"]["neutral_point_m"], "m")
+    out("cg_x", rep["airframe"]["x_cg_m"], "m")
+    out("cruise_speed_laps", n["V_lap"], "m/s")
+    out("cruise_speed_survey", n["V_map"], "m/s")
+    out("stall_speed", n["Vs"], "m/s")
+    for k, r in rep["rotors"].items():
+        out(f"rotor_{k}_rpm", r["rpm"], "rpm")
+        out(f"rotor_{k}_thrust", r["T_N"], "N")
+        out(f"rotor_{k}_shaft_power", r["P_shaft_W"], "W")
+        out(f"rotor_{k}_current", r["I_A"], "A")
+    for tag, key in (("laps", "lap"), ("survey", "map")):      # the nose propeller at the two cruise speeds (shaft power = Q omega)
+        c = rep["cruise"][key]
+        out(f"cruise_{tag}_rpm", c["omega"] * 30.0 / math.pi, "rpm")
+        out(f"cruise_{tag}_thrust", c["thrust"], "N")
+        out(f"cruise_{tag}_shaft_power", c["Q"] * c["omega"], "W")
+    ins = []
+    for key, units in (("mtow_kg", "kg"), ("thrust_to_weight", "nd"), ("reserve_hover_s", "s"), ("load_factor", "nd"),
+                       ("safety_factor", "nd"), ("static_margin_target", "nd"), ("battery_usable_fraction", "nd")):
+        e = st["limits"][key]
+        ins.append({"name": key, "value": float(e["value"]), "units": units,
+                    "placeholder": bool(e.get("placeholder", False)), "source": e["source"]})
+    act = [k for k, c in rep["constraints"].items() if c["enabled"] and not c["equality"] and c["margin"] < 1e-3]
+    desc = (f"Rosella sizing, case {case} ({rep['config']}, {rep['cells_s']}S), level {rep.get('level_reached', rep.get('level'))}. "
+            "Minimum mission energy under the limits of the settings. Active constraints: " + (", ".join(act) or "none") + ". "
+            f"{len(rep.get('placeholders') or [])} settings values are stand-ins (the result file lists them).")
+    return {"name": "sizing", "description": desc,
+            "tools": [{"model_name": "Rosella quadplane propulsion sizing",
+                       "generation_tool": "AeroSandbox (tools/aerosandbox/rosella.py) with the Proptimiser BEMT",
+                       "description": "Bershadsky, Haviland, Johnson, AIAA 2016-0581, with a geometric prop scale. The record is an "
+                                      "estimate. Every input marked placeholder is a stand-in.",
+                       "data_exchange": {"model_identifier": "rosella", "inputs": ins, "outputs": o}}]}
+
+
+def _ingest_quadplane(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]):
+    """Write the Rosella quadplane from the sizing result and the Currawong base (ADR 0022).
+
+    Writes: copies of the Currawong wing, ailerons and empennage (stabilizer, tail boom). The new fuselage 1.2.2.2 (body
+    from the rule of rosella.py). Two lift booms as subcomponents of 1.2.2 (`muas.tube`). 1.2.3.9: the cruise propeller and
+    the lift rotors (`muas.propeller` role lift, motor 5 and up). 1.2.3: the lift propulsion system and its BEMT table.
+    1.2: point masses, mass properties (roll-up with the own inertia of the long parts), `reference` (kind quadplane, MRP =
+    the sized CG), initial conditions and the `sizing` record. 1.2.5.10: the autopilot (surface outputs of the base, motor
+    outputs 5 and up). Every estimate has `placeholder: true` and names its source."""
+    rosella = _rosella()
+    res_path, rep, case = _quad_result(ctx, st)
+    base = source_tree.read(ctx.root / "aircraft" / st["base"])
+    ref = ctx.source_ref(res_path, f"Rosella sizing result {case} (rosella.py)")
+    n, d, changes = rep["names"], rep["design"], []
+    cfg = rep["config"]
+
+    def copy_ref(inst):
+        return {**ref, "note": f"copy of aircraft/{st['base']} {inst}"}
+
+    # ---- copies of the base airframe (wing, ailerons, empennage with the stabilizer and the tail boom)
+    for wbs in COPIED:
+        _graft(doc, wbs, _clean_copy(adh_doc.node(base.doc, wbs)))
+    for inst in ("wing_main", "htail", "fin", "tail_boom"):
+        it = adh_doc.find(doc, inst)
+        m = it["muas"]
+        if m.get("planform"):
+            m["visual"] = [{"part": "wing" if inst == "wing_main" else inst, "generator": "planform",
+                            "source": f"full lifting surface from the ADH planform of {inst} (copied from aircraft/{st['base']}, no CAD in Rosella)",
+                            "placeholder": True}]
+        set_sources(it, NAME, [copy_ref(inst)])
+    tb = adh_doc.find(doc, "tail_boom")["muas"]["tube"]
+    tb["source"] = f"Copy of aircraft/{st['base']} tail_boom. " + tb["source"]
+    tb["placeholder"] = True
+    changes.append(f"copied from {st['base']}: wing_main, ailerons, empennage (htail, fin, elevator, rudder, tail_boom)")
+
+    # ---- the new fuselage
+    tail_body = adh_doc.find(doc, "tail_boom")["geometry"]["body"]
+    frames = _fuselage_frames(rosella, st, rep["airframe"]["x_nose_hub_m"], tail_body)
+    Lf = float(frames[-1][0, 0] - frames[0][0, 0])
+    fus = adh_doc.node(doc, "1.2.2.2", create=True)
+    for k in [k for k in fus if k not in ("wbs_no", "name")]:
+        del fus[k]
+    fus["description"] = "Rosella fuselage: a superellipse body from the nose to the tail boom joint (new, sized for the battery bay)"
+    fus["geometry"] = {"body": body_adh(frames)}
+    fm = adh_doc.muas(fus, "fuselage")
+    fm["fidelity"] = "L1"
+    fm["visual"] = [{"part": "fuselage", "generator": "body", "material": "body",
+                     "source": "body lofted from the ADH body cross sections (superellipse rule of rosella.py, settings fuselage). Width and "
+                               f"height are stand-ins ({st['fuselage']['width_m']['value']} x {st['fuselage']['height_m']['value']} m).",
+                     "placeholder": True}]
+    set_sources(fus, NAME, [ref])
+    changes.append(f"fuselage: {len(frames)} frames, x {frames[0][0, 0]:.3f} to {frames[-1][0, 0]:.3f} m (placeholder size)")
+
+    # ---- lift booms: subcomponents of 1.2.2 with muas.tube
+    frame = adh_doc.node(doc, "1.2.2", create=True)
+    adh_doc.muas(frame, "airframe")
+    z_b = float(next(i["z"] for i in rep["items"] if i["name"] == "boom"))
+    half = 0.5 * n["L_boom"]
+    r_o, t = d["r_boom"], d["t_boom"]
+    mat = st["material"]["design_choice"]
+    for side, nm in ((-1, "left"), (1, "right")):
+        y = side * d["y_b"]
+        p0, p1 = [n["x_c"] - half, y, z_b], [n["x_c"] + half, y, z_b]
+        item = {"name": f"Lift boom {nm}",
+                "description": f"Lift boom, {nm} side: a carbon tube clamped to the wing, a rotor at each end"}
+        m = adh_doc.muas(item, f"boom_{nm}")
+        m["fidelity"] = "L1"
+        m["tube"] = {"radius": _q(r_o, "m"), "inner_radius": _q(r_o - t, "m"), "material": f"{mat.replace('_', '-')} carbon tube",
+                     "p0": p0, "p1": p1, "placeholder": True,
+                     "source": f"{case} sizing: outer radius, wall and length are design variables of rosella.py (material block "
+                               f"of tools/aerosandbox/settings/{ctx.aircraft}.yaml)"}
+        m["visual"] = [{"part": f"boom_{nm}", "generator": "tube", "material": "boom",
+                        "shape": {"p0": p0, "p1": p1, "radius_m": r_o},
+                        "source": "Boom of the sizing result (outer radius, length).", "placeholder": True}]
+        set_sources(item, NAME, [ref])
+        adh_doc.put_subcomponent(frame, item)
+    changes.append(f"booms: 2 tubes, OD {2000 * r_o:.2f} mm, wall {1000 * t:.2f} mm, length {1000 * n['L_boom']:.0f} mm, "
+                   f"y +/-{d['y_b']:.3f} m")
+
+    # ---- 1.2.3.9: the cruise propeller (copy) and the lift rotors
+    prop_node = adh_doc.node(doc, "1.2.3.9", create=True)
+    base_cruise = adh_doc.find(base.doc, "prop_cruise")
+    cruise = _clean_copy(base_cruise)
+    cm = cruise["muas"]
+    hub = list(base_cruise["muas"]["propeller"]["hub"]["xyz"])
+    hub[0] = rep["airframe"]["x_nose_hub_m"]
+    cm["propeller"]["hub"] = _pos(hub)
+    cm["fidelity"] = "L1"
+    ps = copy.deepcopy(base_cruise["muas"]["propulsion_system"])
+    ps.update({"source": copy_ref("prop_cruise"), "placeholder": True})
+    ps["warnings"] = list(ps.get("warnings") or []) + [
+        f"Copied from aircraft/{st['base']} prop_cruise: the Currawong nose motor and propeller. The hub x follows the sized CG."]
+    cm["propulsion_system"] = ps
+    cm["visual"] = [{"part": "propeller_cruise", "generator": "disc", "material": "rotor",
+                     "shape": {"centre": hub, "axis": list(cm["propeller"]["thrust_axis"]),
+                               "radius_m": 0.5 * cm["propeller"]["diameter"]["value"],
+                               "thickness_m": DISC_THICKNESS_M, "alpha": DISC_ALPHA},
+                     "source": "Demo disc of the cruise propeller diameter (no CAD).", "placeholder": True}]
+    prop_node.clear()
+    prop_node.update(cruise)
+    bref = assets.item_dataset(base_cruise, "propulsion")
+    if bref:
+        be = assets.entry(base.doc, bref["ref"])
+        aid = assets.register_dataset(ctx.acft, be["name"], base.datasets[be["id"]], tool=be["tool"], role=be["role"],
+                                      dataset_role="propulsion", meta=copy.deepcopy(be["dataset"]),
+                                      built_against=f"{ctx.aircraft}@{ctx.acft.version}",
+                                      note=f"Copy of the dataset of aircraft/{st['base']} (Currawong nose propeller).")
+        assets.set_item_dataset(prop_node, "propulsion", aid)
+    rotors = _rotors(rep, st)
+    D = 2.0 * rep["R_m"]
+    for r in rotors:
+        item = {"name": f"Lift rotor {r['motor']}",
+                "description": f"Lift rotor, ArduPilot motor {r['motor']}, {r['position'].replace('_', ' ')}"
+                               + (f", {r['level']} of the coaxial pair" if cfg == "H8" else "")}
+        m = adh_doc.muas(item, f"prop_lift_{r['motor']}")
+        m["fidelity"] = "L1"
+        m["propeller"] = {"role": "lift", "hub": _pos(r["hub"]), "thrust_axis": r["axis"], "spin": r["spin"],
+                          "diameter": _q(D, "m"), "motor": r["motor"], "system": LIFT_SYSTEM}
+        m["visual"] = [{"part": f"rotor_{r['motor']}", "generator": "disc", "material": "rotor",
+                        "shape": {"centre": r["hub"], "axis": r["axis"], "radius_m": 0.5 * D, "thickness_m": DISC_THICKNESS_M,
+                                  "alpha": DISC_ALPHA},
+                        "source": "Demo rotor disc of the sized diameter (no CAD). Turns about the thrust axis through the hub.",
+                        "placeholder": True}]
+        set_sources(item, NAME, [ref])
+        adh_doc.put_subcomponent(prop_node, item)
+    changes.append(f"rotors: cruise prop + {len(rotors)} lift ({cfg}), D {D:.4f} m ({1000 * D:.1f} mm), motors "
+                   f"{rotors[0]['motor']} to {rotors[-1]['motor']}, cant {math.degrees(d['cant']):.2f} deg")
+
+    # ---- 1.2.3 propulsion: the lift system and its BEMT table
+    prop = adh_doc.node(doc, "1.2.3", create=True)
+    for k in [k for k in prop if k not in adh_doc.child_keys(prop)]:       # keep the child node 1.2.3.9
+        del prop[k]
+    prop.update({"wbs_no": "1.2.3", "name": "Propulsion", "description": "Rosella propulsion: the Currawong nose propeller "
+                                                                         "(cruise) and the sized lift rotors"})
+    pm_ = adh_doc.muas(prop, "propulsion")
+    p_max = max(r["P_shaft_W"] for k, r in rep["rotors"].items() if k.startswith("MAX"))
+    blades = _blade_count(ctx, st)
+    warn = [f"Estimate from the {case} sizing. Motor, ESC and battery are sized values, not maker parts.",
+            "Propeller inertia: a rod of the propeller mass and length D (stand-in).",
+            f"Blade count {blades}: from the Proptimiser design {st['proptimiser_design']}.",
+            "Each lift rotor tilts about its radial axis (CG to hub) by the cant. The tilt sign follows the spin, so the tilts "
+            "cancel in hover. rosella.py gives the cant size only.",
+            ("H8: motors 5 to 8 are the upper rotors, 9 to 12 the lower rotors of each station, counter-rotating, spaced "
+             f"{st['rotors']['coaxial']['spacing_over_D']} D. The ArduPilot frame class and motor order are a stand-in: check them."
+             if cfg == "H8" else
+             "H4: motors 5 to 8 follow the ArduPilot Quad X order (front right, rear left, front left, rear right).")]
+    pm_["propulsion_system"] = {
+        "system_id": LIFT_SYSTEM, "basis": "sizing estimate", "p_max": _q(p_max, "W"), "diameter": _q(D, "m"),
+        "blades": blades, "ixx": _q(n["m_prop"] * D ** 2 / 12.0, "kg*m^2"),
+        "model": f"Rosella lift rotor: {st['proptimiser_design']} scaled to {D:.4f} m (Proptimiser scale {d['scale']:.4f})",
+        "motor": {"model": "sized motor (not a maker part)", "kv": _q(d["kv"], "rpm/V"), "r": _q(n["rm"], "ohm"),
+                  "i0": _q(n["i0"], "A"), "mass": _q(n["m_motor"], "kg"), "imax_continuous": _q(n["I_pk"], "A")},
+        "esc": {"model": "sized ESC (not a maker part)",
+                "imax_continuous": _q(float(st["bershadsky"]["esc_peak_factor"]["value"]) * n["I_pk"], "A"),
+                "vmax": _q(rep["cells_s"] * 4.2, "V")},
+        "battery": {"model": "sized pack (not a maker part)", "cells_s": rep["cells_s"], "cells_p": 1,
+                    "capacity": _q(d["cap_Ah"], "A*h"),
+                    "v_nominal": _q(rep["cells_s"] * float(st["electrical"]["cell_nominal_V"]["value"]), "V"),
+                    "mass": _q(n["m_batt"], "kg")},
+        "warnings": warn, "source": ref, "placeholder": True}
+    table, why = _lift_table(ctx, st)
+    if table is None:
+        pm_["propulsion_system"]["warnings"].append("No BEMT table of the lift blade: " + str(why))
+        changes.append("no lift BEMT table (open gap): " + str(why))
+    else:
+        meta = {"form": "tables", "fidelity": "L1", "units_system": "SI", "placeholder": True,
+                "model_description": {"generation_tool": "Proptimiser BEMT (NeuralFoil sections) via tools/aerosandbox/rosella.py",
+                                      "model_name": f"{st['proptimiser_design']} scaled",
+                                      "description": "CT and CP samples of the lift blade at the scales and shaft speeds of the "
+                                                     "sizing table (hover and 2.5 m/s climb)"},
+                "notes": [f"Sea-level density {RHO0} kg/m3. CT = T/(rho n^2 D^4), CP = Q omega/(rho n^3 D^5), n in rev/s, "
+                          "D = 2 R_ref scale. A scaled copy of a measured blade: a model value, not a measurement.",
+                          "Not the Aerolink propulsion table (no throttle map): the dataset role is other."]}
+        aid = assets.register_dataset(ctx.acft, "propulsion.rosella_lift_bemt", table, tool=NAME,
+                                      role="BEMT samples of the scaled lift blade", dataset_role="other", meta=meta,
+                                      derived_from=[ref["asset"]], built_against=f"{ctx.aircraft}@{ctx.acft.version}")
+        assets.set_item_dataset(prop, "other", aid)
+        changes.append(f"lift system {LIFT_SYSTEM}: P_max {p_max:.0f} W, "
+                       f"{len(table['lift_bemt']['columns']['J'])} BEMT samples (dataset)")
+    set_sources(prop, NAME, [ref])
+
+    # ---- 1.2 point masses, mass properties, reference, sizing
+    air = adh_doc.node(doc, "1.2", create=True)
+    am = adh_doc.muas(air, f"{ctx.aircraft}_airvehicle")
+    counts: Dict[str, int] = {}
+    pms, items = [], []
+    for it in rep["items"]:
+        counts[it["name"]] = counts.get(it["name"], 0) + 1
+        xyz = [it["x"], it["y"], it["z"]]
+        pms.append({"tag": f"{it['name']}_{counts[it['name']]}", "mass": _q(it["mass_kg"], "kg"), "position": _pos(xyz),
+                    "placeholder": True, "source": f"{case} sizing, item {it['name']}: {ORIGIN[it['name']]}"})
+        row = {"mass_kg": it["mass_kg"], "xyz": xyz}
+        own = _own_inertia(it["name"], it["mass_kg"], n, Lf)
+        if own:
+            row["inertia_own"] = own
+        items.append(row)
+    roll = mass_model.rollup(items)
+    if abs(roll["mass_kg"] - n["M"]) > 1e-6:
+        raise ValueError(f"the items sum to {roll['mass_kg']:.6f} kg, the result says {n['M']:.6f} kg")
+    cg = roll["cg"]
+    rin = rep["inertia_kg_m2"]
+    am["point_masses"] = pms
+    am["mass_properties"] = {
+        "mass": _q(roll["mass_kg"], "kg"), "cg": _pos(cg),
+        "inertia": {"axes": "parallel_to_design", "products_convention": "+integral(xy dm)", "units": "kg*m^2", **roll["inertia"]},
+        "source": "estimate", "placeholder": True,
+        "notes": [f"Roll-up of the {len(pms)} point masses of the {case} sizing result (mass_model.rollup). The sizing owns the "
+                  "mass model until a SpecSheet exists (ADR 0022).",
+                  "Own inertia added for tail_boom, fuselage, battery and the two lift booms (the rules of rosella.py). Every "
+                  "other item is a point mass.",
+                  f"The sizing result gives Ixx {rin['ixx']:.4f}, Iyy {rin['iyy']:.4f}, Izz {rin['izz']:.4f} kg m^2. Its Ixx is about "
+                  "y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
+                  f"The sizing CG x is {rep['airframe']['x_cg_m']:.6f} m (neutral point less the static margin target)."]}
+    base_ref = adh_doc.node(base.doc, "1.2")["muas"]["reference"]
+    cg_pt = _pos(cg)
+    am["reference"] = {
+        "design_frame": base_ref["design_frame"], "body_frame": "FRD", "euler": "3-2-1/NED", "kind": "quadplane",
+        "s_ref": copy.deepcopy(base_ref["s_ref"]), "b_ref": copy.deepcopy(base_ref["b_ref"]),
+        "c_ref": copy.deepcopy(base_ref["c_ref"]), "nominal_cg": cg_pt,
+        "mrp": {"definition": "nominal_cg", "config_id": f"{ctx.aircraft}.nominal", "point": dict(cg_pt)},
+        "surface_signs": copy.deepcopy(base_ref.get("surface_signs") or {}),
+        "placeholder_fields": ["nominal_cg", "mrp"],
+        "notes": [f"Quadplane. S, b and c: the Currawong wing (copied from aircraft/{st['base']}). The design frame has the wing "
+                  "root leading edge at x = 0.",
+                  "MRP = the sized CG of the mass model. x = neutral point (vortex lattice) less the static margin target times "
+                  "c_ref. It is a sizing value (placeholder)."]}
+    am["initial_conditions"] = {"rate_frame": "local_NED", "latitude_type": "geodetic", "attitude_sequence": "3-2-1", "units": "SI",
+                                "values": {"speed_mps": float(n["V_lap"]), "altitude_m": 0.0}, "placeholder": True}
+    t_full = 0.5 * len(rotors) * (rep["rotors"]["MAX_f"]["T_N"] + rep["rotors"]["MAX_r"]["T_N"])
+    tw = t_full / (n["M"] * G0)
+    sizing = _sizing_discipline(rep, case, st, tw)
+    air["performance"] = [sizing] + [x for x in air.get("performance") or [] if x.get("name") != "sizing"]
+    set_sources(air, NAME, [ref])
+    changes.append(f"mass: {roll['mass_kg']:.3f} kg, CG x {cg[0]:.4f} m (MRP), Ixx {roll['inertia']['ixx']:.3f} Iyy "
+                   f"{roll['inertia']['iyy']:.3f} Izz {roll['inertia']['izz']:.3f} kg m^2 (placeholder)")
+    changes.append(f"sizing: {len(sizing['tools'][0]['data_exchange']['outputs'])} outputs, energy "
+                   f"{rep['energy_total_Wh']:.0f} Wh, T/W {tw:.2f}")
+
+    # ---- 1.2.5.10 autopilot: the surface outputs of the base, the motor outputs 5 and up
+    ap = adh_doc.node(doc, "1.2.5.10", create=True)
+    apm = adh_doc.muas(ap, "autopilot")
+    base_ap = adh_doc.node(base.doc, "1.2.5.10")["muas"]["autopilot"]
+    outs = [copy.deepcopy(o) for o in base_ap["outputs"] if o["function"] in ("aileron", "elevator", "throttle", "rudder")]
+    for r in rotors:
+        k = r["motor"]
+        outs.append({"channel": k, "function": f"motor{k}", "targets": [f"prop_lift_{k}"], "placeholder": True,
+                     "source": f"ArduPlane quadplane (Q_ENABLE): output {k} drives lift motor {k} (SERVO{k}_FUNCTION "
+                               f"{MOTOR_FUNCTION[k]}). The ESC end points come with the maker part: the lift motors and ESCs "
+                               "are sized values."})
+    apm["autopilot"] = {"firmware": "ArduPlane", "outputs": outs,
+                        "notes": [f"Quadplane {cfg}: outputs 1 to 4 are the Currawong surfaces and throttle (copied). Lift motors "
+                                  f"{rotors[0]['motor']} to {rotors[-1]['motor']} on the outputs of the same number. Frame class and "
+                                  "motor order: see the warnings of the lift propulsion system."]}
+    changes.append(f"autopilot: ArduPlane, outputs 1 to 4 (copied) and motor{rotors[0]['motor']} to motor{rotors[-1]['motor']}")
+    return changes
+
+
 def ingest(doc: Dict[str, Any], ctx: Context):
     st = ctx.settings()
     if st.get("kind") == "multirotor":
         return _ingest_multirotor(doc, ctx, st)
+    if st.get("kind") == "quadplane":
+        return _ingest_quadplane(doc, ctx, st)
     path = ctx.work / FILE
     if not path.is_file():
         return None

@@ -1,0 +1,5 @@
+name: rosella
+kind: aircraft
+consumers:
+- review
+- archive
