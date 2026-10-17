@@ -7,7 +7,7 @@ Date: 2026-10-17. Step 6 of the Redback twin plan. Detail pages: [power/results.
 1. **The log holds no electrical power.** No log of the fleet (66 logs) has a working current sensor. So the factor between the maker power and the real power is not measured. An energy bracket from the start and end pack voltage replaces it.
 2. **The data do not support the claim that the maker understates power.** The energy bracket for flight 00000171 is 921 to 950 W mean power. The maker model gives 1041 W in hover and 1107 W over the mission mix, both at 40 C. Most models are 6 to 20 % above the bracket. Only the maker datasheet value (930 W) and the Mk4 sheet (970 W) sit inside or near it. The bracket has a limit: a table error of 4 to 6 points of SOC would remove the gap.
 3. **The SITL twin is unstable because its motor lag is too large.** The JSBSim engine holds power constant. That gives a lag of 0.26 s. A voltage-driven motor gives 0.10 s. The twin is stable for lags below about 0.2 s. With 0.26 s the roll and pitch phase margin is about -3 deg. With 0.10 s it is +19 deg.
-4. **The real aircraft flew with the voltage compensation at its lower limit.** The autopilot read 16 V on battery instance 0 for the whole flight. So lift_max stayed at 0.69 and the controller output gain went up. The twin needs pin overrides to reproduce this.
+4. **The real aircraft flew with the voltage compensation at its lower limit.** The autopilot read 16 V on battery instance 0 for the whole flight. So lift_max stayed at 0.69 and the controller output gain went up. MOT_BAT_IDX is 0, so the compensation follows this broken monitor. Fix it before the next flight. The twin needs pin overrides to reproduce this.
 5. **The real aircraft probably flew near its stability limit.** The log shows a lightly damped 2.0 Hz mode. The linear model with the as-built plant peaks at 1.8 Hz. No linear case reaches the 45 deg phase margin goal for the attitude loops.
 6. **The MAD chart curve "P" is output power, not input power.** The first propulsion build read it as input power. It understated shaft power by about 17 %. The fix is the transcription of the five maker bench tables. All numbers in this report use the corrected data.
 7. **In forward flight the twin needs more command than the real aircraft.** At 30 deg of tilt the mean command is 0.81 in the twin and 0.65 in the log. In hover they agree (0.597 and 0.599). The twin has no edgewise-flow model for the rotors.
@@ -65,7 +65,7 @@ The first build read the MAD datasheet chart by eye. It took the curve "P" as in
 The effect was a 17 % low shaft power and 176 W of hover input for each motor. The table gives 220 W. The fix has three steps:
 
 1. Type the five maker bench tables (75 rows) into one file.
-2. Delete the chart file and the fits that used it (Proptimiser Fit A and Fit B).
+2. Delete the chart file. Keep Proptimiser Fit B, which used the chart, as a comparison case only.
 3. Fit the motor chain and the propeller model to the tables.
 
 ### 3.2 Maker table gates and the chain fit
@@ -92,7 +92,7 @@ Fit C is in-sample. The fit and the check use the same 15 rows. The blade sectio
 
 ### 3.4 Hover power of four rotors
 
-The model values are at 48 V. The 40 C column uses the factor 1.057 for the density 1.097 kg/m3. This factor is a momentum scaling. Nobody checked it with the live Fit C model.
+The maker datasheet and the Propalyser chain values are at 48 V. The EMST and live values use the nominal pack of 44.4 V. The 40 C column uses the factor 1.057 for the density 1.097 kg/m3. This factor is a momentum scaling. Nobody checked it with the live Fit C model.
 
 | Source | ISA (W) | 40 C (W) |
 |---|---|---|
@@ -169,7 +169,7 @@ The model agrees with the log in hover and at low speed. At transit speed the lo
 
 ### 4.5 Conclusion and limits
 
-The maker hover power matches the energy only when the end SOC is 61.1 %. The mission mix matches at 58.7 %. The table gives 65.1 %. The data do not support the statement that the maker understates power. They point to a maker table that is 10 to 20 % high at the site. The limits are:
+The maker hover power matches the energy only when the end SOC is 61.1 %. The mission mix matches at 58.7 %. The table gives 65.1 %. The data do not support the statement that the maker understates power. If the bracket is correct, the models are 6 to 20 % high at the site. The limits are:
 
 - The OCV table is for another cell at 25 C. The table reads low after a discharge, so a real cell at 3.85 V sits at a lower SOC.
 - The sag under load is unknown.
@@ -234,7 +234,7 @@ No case meets the 45 deg goal for the attitude loops. The yaw margin of about -1
 The log rates are 10 Hz for attitude and rate data, and 25 Hz for the IMU. The frequency response needs 100 Hz. So every response stops at 5 Hz.
 
 - The roll rate PSD has a narrow peak at 2.0 Hz. The ratio of attitude to attitude target reaches 11 there. The linear model peaks at 1.8 Hz with a ratio of 10.
-- The real aircraft flew with an effective lag nearer 0.2 s than 0.1 s. The twin at 0.10 s is more damped than the real aircraft.
+- The real aircraft probably flew with an effective lag nearer 0.2 s than 0.1 s. The twin at 0.10 s is more damped than the real aircraft.
 - The authority fit is not reliable. Roll gives 51 rad/s^2 per mixer unit and pitch gives 112. The twin has 218 and 204. The two axes differ by a factor of 2. Treat the result as "the twin authority is not below the log value".
 - The mixer-to-gyro estimate is biased by feedback. It shows the inverse of the controller, not the plant.
 
@@ -242,7 +242,7 @@ The log rates are 10 Hz for attitude and rate data, and 25 Hz for the IMU. The f
 
 ### 6.6 Twin against log (Theil U)
 
-The replay sends the logged attitude targets to the twin (lag 0.10 s, flown map). Theil U is 0 for a perfect match. The project band is 0.3. The table skips the first 4 s.
+The replay sends the logged attitude targets to the twin (lag 0.10 s, flown map). Theil U is 0 for a perfect match. The Aerolink band (`compare.bands`) is 0.3. The table skips the first 4 s.
 
 | Channel | Hover U | Manoeuvre U |
 |---|---|---|
@@ -301,7 +301,7 @@ The SITL twin has no atmosphere offset. It flies at ISA density for the site hei
 | Real NXE OCV curve | Not measured. The table is for another cell at 25 C. |
 | Motor rotor inertia | Not measured. |
 | Placeholder values in package 0.2.0 | 45 |
-| ESC type | The user said DroneCAN. The log says PWM. The aircraft page names the "CAN" product variant. Confirm PWM. |
+| ESC type | PWM, confirmed by the user on 2026-10-17. The maker DroneCAN interface did not work for the team. The AeroPlan aircraft page still names the "CAN" product variant. Correct it in the next AeroPlan version. |
 | Stand torque (A401) | The data do not support "the stand torque reads too high". A dead-weight calibration of both load cells decides it. |
 
 ### Differences between the two result files
