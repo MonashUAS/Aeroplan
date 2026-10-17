@@ -1,0 +1,396 @@
+{
+  "log_sha256": "215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d",
+  "package_hash": "2cc698f0e41b692d",
+  "mass_kg": 9.134,
+  "hover": [
+    {
+      "t_start_s": 366.4,
+      "t_end_s": 378.8,
+      "alt_m": 52.58763328675301,
+      "p_pa": 98667.36466733871,
+      "t_isa_c": 13.54650728739535,
+      "rho_isa_temp": 1.1989293041699507,
+      "rho_if_air_25c": 1.1528721918163074,
+      "rho_board_46c_lower_bound": 1.076338950962994,
+      "tho": 0.25021292257212824,
+      "thh_learned": 0.19232507783078379,
+      "a_mean": 0.6113557018954032,
+      "a_motors": [
+        0.6520152625020257,
+        0.6664930558930207,
+        0.49643969845529556,
+        0.6304747907312714
+      ],
+      "pwm_mean_us": 1594.106574686909,
+      "pitch_deg": -2.247857429467719
+    },
+    {
+      "t_start_s": 379.5,
+      "t_end_s": 385.7,
+      "alt_m": 52.61237956631568,
+      "p_pa": 98666.73765120968,
+      "t_isa_c": 13.546160643903177,
+      "rho_isa_temp": 1.198923134768883,
+      "rho_if_air_25c": 1.1528648654884845,
+      "rho_board_46c_lower_bound": 1.076332110992302,
+      "tho": 0.22714941852515744,
+      "thh_learned": 0.20847515617647477,
+      "a_mean": 0.5855668988856496,
+      "a_motors": [
+        0.6133295683465463,
+        0.6426335035630355,
+        0.45773181218782155,
+        0.6285727114451951
+      ],
+      "pwm_mean_us": 1571.154540008228,
+      "pitch_deg": -2.419020218084998
+    },
+    {
+      "t_start_s": 728.3,
+      "t_end_s": 733.3,
+      "alt_m": 52.69995658874512,
+      "p_pa": 98664.97453125,
+      "t_isa_c": 13.545185900151159,
+      "rho_isa_temp": 1.1989057868591164,
+      "rho_if_air_25c": 1.1528442644318007,
+      "rho_board_46c_lower_bound": 1.076312877533557,
+      "tho": 0.2584050688147545,
+      "thh_learned": 0.2761231219768524,
+      "a_mean": 0.6204145107688859,
+      "a_motors": [
+        0.7023143486556254,
+        0.5760455793679732,
+        0.6523344475893376,
+        0.5509636674626074
+      ],
+      "pwm_mean_us": 1602.1689145843086,
+      "pitch_deg": 5.691855078247229
+    },
+    {
+      "t_start_s": 797.3,
+      "t_end_s": 800.8,
+      "alt_m": 79.68340148925782,
+      "p_pa": 98348.99308035715,
+      "t_isa_c": 13.370266826783759,
+      "rho_isa_temp": 1.1957957890546318,
+      "rho_if_air_25c": 1.1491522004034125,
+      "rho_board_46c_lower_bound": 1.0728659106005245,
+      "tho": 0.23955340257712773,
+      "thh_learned": 0.2523976905005319,
+      "a_mean": 0.6010007510681911,
+      "a_motors": [
+        0.6730720123758215,
+        0.5168251572541384,
+        0.6668463405744637,
+        0.5472594940683406
+      ],
+      "pwm_mean_us": 1584.89066845069,
+      "pitch_deg": 1.5883231797176904
+    }
+  ],
+  "hover_a_mean_all": 0.6045844656545324,
+  "hover_a_range": [
+    0.5855668988856496,
+    0.6204145107688859
+  ],
+  "rho_ratio_to_model": 0.9780722479290983,
+  "map_fit": {
+    "twin_accontrol_lift_max_1": {
+      "bias": -0.07387751988091847,
+      "rms": 0.07604932538611846
+    },
+    "curve_with_lift_max_inside": {
+      "bias": -0.14196723007554773,
+      "rms": 0.14363521337687676
+    },
+    "thrust_over_lift_max_then_curve": {
+      "bias": 0.00902939516095528,
+      "rms": 0.021120588433526582
+    }
+  },
+  "lift_max_log": 0.6899580000000002,
+  "map_at_thst_hover": {
+    "first_0.2118": {
+      "thst": 0.21183461,
+      "a_twin": 0.49914121189786026,
+      "a_comp": 0.5765166252080255,
+      "pwm_comp_us": 1563.0997964351427,
+      "pwm_twin_us": 1494.2356785890956
+    },
+    "last_0.2516": {
+      "thst": 0.2516438,
+      "a_twin": 0.5331624451437196,
+      "a_comp": 0.6178802448719108,
+      "pwm_comp_us": 1599.9134179360008,
+      "pwm_twin_us": 1524.5145761779104
+    }
+  },
+  "segments": [
+    {
+      "name": "ground_prestart",
+      "t_start_s": 0.0,
+      "t_end_s": 5.4,
+      "purpose": "other",
+      "note": "armed on the ground, motors at idle, before the takeoff command",
+      "median_gs_m_s": 0.006955927173729108,
+      "median_climb_m_s": 0.00869530140891727,
+      "mean_alt_m": -0.3952326167512823,
+      "mean_tho": 0.0,
+      "mean_a": 0.08642105266919574,
+      "median_pitch_deg": -0.21335977324976652
+    },
+    {
+      "name": "takeoff_climb",
+      "t_start_s": 8.5,
+      "t_end_s": 50.0,
+      "purpose": "performance",
+      "note": "vertical climb to 92.8 m at about 2.7 m/s, AUTO, spool-up 5.4 to 8.5 s left out",
+      "median_gs_m_s": 0.057394208364332754,
+      "median_climb_m_s": 2.6053703419428555,
+      "mean_alt_m": 42.625438211517164,
+      "mean_tho": 0.2531088772443045,
+      "mean_a": 0.6036215283573748,
+      "median_pitch_deg": 3.449428486340045
+    },
+    {
+      "name": "cruise_transit_92m",
+      "t_start_s": 55.0,
+      "t_end_s": 328.0,
+      "purpose": "performance",
+      "note": "AUTO legs at 92.8 m, ground speed 11 to 17 m/s, turns included",
+      "median_gs_m_s": 16.71103772623696,
+      "median_climb_m_s": 0.011762744650194,
+      "mean_alt_m": 92.69631699782151,
+      "mean_tho": 0.25232935915308774,
+      "mean_a": 0.5963951066803953,
+      "median_pitch_deg": -11.35134391058837
+    },
+    {
+      "name": "descent_to_survey",
+      "t_start_s": 334.0,
+      "t_end_s": 366.0,
+      "purpose": "performance",
+      "note": "AUTO descent from 92 m to 52.6 m",
+      "median_gs_m_s": 0.16835492144662895,
+      "median_climb_m_s": -1.578406524101287,
+      "mean_alt_m": 75.76828830242157,
+      "mean_tho": 0.17469164044596255,
+      "mean_a": 0.521262195672627,
+      "median_pitch_deg": -1.804279327090809
+    },
+    {
+      "name": "hover_1",
+      "t_start_s": 366.4,
+      "t_end_s": 378.8,
+      "purpose": "trim",
+      "note": "AUTO hover at 52.6 m",
+      "median_gs_m_s": 0.10771021316385664,
+      "median_climb_m_s": 0.022921031736948427,
+      "mean_alt_m": 52.58763328675301,
+      "mean_tho": 0.25021292257212824,
+      "mean_a": 0.6113557018954032,
+      "median_pitch_deg": -2.4286354572340354
+    },
+    {
+      "name": "hover_2",
+      "t_start_s": 379.5,
+      "t_end_s": 385.7,
+      "purpose": "trim",
+      "note": "AUTO hover at 52.6 m",
+      "median_gs_m_s": 0.1303318015627989,
+      "median_climb_m_s": -0.02981527059729757,
+      "mean_alt_m": 52.61237956631568,
+      "mean_tho": 0.22714941852515744,
+      "mean_a": 0.5855668988856496,
+      "median_pitch_deg": -2.3728212797056853
+    },
+    {
+      "name": "cruise_survey_52m",
+      "t_start_s": 388.0,
+      "t_end_s": 726.0,
+      "purpose": "performance",
+      "note": "AUTO survey legs at 52.6 m, ground speed about 6 m/s, turns included",
+      "median_gs_m_s": 5.936168337235834,
+      "median_climb_m_s": 0.0010584195726672696,
+      "mean_alt_m": 52.59620012588049,
+      "mean_tho": 0.24392571499979002,
+      "mean_a": 0.6020278165880242,
+      "median_pitch_deg": -2.3079261545745
+    },
+    {
+      "name": "hover_3",
+      "t_start_s": 728.3,
+      "t_end_s": 733.3,
+      "purpose": "trim",
+      "note": "AUTO hover at 52.7 m, last survey waypoint",
+      "median_gs_m_s": 0.14849944142851584,
+      "median_climb_m_s": 0.00438156231987802,
+      "mean_alt_m": 52.69995658874512,
+      "mean_tho": 0.2584050688147545,
+      "mean_a": 0.6204145107688859,
+      "median_pitch_deg": 5.169380822243793
+    },
+    {
+      "name": "climb_rtl",
+      "t_start_s": 734.2,
+      "t_end_s": 745.9,
+      "purpose": "performance",
+      "note": "RTL climb from 52.6 m to 79.6 m",
+      "median_gs_m_s": 0.07600770923702631,
+      "median_climb_m_s": 2.549598705231807,
+      "mean_alt_m": 65.69138502463316,
+      "mean_tho": 0.31727939334690064,
+      "mean_a": 0.6779718842237196,
+      "median_pitch_deg": 5.376360646000371
+    },
+    {
+      "name": "cruise_rtl",
+      "t_start_s": 750.0,
+      "t_end_s": 790.0,
+      "purpose": "performance",
+      "note": "RTL return leg at 79.6 m, ground speed about 10 m/s",
+      "median_gs_m_s": 10.01961811151076,
+      "median_climb_m_s": 0.029836751738579144,
+      "mean_alt_m": 79.59932928085327,
+      "mean_tho": 0.2545649712905288,
+      "mean_a": 0.6138976847016465,
+      "median_pitch_deg": 11.970806242933087
+    },
+    {
+      "name": "hover_4",
+      "t_start_s": 797.3,
+      "t_end_s": 800.8,
+      "purpose": "trim",
+      "note": "RTL hover at 79.7 m before the descent",
+      "median_gs_m_s": 0.198972941891231,
+      "median_climb_m_s": -0.06991830571607516,
+      "mean_alt_m": 79.68340148925782,
+      "mean_tho": 0.23955340257712773,
+      "mean_a": 0.6010007510681911,
+      "median_pitch_deg": 1.9942343201210992
+    },
+    {
+      "name": "descent_landing",
+      "t_start_s": 801.0,
+      "t_end_s": 858.0,
+      "purpose": "performance",
+      "note": "RTL descent to 5 m, about 1.0 to 1.6 m/s",
+      "median_gs_m_s": 0.10032131917338477,
+      "median_climb_m_s": -1.5219127950061528,
+      "mean_alt_m": 38.323941852335345,
+      "mean_tho": 0.21327310855451384,
+      "mean_a": 0.5709063370332779,
+      "median_pitch_deg": 2.4443450559674185
+    },
+    {
+      "name": "landing",
+      "t_start_s": 858.0,
+      "t_end_s": 867.0,
+      "purpose": "other",
+      "note": "last 5 m and touchdown, disarm at 867.0 s (1328.3 s boot time)",
+      "median_gs_m_s": 0.08278169272708923,
+      "median_climb_m_s": -0.5342985422377886,
+      "mean_alt_m": 2.7791958265834387,
+      "mean_tho": 0.24851453743047183,
+      "mean_a": 0.6095792698683719,
+      "median_pitch_deg": 1.3908171374167746
+    }
+  ],
+  "drag_from_pitch": {
+    "14_to_18": {
+      "n": 1112,
+      "speed_m_s": 17.00556534077746,
+      "pitch_deg": -10.812339676354181,
+      "drag_n": 17.10713730036861,
+      "cda_m2_rho1.2": 0.098592514238588,
+      "tho": 0.23457138056752921,
+      "a": 0.5841867807805998
+    },
+    "5_to_7": {
+      "n": 2248,
+      "speed_m_s": 5.970229743172931,
+      "pitch_deg": -1.5333433384297162,
+      "drag_n": 2.397740389269403,
+      "cda_m2_rho1.2": 0.11211631654015088,
+      "tho": 0.24566404337189376,
+      "a": 0.6043954678358282
+    }
+  },
+  "climb_rate_median_takeoff": 2.6374829514969123,
+  "airborne_s": [
+    5.4,
+    867.0
+  ],
+  "airborne_duration_s": 861.6,
+  "arm_19s": {
+    "max_tho": 0.0,
+    "max_alt_m": -0.013631775975227356
+  },
+  "arm_16s": {
+    "max_tho": 0.0,
+    "max_alt_m": -0.35325655341148376
+  },
+  "end_check": {
+    "rest_voltage_pack_v": 23.1,
+    "cell_voltage_v": 3.85,
+    "cells_per_pack": 6,
+    "packs_series": 2,
+    "parallel_strings": 3,
+    "cells_total": 36,
+    "battery_rest_voltage_v": 46.2,
+    "temperature_c": 25.0,
+    "soc_pct": 65.11551155115514,
+    "soc_low_pct": 64.57792207792208,
+    "soc_high_pct": 65.61872909699001,
+    "soc_sigma_pct": 1.6651070304943227,
+    "soc_half_width_pct": 3.26354981017331,
+    "capacity_mah": 13500.0,
+    "charge_remaining_mah": 8790.594059405943
+  },
+  "energy_bracket": {
+    "4.14 V per cell (table top)": {
+      "soc_start_pct": 99.60076045627376,
+      "charge_mah": 4655.508602191015,
+      "mean_current_a": 19.451985803026524,
+      "mean_power_w_at_46.2V": 898.6817440998254,
+      "mean_power_w_at_49V": 953.1473043482997
+    },
+    "4.10 V per cell": {
+      "soc_start_pct": 95.79847908745246,
+      "charge_mah": 4142.200617400139,
+      "mean_current_a": 17.307244919499187,
+      "mean_power_w_at_46.2V": 799.5947152808625,
+      "mean_power_w_at_49V": 848.0550010554601
+    },
+    "4.05 V per cell": {
+      "soc_start_pct": 91.04562737642587,
+      "charge_mah": 3500.565636411549,
+      "mean_current_a": 14.626318815090036,
+      "mean_power_w_at_46.2V": 675.7359292571597,
+      "mean_power_w_at_49V": 716.6896219394117
+    }
+  },
+  "bat_channels": {
+    "inst0": {
+      "V_min": 15.92075252532959,
+      "V_max": 16.194448471069336,
+      "V_hover1": 16.125330622990926,
+      "I_min": 0.0,
+      "I_max": 0.0010039833141490817
+    },
+    "inst1": {
+      "V_min": 35.520263671875,
+      "V_max": 49.499244689941406,
+      "V_hover1": 49.499244689941406,
+      "I_min": 47.51031494140625,
+      "I_max": 65.99899291992188
+    },
+    "inst2": {
+      "V_min": 13.377670288085938,
+      "V_max": 13.607647895812988,
+      "V_hover1": 13.549570687611897,
+      "I_min": 0.0,
+      "I_max": 0.0004280090215615928
+    }
+  }
+}

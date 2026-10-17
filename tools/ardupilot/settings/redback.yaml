@@ -30,8 +30,24 @@ flights:
     aircraft_version: "0.2.0"        # the first AeroPlan version that holds the real data of the flown aircraft. No package flew.
     mass_kg: document
     cg_m: document
-    segments: []
-    source: "Log 00000171.BIN (sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d), 1197.4 s. AUTO mission with takeoff from 466.7 s, RTL from 1193.7 s, disarm at 1328.3 s (boot time), then two short arm periods of 19 s and 16 s. Parameters: the PARM messages of the log (00000171_log.parm, sha256 3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13). Pilot: not stated by the user. Site: not stated by the user. Mass and CG: the weight sheet total 9.134 kg and the mass model of node 1.2, not weighed for this flight."
+    # Segments: time in seconds from the first message of the log (boot time 461.3 s), 10 Hz EKF and CTUN data, read with the Aerolink
+    # flight reader. Hover = ground speed below 0.8 m/s and climb rate below 0.3 m/s. Ground speed is the EKF value (no airspeed sensor,
+    # wind unknown). Source: log 00000171.BIN, sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d.
+    segments:
+      - {name: ground_prestart, t_start_s: 0.0, t_end_s: 5.4, purpose: other, note: "armed on the ground, motors at idle, before the takeoff command"}
+      - {name: takeoff_climb, t_start_s: 8.5, t_end_s: 50.0, purpose: performance, note: "vertical climb to 92.8 m at about 2.7 m/s, AUTO, spool-up 5.4 to 8.5 s left out"}
+      - {name: cruise_transit_92m, t_start_s: 55.0, t_end_s: 328.0, purpose: performance, note: "AUTO legs at 92.8 m, ground speed 11 to 17 m/s, turns included"}
+      - {name: descent_to_survey, t_start_s: 334.0, t_end_s: 366.0, purpose: performance, note: "AUTO descent from 92 m to 52.6 m"}
+      - {name: hover_1, t_start_s: 366.4, t_end_s: 378.8, purpose: trim, note: "AUTO hover at 52.6 m"}
+      - {name: hover_2, t_start_s: 379.5, t_end_s: 385.7, purpose: trim, note: "AUTO hover at 52.6 m"}
+      - {name: cruise_survey_52m, t_start_s: 388.0, t_end_s: 726.0, purpose: performance, note: "AUTO survey legs at 52.6 m, ground speed about 6 m/s, turns included"}
+      - {name: hover_3, t_start_s: 728.3, t_end_s: 733.3, purpose: trim, note: "AUTO hover at 52.7 m, last survey waypoint"}
+      - {name: climb_rtl, t_start_s: 734.2, t_end_s: 745.9, purpose: performance, note: "RTL climb from 52.6 m to 79.6 m"}
+      - {name: cruise_rtl, t_start_s: 750.0, t_end_s: 790.0, purpose: performance, note: "RTL return leg at 79.6 m, ground speed about 10 m/s"}
+      - {name: hover_4, t_start_s: 797.3, t_end_s: 800.8, purpose: trim, note: "RTL hover at 79.7 m before the descent"}
+      - {name: descent_landing, t_start_s: 801.0, t_end_s: 858.0, purpose: performance, note: "RTL descent to 5 m, about 1.0 to 1.6 m/s"}
+      - {name: landing, t_start_s: 858.0, t_end_s: 867.0, purpose: other, note: "last 5 m and touchdown, disarm at 867.0 s (1328.3 s boot time)"}
+    source: "Log 00000171.BIN (sha256 215616e25dd4532d0256e1ae4e9572d2cd73d8774ea1ae4c4b2642549ef0a57d), 1197.4 s. AUTO mission with takeoff from 466.7 s, RTL from 1193.7 s, disarm at 1328.3 s (boot time), then two short arm periods of 19 s and 16 s. Parameters: the PARM messages of the log (00000171_log.parm, sha256 3592de49e0fa3bedf37e3baac96ad93658b6368cd131ed73b0e359bcdaee3e13). Pilot: not stated by the user. Site: not stated by the user. Mass and CG: the weight sheet total 9.134 kg and the mass model of node 1.2, not weighed for this flight. Segments: cut from the EKF and CTUN data of this log (times from the first log message, see the comment above the list)."
 
 # flight_files: the files of the aircraft that go into the autopilot node 1.2.5.10 (datasets parameters, waypoints, geofence).
 # optional: a missing file is skipped with a note.
