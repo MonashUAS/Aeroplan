@@ -211,7 +211,8 @@ ladder:
     J: {value: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], source: "advance ratio samples"}
     fit_J_max: {value: 0.6, source: "the Currawong V1 blade gives CT below zero for J above 0.6; the fit covers the thrust range only"}
     poly_degree: {value: 4, placeholder: true, source: "stand-in: lowest degree with a fit error under 1 % of CT"}
-  feasibility_tol: {value: 1.0e-4, placeholder: true, source: "stand-in: sum of the scaled slacks below which the level counts as feasible"}
+  feasibility_tol: {value: 1.0e-4, placeholder: true, source: "stand-in: largest scaled slack below which the level counts as feasible. The sum is not used, because IPOPT leaves each slack near 1e-6"}
+  elastic_pull: {value: 1.0e-2, placeholder: true, source: "stand-in: weight of the squared distance (in bound widths) to the start point in the elastic phase. It keeps the phase near a start that is already feasible"}
   active_margin: {value: 1.0e-3, source: "design note: a constraint with margin below 1e-3 is active"}
   multistart_seed: {value: 20261017, source: "fixed seed so that the random starts repeat"}
   ipopt_first: {mu_init: 1.0e-3, bound_push: 1.0e-4, placeholder: true, source: "stand-in: small barrier start for a warm start"}

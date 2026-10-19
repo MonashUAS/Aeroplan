@@ -53,7 +53,7 @@ Follow these steps for each level.
 3. Read `active` in the level file. It lists the constraints with a margin below 1e-3. These constraints set the design.
 4. Read `cost_Wh_per_unit` of a constraint in the `constraints` block. It gives the energy that one unit of relaxation saves.
 
-Every level first runs an elastic feasibility phase. The solver adds a slack to each inequality and minimises the sum. When the sum is above the tolerance, the status is `infeasible`. The report then lists `slack > 0` with the names. These are the constraints that you must relax. The result of `optimise` is the result of the highest level that converged. The field `level_reached` names it.
+Every level first runs an elastic feasibility phase. The solver adds a slack to each inequality and minimises the sum. When the largest slack is above the tolerance, the status is `infeasible`. The report then lists `slack > 0` with the names. These are the constraints that you must relax. The result of `optimise` is the result of the highest level that converged. The field `level_reached` names it.
 
 ## Check your own parts
 

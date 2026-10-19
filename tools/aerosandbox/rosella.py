@@ -657,7 +657,18 @@ class Case:
             return
         sl = 0.0
         if self.feasibility:
-            sl = o.variable(init_guess=0.05, lower_bound=0.0, scale=0.1)
+            # Start the slack at the violation of the start point (a start that is feasible gives a slack near zero)
+            # in place of a fixed 0.05, which pushes the phase away from a good start.
+            s0 = 0.05
+            if self.init:
+                try:
+                    ev = lambda x: float(np.ravel(o.value(x, o.initial()))[0])
+                    v0 = ev(expr)
+                    s0 = max(0.0, (ev(lo) - v0) / scale if lo is not None else 0.0, (v0 - ev(hi)) / scale if hi is not None else 0.0)
+                    s0 = min(s0 + 1e-4, 1.0) if np.isfinite(s0) else 0.05
+                except RuntimeError:
+                    s0 = 0.05
+            sl = o.variable(init_guess=s0, lower_bound=0.0, scale=0.1)
             self.slacks[name] = sl
         d = []
         if lo is not None:
@@ -1029,7 +1040,14 @@ class Case:
                           L_boom=L_boom, V_lap=V_lap, V_map=V_map, Vs=Vs, m_fuse=m_fuse, A_cu=A_cu, R=R, D=D, kv_rad=kv_rad,
                           r_i=r_i, sigma_cr=sigma_cr, L_run_f=L_runs[0], L_run_r=L_runs[1], R_w_f=R_w[0], R_w_r=R_w[1])
         if self.feasibility and self.slacks:
-            o.minimize(sum(self.slacks.values()))                      # elastic phase: the sum of the scaled slacks
+            obj = sum(self.slacks.values())                            # elastic phase: the sum of the scaled slacks
+            # Small pull to the start point: with all slacks at zero the objective is flat, and IPOPT can drift far away
+            # from a start that is already feasible. The weight is small, so a real violation still wins.
+            near = [((self.named[k] - self.start(k, 0.0)) / (hi - lo)) ** 2 for k, (lo, hi) in self.bounds.items()
+                    if k in self.v and hi > lo and k in self.init]
+            if near:
+                obj = obj + val(self.st["ladder"], "elastic_pull") * sum(near)
+            o.minimize(obj)
         else:
             o.minimize(self.E_total / 100.0)
         return self
@@ -1317,7 +1335,7 @@ def _status_word(c: Case) -> str:
 def solve_level(st, air, motor, config, cells, level, init, fixed=None, overrides=None, verbose=False, max_iter=300,
                 max_runtime=1e20) -> Dict[str, Any]:
     """
-    One level: the elastic feasibility phase, then the optimality phase from the feasibility point. When the optimality phase
+    One level: the elastic feasibility phase (feasible when the largest scaled slack is at most ladder.feasibility_tol), then the optimality phase from the feasibility point. When the optimality phase
     fails, one retry from the feasibility point with the retry options of settings ladder.ipopt_retry.
     Returns {status, rep, feasibility, iterations, seconds, attempts}. status: ok, acceptable, infeasible or failed.
     """
@@ -1331,10 +1349,17 @@ def solve_level(st, air, motor, config, cells, level, init, fixed=None, override
         return Case(st, air, motor, config, cells, fixed=fixed, overrides=overrides, level=level, feasibility=feas, init=ini).build()
 
     cf = make(True, init)
-    cf.solve(verbose=verbose, max_iter=max_iter, max_runtime=left())
+    # A warm start (a point from the level below) gets the small barrier start of ladder.ipopt_first. The default start
+    # (mu_init 0.1, bound push 0.01) throws the iterate far from a start that is nearly feasible.
+    w = lad["ipopt_first"]
+    wopt = {"ipopt.mu_init": float(w["mu_init"]), "ipopt.bound_push": float(w["bound_push"]),
+            "ipopt.bound_frac": float(w["bound_push"])} if init else None
+    cf.solve(verbose=verbose, max_iter=max_iter, max_runtime=left(), options=wopt)
     rf = cf.report()
     total = float(sum(rf["slacks"].values()))
-    feas = {"slack_total": total, "slacks": rf["slacks"], "status": cf.stats, "feasible": total <= val(lad, "feasibility_tol")}
+    worst = float(max(rf["slacks"].values(), default=0.0))      # IPOPT leaves each slack near 1e-6, so the sum grows with the count
+    feas = {"slack_total": total, "slack_max": worst, "slacks": rf["slacks"], "status": cf.stats,
+            "feasible": worst <= val(lad, "feasibility_tol")}
     res: Dict[str, Any] = {"feasibility": feas, "iterations": {"feasibility": cf.stats.get("iter_count", 0), "optimality": 0},
                            "attempts": []}
     if not feas["feasible"]:
