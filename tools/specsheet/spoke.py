@@ -8,7 +8,7 @@ Weight log (`weights_sheet`): a group in column A is one subassembly. The row wi
 column F is the weighed mass of the whole subassembly (the rule of the sheet). The other rows with a mass are the
 itemised parts. The sheet "unitemised" lines are not used: the spoke takes the weighed total less the mapped parts.
 Position sheet (`positions_sheet`): column F is the distance from the wing root leading edge in mm, positive
-forward. x_design = -F / 1000. The sheet has no y or z, so y = 0 and z = 0 (stand-ins, see the notes written).
+forward. x_design = +F / 1000 (the design frame is FRD, x forward). The sheet has no y or z, so y = 0 and z = 0 (stand-ins, see the notes written).
 
 CSV mode (settings `format: csv`, or a workbook that ends in `.csv`): the input is the weight log alone, exported from
 the sheet as CSV (same columns A to F as the xlsx weight log; the header row is the row with "Component" in column B).
@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from aeroplan import adh_doc, mass_model
+from aeroplan.frame import planform_le_x
 from aeroplan.spokes import Context, set_sources
 
 NAME = "SpecSheet"
@@ -172,9 +173,9 @@ def read_workbook(path: Path, st: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _x(row: Dict[str, float], datum: float = 0.0) -> float:
-    """Design x (m, aft) of a sheet row. The sheet measures from the wing root leading edge, positive forward, so
-    x = datum - F/1000 with datum = the design x of that leading edge (settings `datum_x_m`)."""
-    return datum - row["x_mm"] / 1000.0
+    """Design x (m, forward, FRD) of a sheet row. The sheet measures from the wing root leading edge, positive forward, so
+    x = datum + F/1000 with datum = the design x of that leading edge (settings `datum_x_m`)."""
+    return datum + row["x_mm"] / 1000.0
 
 
 def _weighted_x(rows: List[Dict[str, float]], datum: float = 0.0) -> float:
@@ -191,7 +192,7 @@ def _root_le_x(doc: Dict[str, Any], st: Dict[str, Any]) -> Optional[float]:
     except (KeyError, ValueError):
         return None
     s0 = pf["sections"][0]
-    return float(pf["position"]["xyz"][0] + s0["x_offset"])
+    return float(planform_le_x(pf["position"]["xyz"][0], s0["x_offset"]))
 
 
 def _tag(*parts: str) -> str:
@@ -297,7 +298,7 @@ def trim_inputs(doc: Dict[str, Any], st: Dict[str, Any], root: Path) -> Optional
 
 def apply_battery_trim(subs: List[Dict[str, Any]], st: Dict[str, Any], trim: Dict[str, Any]) -> Dict[str, Any]:
     """Move the battery point mass fore or aft so that the mass CG sits at the best flight CG
-    x_best = x_np - SM_goal c_ref. SM_goal is the middle of the requirement band. The move is clamped to +/- travel_m.
+    x_best = x_np + SM_goal c_ref (FRD: the CG is ahead of the neutral point). SM_goal is the middle of the requirement band. The move is clamped to +/- travel_m.
     Only the mass CG moves (ADR 0013). Raises ValueError for a missing tag or a margin outside the band."""
     bt = st["battery_trim"]
     pms = [p for s in subs for p in s["point_masses"]]
@@ -309,19 +310,19 @@ def apply_battery_trim(subs: List[Dict[str, Any]], st: Dict[str, Any], trim: Dic
     m_tot = sum(p["mass_kg"] for p in pms)
     mx_other = sum(p["mass_kg"] * p["xyz"][0] for p in pms if p is not bat)
     sm_goal = 0.5 * (trim["sm_min"] + trim["sm_max"])
-    x_best = trim["x_np"] - sm_goal * trim["c_ref"]
+    x_best = trim["x_np"] + sm_goal * trim["c_ref"]
     x_before = (mx_other + bat["mass_kg"] * bat["xyz"][0]) / m_tot
     dx_free = (x_best * m_tot - mx_other) / bat["mass_kg"] - bat["xyz"][0]
     dx = max(-travel, min(travel, dx_free))
     clamped = abs(dx_free) > travel + 1e-12
     bat["xyz"][0] += dx
     cg = (mx_other + bat["mass_kg"] * bat["xyz"][0]) / m_tot
-    sm = (trim["x_np"] - cg) / trim["c_ref"]
+    sm = (cg - trim["x_np"]) / trim["c_ref"]
     bat["source"] += (f". Battery cage trim: moved {dx * 1000:+.1f} mm in x to reach the best flight CG with static margin "
                       f"{sm_goal:.3f} (middle of the requirement band) about the neutral point of {trim['np_file']}"
                       f"{' (clamped at the travel limit)' if clamped else ''}. {bt.get('source', '')}")
     rep = {"x_np_m": trim["x_np"], "c_ref_m": trim["c_ref"], "sm_goal": sm_goal, "x_best_m": x_best, "dx_m": dx,
-           "dx_free_m": dx_free, "clamped": clamped, "cg_before_m": x_before, "sm_before": (trim["x_np"] - x_before) / trim["c_ref"],
+           "dx_free_m": dx_free, "clamped": clamped, "cg_before_m": x_before, "sm_before": (x_before - trim["x_np"]) / trim["c_ref"],
            "cg_m": cg, "sm": sm}
     if not trim["sm_min"] - 1e-9 <= sm <= trim["sm_max"] + 1e-9:
         raise ValueError(f"battery_trim: the static margin reached ({sm:.4f}) is outside the band {trim['sm_min']} to "

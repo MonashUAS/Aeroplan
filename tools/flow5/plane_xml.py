@@ -1,6 +1,7 @@
 """flow5 plane XML: read the body frames and point masses, and write a plane XML from the ADH document.
 
-The wing reader is aeroplan.adapters.flow5_geometry.read_plane. Layout of the file: a hand copy of the plane XML that
+flow5 works in x aft, y right, z up. The readers return, and the writer takes, the design frame (FRD, aeroplan.frame): each
+position is flipped at the file edge. The wing reader is aeroplan.adapters.flow5_geometry.read_plane. Layout of the file: a hand copy of the plane XML that
 flow5 7.57 writes (`<xflplane version="1.0">`, the Currawong file plane_with_body.xml). The writer makes the same
 elements. Meshing values (panel counts and distributions) are tool settings: they come from tools/flow5/settings/.
 """
@@ -11,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
+
+from aeroplan.frame import flip_array, flip_point
 
 
 def _tag(e: ET.Element) -> str:
@@ -26,14 +29,15 @@ def _vec(text: str) -> np.ndarray:
 
 
 def read_body_and_masses(path: Path) -> Tuple[List[np.ndarray], np.ndarray, List[Dict[str, Any]], Dict[str, Any]]:
-    """(frames, body position, point masses, body mesh settings) of a plane XML. Frames are right-half points."""
+    """(frames, body position, point masses, body mesh settings) of a plane XML, in the design frame (FRD). Frames are
+    right-half points, nose first."""
     root = ET.fromstring(Path(path).read_bytes())
     plane = _child(root, "plane")
     masses = []
     inertia = _child(plane, "inertia")
     for pm in (c for c in (inertia if inertia is not None else []) if _tag(c) == "point_mass"):
         masses.append({"tag": _child(pm, "tag").text.strip(), "mass_kg": float(_child(pm, "mass").text),
-                       "xyz": _vec(_child(pm, "coordinates").text).tolist()})
+                       "xyz": flip_point(_vec(_child(pm, "coordinates").text))})
     body = _child(plane, "body")
     if body is None:
         return [], np.zeros(3), masses, {}
@@ -41,12 +45,12 @@ def read_body_and_masses(path: Path) -> Tuple[List[np.ndarray], np.ndarray, List
     nurbs = _child(body, "nurbs")
     frames, x_panels = [], []
     for fr in (c for c in nurbs if _tag(c) == "frame"):
-        frames.append(np.array([_vec(p.text) for p in fr if _tag(p) == "point"]) + pos)
+        frames.append(flip_array(np.array([_vec(p.text) for p in fr if _tag(p) == "point"]) + pos))
         x_panels.append(int(_child(fr, "x_panels").text))
     stripes = [int(s.text) for s in _child(body, "panel_stripes")]
     mesh = {"name": _child(body, "name").text, "type": _child(body, "type").text, "x_panels": x_panels,
             "panel_stripes": stripes}
-    return frames, pos, masses, mesh
+    return frames, np.array(flip_point(pos)), masses, mesh
 
 
 def read_wing_masses(path: Path) -> Dict[str, float]:
@@ -87,7 +91,8 @@ def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dic
                 masses: List[Dict[str, Any]], mesh: Dict[str, Any]) -> None:
     """Write a flow5 plane XML.
 
-    surfaces: muas.planform dicts. body: {"frames": [array], "position": xyz} or None. masses: {tag, mass_kg, xyz}.
+    surfaces: muas.planform dicts. body: {"frames": [array], "position": xyz} or None. masses: {tag, mass_kg, xyz}. All
+    positions are in the design frame (FRD): the writer flips them to the flow5 frame.
     mesh: flow5 settings {"surfaces": {surface_name: {"sections": [{x_panels, x_dist, y_panels, y_dist}],
     "tip_strips"}}, "body": {"type", "x_panels", "panel_stripes"}}.
     """
@@ -102,13 +107,13 @@ def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dic
         pm = _sub(inert, "Point_Mass")
         _sub(pm, "Tag", m["tag"])
         _sub(pm, "Mass", _f(m["mass_kg"]))
-        _sub(pm, "coordinates", ", ".join(_f(v) for v in m["xyz"]))
+        _sub(pm, "coordinates", ", ".join(_f(v) for v in flip_point(m["xyz"])))
     if body is not None:
         bm = mesh.get("body", {})
         b = _sub(p, "body")
         _sub(b, "Name", bm.get("name", "Fuselage"))
         _sub(b, "Description", "Written by the AeroPlan flow5 spoke from the ADH document")
-        pos = np.asarray(body["position"], float)
+        pos = np.asarray(flip_point(body["position"]), float)
         _sub(b, "Position", ", ".join(_f(v) for v in pos))
         _sub(b, "Type", bm.get("type", "FLATPANELS"))
         n_pts = len(body["frames"][0])
@@ -123,7 +128,7 @@ def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dic
             f = _sub(nurbs, "frame")
             _sub(f, "Angle", 0)
             _sub(f, "x_panels", nx)
-            local = np.asarray(fr) - pos
+            local = flip_array(fr) - pos
             _sub(f, "Position", f"{_f(local[0, 0])}, 0, 0")
             for q in local:
                 _sub(f, "point", ", ".join(_f(v) for v in q))
@@ -133,7 +138,7 @@ def write_plane(path: Path, name: str, surfaces: List[Dict[str, Any]], body: Dic
         _sub(w, "Name", s["surface_name"])
         _sub(w, "Type", s["kind"])
         _sub(w, "Description")
-        _sub(w, "Position", ", ".join(_f(v) for v in s["position"]["xyz"]))
+        _sub(w, "Position", ", ".join(_f(v) for v in flip_point(s["position"]["xyz"])))
         _sub(w, "Tip_Strips", sm.get("tip_strips", 10))
         _sub(w, "Rx_angle", _f(s.get("rx_deg", 0.0)))
         _sub(w, "Ry_angle", _f(s.get("ry_deg", 0.0)))

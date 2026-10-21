@@ -6,12 +6,12 @@ writes the structure that no other spoke knows: the four lift rotors, the motor 
 reference data, the ground contacts and the demo shapes of the 3D view. The mass comes from the SpecSheet spoke, the
 propulsion system from the Propalyser spoke, the body drag and the EMST results from the AeroSandbox worker.
 
-Frames. The design frame is x aft, y right, z up (metres), origin at the middle of the four hubs (the body origin).
-A CAD arm vector is turned into it by `design_from_cad` (CAD axes: -Z forward, +Y up, X right: x_design = Z_cad,
-y_design = X_cad, z_design = Y_cad). The hub of the given arm is d * cos(angle) on each CAD axis, with no rounding.
+Frames. The design frame is FRD: x forward, y right, z down (metres), origin at the middle of the four hubs (the body
+origin). A CAD arm vector is turned into it by `design_from_cad` (CAD axes: -Z forward, +Y up, X right: x_design =
+-Z_cad, y_design = X_cad, z_design = -Y_cad). The hub of the given arm is d * cos(angle) on each CAD axis, with no rounding.
 The other hubs are its mirror images.
 
-Rotor sense. ArduPilot gives the turn direction seen from above. A lift rotor has its thrust up, so the sense that
+Rotor sense. ArduPilot gives the turn direction seen from above. A lift rotor has its thrust up (-z), so the sense that
 `muas.propeller.spin` states (looking along the thrust vector from behind the rotor, the JSBSim convention) is the view
 from below: ArduPilot CCW is `cw` and ArduPilot CW is `ccw`. CW then means that the angular velocity points along the
 thrust axis (right-hand rule).
@@ -27,10 +27,10 @@ from . import adh_doc
 
 #: ArduPilot Quad X (AP_MotorsMatrix, frame class 1, type 1): motor number -> (position, turn direction seen from above)
 QUAD_X = {1: ("front_right", "ccw"), 2: ("rear_left", "ccw"), 3: ("front_left", "cw"), 4: ("rear_right", "cw")}
-#: position name -> signs of (x, y) in the design frame (x aft, y right)
-SIGNS = {"front_right": (-1.0, 1.0), "front_left": (-1.0, -1.0), "rear_right": (1.0, 1.0), "rear_left": (1.0, -1.0)}
+#: position name -> signs of (x, y) in the design frame (x forward, y right)
+SIGNS = {"front_right": (1.0, 1.0), "front_left": (1.0, -1.0), "rear_right": (-1.0, 1.0), "rear_left": (-1.0, -1.0)}
 CAD_AXES = {"x": 0, "y": 1, "z": 2}
-UNIT_UP = [0.0, 0.0, 1.0]
+UNIT_UP = [0.0, 0.0, -1.0]      # up is -z (FRD)
 
 
 def spin_from_ardupilot(seen_from_above: str) -> str:
@@ -117,7 +117,7 @@ def seed(doc: Dict[str, Any], aircraft: str, st: Dict[str, Any]) -> List[str]:
     mrp = old.get("mrp") or {"definition": "nominal_cg", "config_id": f"{aircraft}.nominal", "point": dict(cg)}
     s_ref = size[1] * size[2]
     am["reference"] = {
-        "design_frame": "x_aft_y_right_z_up_m_bodyOrigin", "body_frame": "FRD", "euler": "3-2-1/NED", "kind": "multirotor",
+        "design_frame": "x_fwd_y_right_z_down_m_bodyOrigin", "body_frame": "FRD", "euler": "3-2-1/NED", "kind": "multirotor",
         "s_ref": _q(s_ref, "m^2"), "b_ref": _q(float(np.ptp(hub_arr[:, 1])), "m"),
         "c_ref": _q(float(np.ptp(hub_arr[:, 0])), "m"), "nominal_cg": cg, "mrp": mrp, "surface_signs": {},
         "placeholder_fields": sorted(set(old.get("placeholder_fields") or []) | {"s_ref", "nominal_cg", "mrp"}),
@@ -184,8 +184,8 @@ def seed(doc: Dict[str, Any], aircraft: str, st: Dict[str, Any]) -> List[str]:
                                        "measure the tube."), "placeholder": True})
     fm["visual"] = vis
     g = st["gear"]
-    lowest = min(centre[2] - size[2] / 2, float((hub_arr[:, 2] - float(mot["length_m"])).min()))
-    foot_z = lowest - float(g["leg_length_m"])
+    lowest = max(centre[2] + size[2] / 2, float((hub_arr[:, 2] + float(mot["length_m"])).max()))   # z is down
+    foot_z = lowest + float(g["leg_length_m"])
     contacts = []
     for n in sorted(H):
         sx, sy = SIGNS[H[n]["position"]]

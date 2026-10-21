@@ -42,6 +42,7 @@ from aeroplan.adapters.flow5_geometry import read_foil, read_plane, read_t7_scal
 from aeroplan.aero_buildup import from_flow5, to_daveml
 from aeroplan.daveml_adh import from_xml
 from aeroplan.dml_validate import validate_dml
+from aeroplan.frame import flip_point
 from aeroplan.geometry import body_adh, body_frames, lifting_surface_adh
 from aeroplan.spokes import Context, set_sources
 
@@ -63,7 +64,8 @@ def _t7_analysis(path: Path) -> Dict[str, Any]:
            "c": float(rd.findtext("Reference_Chord_Length")), "ref_kind": rd.findtext("Reference_Dimensions"),
            "use_plane_inertia": pol.findtext("Use_plane_inertia") == "true"}
     out["mass"] = float(inert.findtext("Mass"))
-    out["cog"] = [float(v) for v in inert.findtext("CoG").split(",")]
+    out["cog_flow5"] = [float(v) for v in inert.findtext("CoG").split(",")]     # flow5 axes: x aft, z up
+    out["cog"] = flip_point(out["cog_flow5"])                                      # design frame (FRD)
     for k in ("Ixx", "Iyy", "Izz", "Ixz"):
         out[k] = float(inert.findtext(f"CoG_{k}"))
     return out
@@ -159,7 +161,7 @@ def ingest(doc: Dict[str, Any], ctx: Context):
         raise ValueError(f"{t7_xml.name}: the analysis uses the plane inertia, which the export does not hold")
     op = read_t7_scalars(t7_txt)
     for k, v in (("mass", op["mass"]), ("cog_x", op["CoG_x"]), ("cog_z", op["CoG_z"])):
-        ref_v = t7["mass"] if k == "mass" else t7["cog"][0 if k == "cog_x" else 2]
+        ref_v = t7["mass"] if k == "mass" else t7["cog_flow5"][0 if k == "cog_x" else 2]
         # the op-point text file prints 6 significant digits, so a value with more digits differs by up to 5e-6
         if not math.isclose(v, ref_v, rel_tol=1e-5, abs_tol=1e-9):
             raise ValueError(f"T7 point {k} {v} differs from the T7 analysis {ref_v}")
@@ -173,14 +175,15 @@ def ingest(doc: Dict[str, Any], ctx: Context):
                   "flow5 does not document its Ixz sign convention in the export: Ixz is not verified."]}
     old_ref = air["muas"].get("reference") or {}
     air["muas"]["reference"] = {
-        "design_frame": "x_aft_y_right_z_up_m_flow5Origin",
+        "design_frame": "x_fwd_y_right_z_down_m_wingLE",
         "s_ref": {"value": t7["S"], "units": "m^2"}, "b_ref": {"value": t7["b"], "units": "m"},
         "c_ref": {"value": t7["c"], "units": "m"}, "nominal_cg": {"xyz": t7["cog"]},
         "mrp": {"definition": "nominal_cg", "config_id": f"{ctx.aircraft}.nominal", "point": {"xyz": t7["cog"]}},
         **({"surface_signs": old_ref["surface_signs"]} if "surface_signs" in old_ref else {}),
         "placeholder_fields": ["nominal_cg", "mrp"],
         "notes": [f"S, b and c: the {t7['ref_kind']} reference dimensions of the flow5 T7 analysis {t7_xml.name}.",
-                  "The design frame origin is the flow5 origin. Its offset from the nose is not recorded.",
+                  "The design frame is FRD (x forward, y right, z down), flipped from the flow5 axes (x aft, z up) at the "
+                  "file edge. The origin is the flow5 origin, the wing root leading edge.",
                   "MRP = the CoG of the T7 analysis (the nominal CG). It is a mass model value (placeholder)."]}
     changes.append(f"reference: S {t7['S']} m^2, b {t7['b']} m, c {t7['c']} m, MRP {t7['cog']}")
 
@@ -252,7 +255,7 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
         raise ValueError("node 1.2 needs muas.reference and muas.mass_properties with inertia (run the SpecSheet spoke)")
     i = mp["inertia"]
     inputs = {"S": ref["s_ref"]["value"], "b": ref["b_ref"]["value"], "cbar": ref["c_ref"]["value"],
-              "mass": mp["mass"]["value"], "cg": mp["cg"]["xyz"], "inertia": [i["ixx"], i["iyy"], i["izz"], i["ixz"]]}
+              "mass": mp["mass"]["value"], "cg": flip_point(mp["cg"]["xyz"]), "inertia": [i["ixx"], i["iyy"], i["izz"], i["ixz"]]}   # flow5 axes
     project = ctx.work / sr["project"] if sr.get("project") else None
     if project is not None and not project.is_file():
         raise ValueError(f"project file not found: {project}")

@@ -12,6 +12,7 @@ import pytest
 import yaml
 
 from aeroplan import adh_doc, assets, datum, source_tree
+from aeroplan.frame import flip_array, flip_point
 from aeroplan.geometry import (body_adh, body_frames, distance_to_mesh, foils_of, lifting_surface_adh, planform_wing,
                                section_points)
 from aeroplan.parts import _hinge_point
@@ -39,7 +40,8 @@ FOILS = {"root": naca(), "tip": naca(m=0.0, t=0.09, n=41, te=0.002)}
 
 
 def planform(name, kind, xyz, sections, rx=0.0, ry=0.0, two_sided=True):
-    return {"surface_name": name, "kind": kind, "position": {"frame": "design", "xyz": xyz, "units": "m"},
+    """`xyz` is given as x aft, z up (the readable orientation of these numbers). The stored position is FRD."""
+    return {"surface_name": name, "kind": kind, "position": {"frame": "design", "xyz": flip_point(xyz), "units": "m"},
             "rx_deg": rx, "ry_deg": ry, "symmetric": True, "two_sided": two_sided, "sections": sections,
             "source": "synthetic", "placeholder": False}
 
@@ -58,14 +60,15 @@ FIN = planform("Fin", "FIN", [1.3, 0.0, 0.08], [
 
 
 def frames():
-    """A body of 9 frames: a point nose, 7 frames of 13 right-half points (top to bottom), a point tail."""
+    """A body of 9 frames: a point nose, 7 frames of 13 right-half points (top to bottom), a point tail. The numbers are
+    written x aft, z up and returned in the design frame (FRD): the nose has the highest x."""
     out = [np.array([[-0.5, 0.0, 0.0]] * 13)]
     for x, r, zc in ((-0.45, 0.04, 0.0), (-0.3, 0.08, 0.005), (-0.1, 0.1, 0.01), (0.1, 0.1, 0.01), (0.3, 0.08, 0.0),
                      (0.5, 0.05, -0.01), (0.7, 0.03, -0.01)):
         a = np.linspace(0.0, np.pi, 13)
         out.append(np.column_stack([np.full(13, x), r * np.sin(a) * (1 + 0.1 * np.sin(2 * a)), zc + 1.2 * r * np.cos(a)]))
     out.append(np.array([[0.8, 0.0, -0.01]] * 13))
-    return out
+    return [flip_array(f) for f in out]
 
 
 def surface_item(pf, instance, name):
@@ -141,6 +144,7 @@ def two_body_doc():
         a = np.linspace(0.0, np.pi, 13)
         boom.append(np.column_stack([np.full(13, x), 0.02 * np.sin(a), -0.01 + 0.02 * np.cos(a)]))
     boom.append(np.array([[1.6, 0.0, -0.01]] * 13))
+    boom = [flip_array(f) for f in boom]
     adh_doc.put_subcomponent(emp, {"name": "Tail boom", "geometry": {"body": body_adh(boom)},
                                    "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": "tail_boom"}})
     adh_doc.validate_document(doc)
@@ -242,13 +246,14 @@ def written(tmp_path_factory):
     doc = make_doc()
     spec = vsp.spec_from_doc(doc, {"wings": ["wing_main", "htail", "fin"], "body": "fuselage"})
     path = tmp_path_factory.mktemp("vsp") / "t.vsp3"
-    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    runner.run({"job": "write", "spec": vsp.vsp_spec(spec), "path": str(path)})
     return doc, spec, path
 
 
 @needs_openvsp
 def test_parameter_round_trip_is_exact(written):
     _, spec, path = written
+    spec = vsp.vsp_spec(spec)                       # the worker holds the OpenVSP frame (x aft, z up)
     back = runner.run({"job": "read", "path": str(path)})["spec"]
     assert back["other"] == []
     by = {w["instance"]: w for w in back["wings"]}
@@ -285,7 +290,7 @@ def test_the_openvsp_surface_holds_the_adh_shape(written):
     for inst in ("wing_main", "htail", "fin"):
         ls = adh_doc.find(doc, inst)["geometry"]["lifting_surface"]
         pts = [[p["x"], p["y"], p["z"]] for k in ("leading_edge_spline", "trailing_edge_spline") for p in ls[k]["points"]]
-        sets.append({"geom": inst, "points": pts})
+        sets.append({"geom": inst, "points": flip_array(np.array(pts)).tolist()})
     d = runner.run({"job": "project", "path": str(path), "sets": sets})["distances"]
     assert max(max(v) for v in d) <= SHAPE
 
@@ -319,7 +324,7 @@ def test_area_span_and_control_surface_stations_agree(written):
         k = int(np.searchsorted(ys, y)) - 1
         t = (y - ys[k]) / (ys[k + 1] - ys[k])
         ruled = (1 - t) * _hinge_point(wing, 0.75, ys[k]) + t * _hinge_point(wing, 0.75, ys[k + 1])
-        assert np.abs(hinge - ruled).max() <= SHAPE
+        assert np.abs(hinge - flip_array(ruled)).max() <= SHAPE          # the hinge rule gives FRD, OpenVSP x aft and z up
 
 
 @needs_openvsp
@@ -405,7 +410,7 @@ def test_summary_recovers_known_slopes_and_the_neutral_point():
     s = vsp.summarize(alpha, beta, alpha_trim=2.0, x_ref=0.1, c_ref=0.3)
     assert s["CLa"] == pytest.approx(cla) and s["Cma"] == pytest.approx(cma)
     assert s["CL0"] == pytest.approx(cl0) and s["Cm0"] == pytest.approx(cm0)
-    assert s["NP_x"] == pytest.approx(0.1 - 0.3 * cma / cla)
+    assert s["NP_x"] == pytest.approx(0.1 + 0.3 * cma / cla)         # FRD: the neutral point is behind (lower x than) the MRP
     assert (s["Cyb"], s["Clb"], s["Cnb"]) == pytest.approx((-0.3, -0.1, 0.07))
     assert s["alpha_window_deg"] == [-2.0, 6.0]
 
@@ -456,12 +461,12 @@ def test_two_bodies_round_trip_with_no_gap(tmp_path):
     doc, boom = two_body_doc()
     spec = vsp.spec_from_doc(doc, {"wings": ["wing_main", "htail", "fin"], "bodies": ["fuselage", "tail_boom"]})
     path = tmp_path / "t2.vsp3"
-    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    runner.run({"job": "write", "spec": vsp.vsp_spec(spec), "path": str(path)})
     back = runner.run({"job": "read", "path": str(path)})["spec"]
     assert back["other"] == []
     assert sorted(b["instance"] for b in back["bodies"]) == ["fuselage", "tail_boom"]
     by = {b["instance"]: b for b in back["bodies"]}
-    for b in spec["bodies"]:
+    for b in vsp.vsp_spec(spec)["bodies"]:
         fa, fb = np.array(b["frames"]), np.array(by[b["instance"]]["frames"])
         assert fa.shape == fb.shape and np.abs(fa - fb).max() <= EXACT
     gaps = vsp.shape_gaps(path, {}, [(b["instance"], [np.asarray(f) for f in b["frames"]]) for b in spec["bodies"]])
@@ -528,7 +533,7 @@ def test_actuator_disk_runs_in_vspaero(tmp_path):
     """A disk ahead of a wing: VSPAERO has the disk at its hub with its CT, the slipstream adds lift, more thrust adds more,
     and the spin sign turns the roll moment."""
     doc = make_doc()
-    spec = vsp.spec_from_doc(doc, {"wings": ["wing_main"]})
+    spec = vsp.vsp_spec(vsp.spec_from_doc(doc, {"wings": ["wing_main"]}))        # the worker holds the OpenVSP frame
     x0 = spec["wings"][0]["position"][0]
     spec["rotors"] = [{"instance": "disk", "p0": [x0 - 0.3, 0.3, 0.0], "axis": [1.0, 0.0, 0.0], "diameter": 0.3}]
     path = tmp_path / "disk.vsp3"

@@ -2,7 +2,7 @@
   "wbs_no": "1.10.2",
   "name": "DataRepository",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "data_repository",
     "assets": [
       {

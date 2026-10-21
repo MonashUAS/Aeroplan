@@ -1,0 +1,73 @@
+{
+  "additionalProperties": false,
+  "description": "A firmware release that flies on the air vehicle.",
+  "properties": {
+    "binary": {
+      "anyOf": [
+        {
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The firmware file, when registered",
+      "title": "Binary"
+    },
+    "board": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Board"
+    },
+    "firmware": {
+      "description": "For example ArduPlane",
+      "minLength": 1,
+      "title": "Firmware",
+      "type": "string"
+    },
+    "git_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Git Hash"
+    },
+    "release_id": {
+      "minLength": 1,
+      "title": "Release Id",
+      "type": "string"
+    },
+    "source": {
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "release_id",
+    "firmware",
+    "version",
+    "source"
+  ],
+  "title": "SoftwareRelease",
+  "type": "object"
+}

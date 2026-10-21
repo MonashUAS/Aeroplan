@@ -86,7 +86,7 @@ worker = _Worker()
 MR = {
     "source": "test settings",
     "arm": {"distance_mm": 1000.0, "angles_deg": {"x": 120.0, "y": 90.0, "z": 30.0},
-            "design_from_cad": {"x": "z", "y": "x", "z": "y"}, "position": "rear_left"},
+            "design_from_cad": {"x": "-z", "y": "x", "z": "-y"}, "position": "rear_left"},
     "rotor": {"diameter_m": 0.4, "disc_thickness_m": 0.002, "disc_alpha": 0.3},
     "body_box": {"size_m": [0.2, 0.2, 0.1], "centre_m": [0.0, 0.0, 0.0]},
     "arm_tube": {"radius_m": 0.01}, "motor_shape": {"radius_m": 0.03, "length_m": 0.04},
@@ -180,16 +180,16 @@ def make_quad(tmp_path, *, sheet=True, propulsion=True, results=True):
 # ------------------------------------------------------------------------------------------------ hubs, spin, seed
 def test_arm_vector_follows_the_cad_axes():
     v = multirotor.arm_in_design(MR["arm"])
-    # d = 1 m: X_cad = cos(120) = -0.5, Y_cad = cos(90) = 0, Z_cad = cos(30): design x = Z_cad, y = X_cad, z = Y_cad
-    assert v == pytest.approx([math.cos(math.radians(30)), -0.5, 0.0], abs=1e-12)
+    # d = 1 m: X_cad = cos(120) = -0.5, Y_cad = cos(90) = 0, Z_cad = cos(30): design (FRD) x = -Z_cad, y = X_cad, z = -Y_cad
+    assert v == pytest.approx([-math.cos(math.radians(30)), -0.5, 0.0], abs=1e-12)
 
 
 def test_hubs_are_mirror_images_with_the_quad_x_pattern():
     H = multirotor.hubs(MR)
     a, b = math.cos(math.radians(30)), 0.5
-    assert H[2]["hub"] == pytest.approx([a, -b, 0.0], abs=1e-12) and H[2]["position"] == "rear_left"
-    assert H[1]["hub"] == pytest.approx([-a, b, 0.0], abs=1e-12)
-    assert H[3]["hub"] == pytest.approx([-a, -b, 0.0], abs=1e-12) and H[4]["hub"] == pytest.approx([a, b, 0.0], abs=1e-12)
+    assert H[2]["hub"] == pytest.approx([-a, -b, 0.0], abs=1e-12) and H[2]["position"] == "rear_left"
+    assert H[1]["hub"] == pytest.approx([a, b, 0.0], abs=1e-12)
+    assert H[3]["hub"] == pytest.approx([a, -b, 0.0], abs=1e-12) and H[4]["hub"] == pytest.approx([-a, b, 0.0], abs=1e-12)
     # ArduPilot Quad X: M1 and M2 turn CCW seen from above, M3 and M4 CW. The stored sense is seen along the thrust (from below)
     assert [H[n]["spin_ardupilot"] for n in (1, 2, 3, 4)] == ["ccw", "ccw", "cw", "cw"]
     assert [H[n]["spin"] for n in (1, 2, 3, 4)] == ["cw", "cw", "ccw", "ccw"]
@@ -213,18 +213,18 @@ def test_the_seed_writes_valid_adh_items(tmp_path):
     doc = acft.doc
     adh_doc.validate_document(doc)
     ref = adh_doc.node(doc, "1.2")["muas"]["reference"]
-    assert ref["kind"] == "multirotor" and ref["design_frame"] == "x_aft_y_right_z_up_m_bodyOrigin"
+    assert ref["kind"] == "multirotor" and ref["design_frame"] == "x_fwd_y_right_z_down_m_bodyOrigin"
     assert ref["s_ref"]["value"] == pytest.approx(0.2 * 0.1) and ref["b_ref"]["value"] == pytest.approx(1.0)
     assert ref["c_ref"]["value"] == pytest.approx(2 * math.cos(math.radians(30)))
     rot = {adh_doc.find(doc, f"prop_lift_{n}")["muas"]["propeller"]["motor"]: adh_doc.find(doc, f"prop_lift_{n}")["muas"]["propeller"]
            for n in (1, 2, 3, 4)}
-    assert sorted(rot) == [1, 2, 3, 4] and all(r["role"] == "lift" and r["thrust_axis"] == [0.0, 0.0, 1.0] for r in rot.values())
+    assert sorted(rot) == [1, 2, 3, 4] and all(r["role"] == "lift" and r["thrust_axis"] == [0.0, 0.0, -1.0] for r in rot.values())
     ap = adh_doc.node(doc, "1.2.5.10")["muas"]["autopilot"]
     assert ap["firmware"] == "ArduCopter"
     assert [(o["channel"], o["function"], o["targets"]) for o in ap["outputs"]] == [(n, f"motor{n}", [f"prop_lift_{n}"]) for n in (1, 2, 3, 4)]
     assert all("sign" not in o for o in ap["outputs"])
     contacts = adh_doc.node(doc, "1.2.2")["muas"]["ground_contacts"]
-    assert len(contacts) == 4 and all(c["position"]["xyz"][2] == pytest.approx(-0.05 - 0.1) for c in contacts)
+    assert len(contacts) == 4 and all(c["position"]["xyz"][2] == pytest.approx(0.05 + 0.1) for c in contacts)       # z is down
 
 
 def test_the_seed_keeps_what_other_spokes_wrote(tmp_path):
@@ -239,7 +239,7 @@ def test_the_seed_keeps_what_other_spokes_wrote(tmp_path):
 
 
 def test_a_lift_rotor_needs_a_motor_number_and_a_motor_output_has_no_sign():
-    base = {"role": "lift", "hub": {"xyz": [0, 0, 0]}, "thrust_axis": [0, 0, 1], "spin": "cw", "diameter": {"value": 0.4, "units": "m"}}
+    base = {"role": "lift", "hub": {"xyz": [0, 0, 0]}, "thrust_axis": [0, 0, -1], "spin": "cw", "diameter": {"value": 0.4, "units": "m"}}
     with pytest.raises(ValueError, match="motor number"):
         PropellerInstallation.model_validate(base)
     PropellerInstallation.model_validate({**base, "motor": 1})
@@ -752,7 +752,7 @@ def test_the_consumer_check_follows_the_vehicle_kind(tmp_path):
 @pytest.mark.parametrize("edit, word", [
     (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(motor=1), "motor 1 is used by two"),
     (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(system="other"), "is not a muas.propulsion_system"),
-    (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(thrust_axis=[1.0, 0.0, 0.0]), "must be [0, 0, 1]"),
+    (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(thrust_axis=[1.0, 0.0, 0.0]), "must be [0, 0, -1]"),
     (lambda d: adh_doc.node(d, "1.2.5.10")["muas"]["autopilot"]["outputs"][0].pop("pwm_max_us"), "no ESC end points"),
     (lambda d: adh_doc.node(d, "1.2.5.10")["muas"]["autopilot"]["outputs"][0].update(targets=["prop_lift_3"]), "the rotor with motor 1"),
     (lambda d: adh_doc.node(d, "1.2.5.10")["muas"]["autopilot"]["outputs"].pop(), "no output motor4"),
@@ -887,7 +887,8 @@ def test_the_emst_jobs_in_the_worker_python_equal_the_numpy_functions(tmp_path):
 
 def test_the_quadplane_cant_is_a_tangential_tilt_with_the_sign_of_the_spin():
     """Rosella lift rotors (synthetic numbers): each axis tilts about the radial axis (CG to hub) by the cant. The tilt
-    moments add up to zero in hover, and the yaw moment of one rotor is T sin(cant) rho with the sign of its reaction torque."""
+    moments add up to zero in hover, and the yaw moment of one rotor is T sin(cant) rho with the sign of its reaction torque.
+    The sizing numbers (x_f, x_r, x_cg) are x aft, z up. The rotors come back in the design frame (FRD)."""
     cant, y_b, x_f, x_r, x_cg = math.radians(7.0), 0.6, -0.5, 0.8, 0.1
     rep = {"names": {"x_f": x_f, "x_r": x_r}, "design": {"cant": cant, "y_b": y_b}, "R_m": 0.3, "config": "H4",
            "items": [{"name": "lift_front", "z": 0.0}, {"name": "lift_rear", "z": 0.0}], "airframe": {"x_cg_m": x_cg}}
@@ -896,13 +897,13 @@ def test_the_quadplane_cant_is_a_tangential_tilt_with_the_sign_of_the_spin():
     hover_moment = 0.0
     for r in rotors:
         ax = np.asarray(r["axis"])
-        rx, ry = r["hub"][0] - x_cg, r["hub"][1]
+        rx, ry = r["hub"][0] + x_cg, r["hub"][1]                                         # FRD: the CG is at x = -x_cg
         rho = math.hypot(rx, ry)
         assert np.linalg.norm(ax) == pytest.approx(1.0)
-        assert ax[2] == pytest.approx(math.cos(cant))
+        assert ax[2] == pytest.approx(-math.cos(cant))                                   # up is -z
         assert ax[0] * rx + ax[1] * ry == pytest.approx(0.0, abs=1e-12)                 # no radial part
         m_z = rx * ax[1] - ry * ax[0]                                                    # per unit thrust, about the CG
-        sign = 1.0 if r["turn_ardupilot"] == "cw" else -1.0                             # cw seen from above: reaction +z
-        assert m_z == pytest.approx(sign * math.sin(cant) * rho)
+        sign = 1.0 if r["turn_ardupilot"] == "cw" else -1.0                             # cw seen from above: reaction up (-z)
+        assert m_z == pytest.approx(-sign * math.sin(cant) * rho)
         hover_moment += m_z
     assert hover_moment == pytest.approx(0.0, abs=1e-12)

@@ -1,6 +1,6 @@
 """glTF 2.0 binary (GLB): the 3D view of the aircraft in a `.muas` package (`preview/aircraft.glb`).
 
-One glTF node and one mesh for each part. The positions are the design frame in metres (x aft, y right, z up), as
+One glTF node and one mesh for each part. The positions are the design frame in metres (FRD: x forward, y right, z down), as
 float32, one vertex for each triangle corner. The node `extras` hold the part data that Aerolink needs: the ADH
 item, the hinge axis (two points, design frame, m), the material, the source and the placeholder flag. The asset
 `extras` give the frame.
@@ -25,9 +25,9 @@ import numpy as np
 MAGIC, VERSION = 0x46546C67, 2
 JSON_CHUNK, BIN_CHUNK = 0x4E4F534A, 0x004E4942
 FLOAT, ARRAY_BUFFER = 5126, 34962
-FRAME = "design (x aft, y right, z up, m)"
-#: design (x aft, y right, z up) -> glTF (x left, y up, z forward): x_g = -y, y_g = z, z_g = -x
-TO_GLTF = [[0, -1, 0, 0], [0, 0, 1, 0], [-1, 0, 0, 0], [0, 0, 0, 1]]
+FRAME = "design (FRD: x forward, y right, z down, m)"
+#: design (FRD) -> glTF (x left, y up, z forward): x_g = -y, y_g = -z, z_g = x. The determinant is +1.
+TO_GLTF = [[0, -1, 0, 0], [0, 0, -1, 0], [1, 0, 0, 0], [0, 0, 0, 1]]
 
 
 class GltfError(ValueError):

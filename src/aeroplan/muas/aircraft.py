@@ -32,7 +32,7 @@ class PlanformSection(MuasModel):
 
     y: float = Field(description="Span station, m, from the root")
     chord: float = Field(gt=0, description="m")
-    x_offset: float = Field(description="Leading-edge offset from the root leading edge, m")
+    x_offset: float = Field(description="Leading-edge offset from the root leading edge, m, positive AFT (the local frame of the planform is x aft, y right, z up as in flow5; it is not the FRD design frame. The design x of the section leading edge is position.x less x_offset)")
     dihedral_deg: float = Field(description="Dihedral of the panel outboard of this section, deg")
     twist_deg: float = Field(description="Twist about the quarter chord, nose up positive, deg")
     foil: str = Field(min_length=1, description="Name of the foil of this section (lifting_surface.airfoil_sections)")

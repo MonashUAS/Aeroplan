@@ -17,7 +17,8 @@ Level functions (the second half of this file) take a component and a `Level` an
 This file imports numpy at the top and aerosandbox, casadi, proptimiser and aeroplan inside the functions that need them.
 So the AeroPlan Python (no aerosandbox) can read and write the JSON of a model.
 
-Frame: x aft, y right, z up, metres, kilograms, seconds, radians. Quantities are SI. Angles in names ending _deg are degrees.
+Frame: x aft, y right, z up (the AeroSandbox frame), metres, kilograms, seconds, radians. The ADH tree is FRD (x forward,
+z down, ADR 0025): `AirframeModel` and `surface_spec` flip what they read, the spoke flips what it writes. Quantities are SI. Angles in names ending _deg are degrees.
 """
 from __future__ import annotations
 
@@ -213,7 +214,8 @@ class Tube(Component):
       overhang_m    tube length beyond each hub                               mount_offset_m   thrust line to the tube axis
       clamp_kg      mass of the clamp at the wing                             material         name of the Material component
       min_wall_m, r_over_t_max, tip_slope_max_deg                             limits of the tube
-      resonance_margin, resonance_side   f1 stays outside 1P hover +/- margin; "below" or "above" the band
+      resonance_margin, resonance_side   f1 stays outside 1P hover +/- margin; "below" or "above" the band. f2 (modes_hz,
+                                         tip rotary inertia included) is a check after the solve, not a limit
     The beam formulas are the static methods below. They work on numbers and on CasADi expressions.
     """
     KIND = "tube"
@@ -234,6 +236,37 @@ class Tube(Component):
         """First bending frequency of the cantilever of length a with a tip mass. m_eff = m_tip + 0.236 m_arm (Rayleigh)."""
         import aerosandbox.numpy as anp
         return anp.sqrt(3.0 * E * I / (a ** 3 * (m_tip + 0.236 * m_arm))) / (2.0 * math.pi)
+
+    @staticmethod
+    def mode_roots(mu, j, n=2):
+        """The first n roots x = beta a of the clamped-free Euler-Bernoulli beam with a tip mass and a tip rotary inertia
+        (Blevins, Formulas for Natural Frequency and Mode Shape, table 8-1, Laura et al. 1974). mu = M / (m' a), j = J / (m' a^3).
+        1 + cos x cosh x + mu x (cos x sinh x - sin x cosh x) - j x^3 (cosh x sin x + sinh x cos x) + mu j x^4 (1 - cos x cosh x) = 0.
+        The equation is divided by cosh x so that it stays finite. Numbers only (a post-solve check)."""
+        def f(x):
+            c, s, t = np.cos(x), np.sin(x), np.tanh(x)
+            return (1.0 / np.cosh(x) + c + mu * x * (c * t - s) - j * x ** 3 * (s + t * c)
+                    + mu * j * x ** 4 * (1.0 / np.cosh(x) - c))
+        x = np.linspace(1e-3, 4.0 * (n + 1), 4000 * (n + 1))
+        y = f(x)
+        roots = []
+        for i in np.nonzero(np.sign(y[:-1]) * np.sign(y[1:]) < 0)[0]:
+            lo, hi = x[i], x[i + 1]
+            for _ in range(60):
+                mid = 0.5 * (lo + hi)
+                lo, hi = (mid, hi) if np.sign(f(mid)) == np.sign(f(lo)) else (lo, mid)
+            roots.append(float(0.5 * (lo + hi)))
+            if len(roots) == n:
+                break
+        return roots
+
+    @staticmethod
+    def modes_hz(E, I, a, m_tip, m_arm, J_tip, n=2):
+        """The first n bending frequencies (Hz) of the cantilever of length a (tube mass m_arm) with the tip mass m_tip and
+        the tip rotary inertia J_tip about the bending axis. f = x^2 sqrt(E I / (m' a^4)) / (2 pi), m' = m_arm / a."""
+        mp = m_arm / a
+        xs = Tube.mode_roots(m_tip / (mp * a), J_tip / (mp * a ** 3), n)
+        return [x ** 2 * math.sqrt(E * I / (mp * a ** 4)) / (2.0 * math.pi) for x in xs]
 
 
 class Rotor(Component):
@@ -274,8 +307,8 @@ class Motor(Component):
 
 
 class ESC(Component):
-    """Params: g_per_A (AIAA 2016-0581 Eq. 2), peak_factor (ESC current over the peak motor current), re_ohm, duty_max, and
-    optional mass_kg and current_A of a bought ESC."""
+    """Params: survey (the CSV of data/, maker ESC masses), peak_factor (ESC current over the peak motor current), re_ohm,
+    duty_max, and optional mass_kg and current_A of a bought ESC (mass_kg replaces the survey fit)."""
     KIND = "esc"
 
 
@@ -304,13 +337,14 @@ class Cables(Component):
 
 class Fuselage(Component):
     """
-    The new fuselage: a superellipse body from the nose to the tail boom joint. Params: stations, width_m, height_m,
-    superellipse_n, z_centre_m, nose_behind_hub_m, mass_kg_per_m2, bay_x_m ([lo, hi] of the battery centre), battery_Wh_per_L.
+    The new fuselage: a superellipse body from the nose to the pod tail end. Params: stations, width_m, height_m,
+    superellipse_n, z_centre_m, nose_behind_hub_m, x_tail_m (the pod tail end, x aft of the wing root leading edge),
+    mass_kg_per_m2, bay_x_m ([lo, hi] of the battery centre), battery_Wh_per_L.
     """
     KIND = "fuselage"
 
     def frames(self, x_hub: float, x_joint: float) -> List[np.ndarray]:
-        """The right-half frames (x, y, z) from the nose to the tail boom joint at x_joint."""
+        """The right-half frames (x, y, z) from the nose to the pod tail end at x_joint."""
         n = int(self["stations"])
         x0 = x_hub + self["nose_behind_hub_m"]
         frames = []
@@ -405,10 +439,12 @@ def parse_levels(spec: str) -> List[str]:
 class MotorModel:
     """
     The motor fitted on data/motor_survey.csv (log-linear least squares), three relations:
-        m  = exp(a0) kv^a1 q_cap^a2        q_cap = (Imax - I0) / Kv_rad, the torque the motor holds for the 180 s peak current
+        m  = exp(a0) q_cap^a1              q_cap = (Imax - I0) / Kv_rad, the torque the motor holds for the 180 s peak current
         Rm = exp(b0) kv^b1 m^b2            (the maker states the phase resistance as given in the CSV note)
         I0 = exp(c0) kv^c1 m^c2
-    Kv is in rpm/V. Maker values of the component (mass_kg, rm_ohm, i0_A) replace the fit.
+    Kv is in rpm/V. Maker values of the component (mass_kg, rm_ohm, i0_A) replace the fit. The mass has no kv term: the rows
+    of one frame with other windings have the same mass (T-Motor MN705-S KV125 and KV260: 450 g). A kv term in the fit
+    gave a lighter motor for a lower kv at the same torque, and the solver used it.
     """
 
     def __init__(self, path: Path, kv_range=(60.0, 450.0), m_range=(150.0, 1600.0)):
@@ -427,7 +463,9 @@ class MotorModel:
         q_cap = (imax - i0) / (kv * 2 * math.pi / 60.0)
         self.models = [d[5] for d in data]
         self.q_range = (float(q_cap.min()), float(q_cap.max()))
-        self.mass_fit, self.mass_rms = self._fit(m, [kv, q_cap])
+        self.q_cap = q_cap
+        self.m_g = m
+        self.mass_fit, self.mass_rms = self._fit(m, [q_cap])
         self.rm_fit, self.rm_rms = self._fit(rm / 1000.0, [kv, m])
         self.i0_fit, self.i0_rms = self._fit(i0, [kv, m])
         self.maker: Dict[str, Optional[float]] = {}
@@ -444,7 +482,7 @@ class MotorModel:
         if self.maker.get("mass_kg") is not None:
             return self.maker["mass_kg"] * 1000.0
         c = self.mass_fit
-        return anp.exp(c[0]) * kv ** c[1] * q_cap ** c[2]
+        return anp.exp(c[0]) * q_cap ** c[1]
 
     def rm_ohm(self, kv, m_g):
         import aerosandbox.numpy as anp
@@ -466,6 +504,44 @@ class MotorModel:
                 "i0": list(map(float, self.i0_fit)), "i0_rms_log": self.i0_rms, "q_cap_range_Nm": self.q_range}
 
 
+class ESCModel:
+    """
+    The ESC mass fitted on data/esc_survey.csv (log-linear least squares on the rows rated for the pack cell count):
+        m = exp(e0) I^e1          I: the continuous current rating (A), m in g
+    A power law keeps the mass positive at a small current (a line through the maker rows has a negative intercept).
+    """
+
+    def __init__(self, path: Path, cells_s: int):
+        rows = list(csv.DictReader(Path(path).open(encoding="utf-8")))
+        data = []
+        for r in rows:
+            try:
+                lo, hi, i, m = (float(r[k]) for k in ("cells_min", "cells_max", "i_cont_A", "mass_g"))
+            except ValueError:
+                continue
+            if lo <= cells_s <= hi:
+                data.append((i, m, r["model"]))
+        self.n = len(data)
+        self.i_A = np.array([d[0] for d in data])
+        self.m_g = np.array([d[1] for d in data])
+        self.models = [d[2] for d in data]
+        self.fit, self.rms = MotorModel._fit(self.m_g, [self.i_A])
+
+    def mass_g(self, current_A):
+        import aerosandbox.numpy as anp
+        return anp.exp(self.fit[0]) * current_A ** self.fit[1]
+
+    def summary(self) -> Dict[str, Any]:
+        return {"rows": self.n, "mass": list(map(float, self.fit)), "mass_rms_log": self.rms,
+                "i_range_A": (float(self.i_A.min()), float(self.i_A.max()))}
+
+
+def esc_model(esc: ESC, cells_s: int) -> ESCModel:
+    """The ESC mass model of an ESC component for a pack of cells_s cells."""
+    path = Path(esc["survey"])
+    return ESCModel(path if path.is_absolute() else HERE / path, cells_s)
+
+
 def motor_model(motor: Motor, lvl: Any = "L4") -> MotorModel:
     """The motor model of a Motor component. Every level uses the survey fit; the maker values of the component replace
     its mass, resistance and idle current. A level with a motor curve of a maker part would plug in here."""
@@ -483,16 +559,34 @@ _CONST: Dict[str, Any] = {}
 
 def proptimiser_home(aircraft: str, designs: Iterable[Tuple[str, str]]) -> Path:
     """work/aerosandbox/<aircraft>/proptimiser: the design file and the state file of each (design, source aircraft) copied by
-    hand from the work folder of the source aircraft (Proptimiser reads one home folder)."""
+    hand from the work folder of the source aircraft (Proptimiser reads one home folder). A copy that differs from its source
+    (sha256) is replaced, so a changed design reaches the aircraft folder."""
     import shutil
     home = work_dir(aircraft) / "proptimiser"
     for name, src in designs:
         for sub, ext in (("designs", ".yaml"), ("propellers", ".state.json")):
-            dst = home / sub / (name + ext)
-            if not dst.is_file():
+            dst, org = home / sub / (name + ext), work_dir(src) / "proptimiser" / sub / (name + ext)
+            if org == dst or (dst.is_file() and not org.is_file()):
+                continue
+            if not dst.is_file() or _sha256(dst) != _sha256(org):
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(work_dir(src) / "proptimiser" / sub / (name + ext), dst)
+                shutil.copy2(org, dst)
     return home
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def design_sha256(home: Path, design: str) -> str:
+    """sha256 of the design file and the state file together: part of each table cache key, so a changed blade with the same
+    name makes new samples."""
+    import hashlib
+    h = hashlib.sha256()
+    for sub, ext in (("designs", ".yaml"), ("propellers", ".state.json")):
+        h.update((home / sub / (design + ext)).read_bytes())
+    return h.hexdigest()
 
 
 def prop_model(home: Path, design: str):
@@ -552,7 +646,8 @@ class LiftTable:
     def __init__(self, rotor: Rotor, home: Path, tables: Path):
         R0, self.R0 = float(rotor["reference_radius_m"]), float(rotor["reference_radius_m"])
         self.deg = int(rotor["table_poly_degree"])
-        key = {"design": rotor["design"], "omega": rotor["table_omega_rad_s"], "scale": rotor["table_scale"],
+        key = {"design": rotor["design"], "design_sha256": design_sha256(home, rotor["design"]),
+               "omega": rotor["table_omega_rad_s"], "scale": rotor["table_scale"],
                "v_x": rotor["table_v_x_m_s"]}
         model = prop_model(home, rotor["design"])
 
@@ -597,7 +692,8 @@ class CruiseTable:
 
     def __init__(self, rotor: CruiseRotor, diameter_m: float, home: Path, tables: Path):
         self.D, self.deg = diameter_m, int(rotor["table_poly_degree"])
-        key = {"design": rotor["design"], "omega": rotor["table_omega_rad_s"], "J": rotor["table_J"], "D": diameter_m}
+        key = {"design": rotor["design"], "design_sha256": design_sha256(home, rotor["design"]),
+               "omega": rotor["table_omega_rad_s"], "J": rotor["table_J"], "D": diameter_m}
         model = prop_model(home, rotor["design"])
 
         def make():
@@ -782,12 +878,13 @@ def _controls_of(doc: Dict[str, Any], parent: str) -> List[Dict[str, Any]]:
 def surface_spec(doc: Dict[str, Any], inst: str) -> Dict[str, Any]:
     """A lifting surface of the ADH document as a tool-neutral dict (sections, controls, foils) for `build_airplane`."""
     from aeroplan import adh_doc
+    from aeroplan.frame import flip_array
     from aeroplan.geometry import _edges, foils_of, planform_wing
     item = adh_doc.find(doc, inst)
     pf = item["muas"]["planform"]
     controls = _controls_of(doc, inst)
     pf2 = _split_planform(pf, [e for c in controls for e in c["eta"]])
-    le, te = _edges(planform_wing(pf2))
+    le, te = (flip_array(e) for e in _edges(planform_wing(pf2)))     # the tree is FRD, AeroSandbox is x aft, z up
     tip = pf2["sections"][-1]["y"]
     sections = []
     for sec, a, b in zip(pf2["sections"], le, te):
@@ -844,7 +941,10 @@ class AirframeModel:
     polar (AeroBuildup). Made by `airframe_model`."""
 
     def __init__(self, airframe: Airframe, fuselage: Fuselage, root: Path = ROOT):
+        import copy
+
         from aeroplan import adh_doc, source_tree
+        from aeroplan.frame import flip_array, flip_point
         from aeroplan.geometry import body_frames
         self.comp, self.fus = airframe, fuselage
         acft = source_tree.read(root / "aircraft" / airframe["base"])
@@ -852,7 +952,13 @@ class AirframeModel:
         air = adh_doc.node(doc, "1.2")["muas"]
         self.ref = air["reference"]
         self.s_ref, self.b_ref, self.c_ref = (air["reference"][k]["value"] for k in ("s_ref", "b_ref", "c_ref"))
-        pm = {p["tag"]: p for p in air["point_masses"]}
+        # The tree is FRD (x forward, z down). The sizing model works in the AeroSandbox frame (x aft, y right, z up):
+        # every position that this class hands to the model is flipped here.
+        pm = {}
+        for p in air["point_masses"]:
+            q = copy.deepcopy(p)
+            q["position"]["xyz"] = flip_point(p["position"]["xyz"])
+            pm[p["tag"]] = q
         self.points = pm
         self.wing_pts = [p for t, p in pm.items() if t.startswith("WINGS")]
         self.tail_pts = [p for t, p in pm.items() if t.startswith("TAIL-S")]
@@ -862,10 +968,11 @@ class AirframeModel:
         self.m_avionics = pm["AVIONICS-REST"]["mass"]["value"]
         self.surfaces = {n: surface_spec(doc, n) for n in ("wing_main", "htail", "fin")}
         self.htail_le_x = float(min(s_["xyz_le"][0] for s_ in self.surfaces["htail"]["sections"]))      # planform LE of the htail
-        self.tail_boom_frames = [f.tolist() for f in body_frames(adh_doc.find(doc, "tail_boom")["geometry"]["body"])]
-        self.tail_boom_z = float(np.array(self.tail_boom_frames[0])[:, 2].mean())   # axis height at the joint end (lift booms are level with it)
+        self.tail_boom_frames = [flip_array(f).tolist() for f in body_frames(adh_doc.find(doc, "tail_boom")["geometry"]["body"])]
+        self.tail_boom_z = float(np.array(self.tail_boom_frames[0])[:, 2].mean())   # axis height of the boom (lift booms are level with it)
+        self.tail_boom_length = float(self.tail_boom_frames[-1][0][0] - self.tail_boom_frames[0][0][0])
         prop = adh_doc.find(doc, "prop_cruise")["muas"]
-        self.cruise_hub_base = prop["propeller"]["hub"]["xyz"]
+        self.cruise_hub_base = flip_point(prop["propeller"]["hub"]["xyz"])
         ps = prop["propulsion_system"]
         m = ps["motor"]
         self.cruise = {"kv_rad_s_V": m["kv"]["value"], "i0_A": m["i0"]["value"], "kappa": m["kappa"],
@@ -898,7 +1005,7 @@ class AirframeModel:
     def new_fuselage_frames(self) -> List[List[List[float]]]:
         """The new fuselage. The nose follows the hub x. Before the hub x is known (the neutral point run) the guess is -0.65."""
         x_hub = self.x_hub if hasattr(self, "x_hub") else -0.65
-        return [f.tolist() for f in self.fus.frames(x_hub, self.tail_boom_frames[0][0][0])]
+        return [f.tolist() for f in self.fus.frames(x_hub, self.fus.num("x_tail_m"))]
 
     def _build(self, fuselages: bool):
         spec = {"name": "Rosella", "reference": {"s_m2": self.s_ref, "b_m": self.b_ref, "c_m": self.c_ref,

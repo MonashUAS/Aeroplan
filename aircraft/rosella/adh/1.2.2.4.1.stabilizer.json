@@ -2,7 +2,7 @@
   "wbs_no": "1.2.2.4.1",
   "name": "Stabilizer",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "stabilizer"
   },
   "subcomponents": [
@@ -10,7 +10,7 @@
       "name": "Horizontal tail",
       "description": "Currawong horizontal tail (flow5 Elevator wing)",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "htail",
         "planform": {
           "surface_name": "Elevator",
@@ -18,9 +18,9 @@
           "position": {
             "frame": "design",
             "xyz": [
-              1.422,
+              -1.422,
               0.0,
-              -0.05
+              0.05
             ],
             "units": "m"
           },
@@ -84,7 +84,7 @@
           "name": "Elevator",
           "description": "Currawong elevator. Limit: hand config controls.elevator_max_deg, a command scale (F-3).",
           "muas": {
-            "ext_version": "0.4.0",
+            "ext_version": "0.5.0",
             "instance": "elevator",
             "fidelity": "L0",
             "control_surface": {
@@ -115,19 +115,19 @@
           "leading_edge_spline": {
             "points": [
               {
-                "x": 1.422,
+                "x": -1.422,
                 "y": 0.0,
-                "z": -0.05
+                "z": 0.05
               },
               {
-                "x": 1.4639567639312099,
+                "x": -1.4639567639312099,
                 "y": 0.32,
-                "z": -0.04809475449857135
+                "z": 0.04809475449857135
               },
               {
-                "x": 1.470949557919745,
+                "x": -1.470949557919745,
                 "y": 0.373,
-                "z": -0.04777721358166657
+                "z": 0.04777721358166657
               }
             ],
             "degree": 2
@@ -135,19 +135,19 @@
           "trailing_edge_spline": {
             "points": [
               {
-                "x": 1.6657488190289342,
+                "x": -1.6657488190289342,
                 "y": 0.0,
-                "z": -0.03893143089646208
+                "z": 0.03893143089646208
               },
               {
-                "x": 1.666747789598725,
+                "x": -1.666747789598725,
                 "y": 0.32,
-                "z": -0.03888606790833283
+                "z": 0.03888606790833283
               },
               {
-                "x": 1.666747789598725,
+                "x": -1.666747789598725,
                 "y": 0.373,
-                "z": -0.03888606790833282
+                "z": 0.03888606790833282
               }
             ],
             "degree": 2
@@ -3182,7 +3182,7 @@
       "name": "Fin",
       "description": "Currawong fin (flow5 Fin wing)",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "fin",
         "planform": {
           "surface_name": "Fin",
@@ -3190,9 +3190,9 @@
           "position": {
             "frame": "design",
             "xyz": [
-              1.422,
+              -1.422,
               0.0,
-              0.03
+              -0.03
             ],
             "units": "m"
           },
@@ -3248,7 +3248,7 @@
           "name": "Rudder",
           "description": "Currawong rudder. Limit: hand config controls.rudder_max_deg, a command scale (F-3).",
           "muas": {
-            "ext_version": "0.4.0",
+            "ext_version": "0.5.0",
             "instance": "rudder",
             "fidelity": "L0",
             "control_surface": {
@@ -3279,14 +3279,14 @@
           "leading_edge_spline": {
             "points": [
               {
-                "x": 1.422,
+                "x": -1.422,
                 "y": 0.0,
-                "z": 0.03
+                "z": -0.03
               },
               {
-                "x": 1.4749999999999999,
+                "x": -1.4749999999999999,
                 "y": 2.6880997241284402e-17,
-                "z": 0.469
+                "z": -0.469
               }
             ],
             "degree": 1
@@ -3294,14 +3294,14 @@
           "trailing_edge_spline": {
             "points": [
               {
-                "x": 1.692,
+                "x": -1.692,
                 "y": 0.0,
-                "z": 0.03
+                "z": -0.03
               },
               {
-                "x": 1.6909999999999998,
+                "x": -1.6909999999999998,
                 "y": 2.6880997241284402e-17,
-                "z": 0.469
+                "z": -0.469
               }
             ],
             "degree": 1

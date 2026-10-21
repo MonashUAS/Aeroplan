@@ -1,6 +1,6 @@
 """Datum checks of the ADH document: every geometry source must agree in the one design frame.
 
-The design frame is the flow5 frame: x aft, y right, z up, metres, origin = the flow5 origin. The sources are the
+The design frame is FRD: x forward, y right, z down, metres, origin = the root leading edge of the main wing (ADR 0025). The sources are the
 flow5 planforms, the reference dimensions, the mass model, the propeller installation, the ground contacts, the
 contract B propeller and, when they are on this machine, the CAD meshes of the CREO spoke. Each check has a
 tolerance. A failed check stops the build. An `info` row records a value with no second source to compare against.
@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
+
+from .frame import planform_le_x
 
 MM = 0.001
 
@@ -64,7 +66,7 @@ class DatumReport:
         return "\n".join(rows)
 
     def as_dict(self) -> Dict:
-        return {"frame": "design (x aft, y right, z up, m, flow5 origin)", "ok": self.ok,
+        return {"frame": "design (FRD: x forward, y right, z down, m, wing root LE origin)", "ok": self.ok,
                 "checks": [asdict(c) for c in self.checks]}
 
 
@@ -79,17 +81,17 @@ def _inboard(p: np.ndarray, band: float = 0.05) -> np.ndarray:
 
 
 def prop_spin(tri: np.ndarray, hub: np.ndarray) -> str:
-    """The turn direction seen from behind, from the blade pitch of a tractor propeller (thrust along -x).
+    """The turn direction seen from behind, from the blade pitch of a tractor propeller (thrust along +x, FRD).
 
-    At a station of a blade, the chord line rises from the leading edge (more forward, lower x) to the trailing edge.
-    The leading edge moves in the turn direction. A blade that points up (+z) and moves to +y turns clockwise
+    At a station of a blade, the chord line falls from the leading edge (more forward, higher x) to the trailing edge.
+    The leading edge moves in the turn direction. A blade that points up (-z) and moves to +y turns clockwise
     seen from behind.
     """
     d = _pts(tri) - hub
     r = np.hypot(d[:, 1], d[:, 2])
     tip = d[r.argmax()]
     u = np.array([0.0, tip[1], tip[2]]) / np.hypot(tip[1], tip[2])
-    w = np.cross([-1.0, 0.0, 0.0], u)       # turn direction of a clockwise turn seen from behind (about -x, right hand)
+    w = np.cross([1.0, 0.0, 0.0], u)        # turn direction of a clockwise turn seen from behind (about +x, right hand)
     span = d @ u
     votes = 0.0
     for frac in np.linspace(0.3, 0.8, 11):
@@ -100,8 +102,8 @@ def prop_spin(tri: np.ndarray, hub: np.ndarray) -> str:
         votes += np.corrcoef(x, tg)[0, 1]
     if votes == 0:
         raise ValueError("no blade section found in the CAD propeller")
-    # the leading edge (low x) leads in the turn direction: x falls as tg rises, so a negative correlation is clockwise
-    return "cw" if votes < 0 else "ccw"
+    # the leading edge (high x) leads in the turn direction: x rises as tg rises, so a positive correlation is clockwise
+    return "cw" if votes > 0 else "ccw"
 
 
 def _get(doc, inst):
@@ -180,7 +182,7 @@ def _multirotor_checks(rep: DatumReport, doc: Dict) -> None:
 
 
 def _origin_check(rep: DatumReport, doc: Dict, pf: Optional[Dict]) -> None:
-    """ADR 0023: the design frame starts at the root leading edge of `wing_main`. A wing at x other than 0 fails."""
+    """ADR 0023 and 0025: the design frame starts at the root leading edge of `wing_main`. A wing at x other than 0 fails."""
     from .consumers import vehicle_kind
 
     if pf is None:
@@ -188,9 +190,9 @@ def _origin_check(rep: DatumReport, doc: Dict, pf: Optional[Dict]) -> None:
                "no wing_main: a published reference model (units_system as-source) or an aircraft with no main wing")
         rep.add("origin: skipped (ADR 0023)", 0.0, None, None, "-", why)
         return
-    x_le = pf["position"]["xyz"][0] + pf["sections"][0]["x_offset"]
+    x_le = planform_le_x(pf["position"]["xyz"][0], pf["sections"][0]["x_offset"])
     rep.add("origin: main wing root LE x (ADR 0023)", x_le, 0.0, MM, "m",
-            "wing_main planform position + first section x_offset; the origin is the wing root LE")
+            "wing_main planform position less first section x_offset (x_offset is aft); the origin is the wing root LE")
 
 
 def datum_checks(doc: Dict, root) -> DatumReport:
@@ -221,9 +223,9 @@ def datum_checks(doc: Dict, root) -> DatumReport:
         else:
             rep.add("MRP against the mass CG (distance)", gap, 0.0, 1e-6, "m", "muas.reference mrp, muas.mass_properties cg")
         if pf:
-            x_le = pf["position"]["xyz"][0] + pf["sections"][0]["x_offset"]
+            x_le = planform_le_x(pf["position"]["xyz"][0], pf["sections"][0]["x_offset"])
             rep.add("mass CG: x behind the main wing root leading edge, in % c_ref",
-                    (cg[0] - x_le) / ref["c_ref"]["value"] * 100.0, None, None, "%",
+                    (x_le - cg[0]) / ref["c_ref"]["value"] * 100.0, None, None, "%",
                     "muas.mass_properties cg, wing_main planform, muas.reference c_ref")
         parts = [item["muas"]["mass_properties"]["mass"]["value"] for _, item, _ in adh_doc.iter_nodes(doc)
                  if (item.get("muas") or {}).get("mass_properties") and item["muas"].get("instance") != am.get("instance")]
@@ -244,11 +246,11 @@ def datum_checks(doc: Dict, root) -> DatumReport:
         rep.add("wing span (CAD) against b_ref", np.ptp(w[:, 1]), ref["b_ref"]["value"], 5 * MM, "m",
                 "CAD wing, muas.reference b_ref")
         if pf:
-            rep.add("wing root leading edge x (CAD) against flow5", _inboard(w)[:, 0].min(), pf["position"]["xyz"][0],
+            rep.add("wing root leading edge x (CAD) against flow5", _inboard(w)[:, 0].max(), pf["position"]["xyz"][0],
                     10 * MM, "m", "CAD wing, wing_main planform position")
     if "htail" in P and hpf:
         hroot = _inboard(P["htail"])
-        rep.add("htail root leading edge x (CAD) against flow5", hroot[:, 0].min(), hpf["position"]["xyz"][0], 10 * MM,
+        rep.add("htail root leading edge x (CAD) against flow5", hroot[:, 0].max(), hpf["position"]["xyz"][0], 10 * MM,
                 "m", "CAD htail, htail planform position")
         rep.add("htail root z (CAD mid) against flow5", (hroot[:, 2].min() + hroot[:, 2].max()) / 2,
                 hpf["position"]["xyz"][2], 10 * MM, "m", "CAD htail, htail planform position")
@@ -283,12 +285,12 @@ def datum_checks(doc: Dict, root) -> DatumReport:
     if "gear" in P and "LEFT_MAIN" in gc:
         gear = P["gear"]
         lm, rm = gc["LEFT_MAIN"]["position"]["xyz"], gc["RIGHT_MAIN"]["position"]["xyz"]
-        rep.add("main wheel contact z against the CAD gear bottom", lm[2], gear[:, 2].min(), 5 * MM, "m",
+        rep.add("main wheel contact z against the CAD gear bottom", lm[2], gear[:, 2].max(), 5 * MM, "m",
                 "airframe ground contact LEFT_MAIN, CAD gear")
         rep.add("main wheel track (contact y) against the CAD gear", rm[1] - lm[1], np.ptp(gear[:, 1]), 30 * MM, "m",
                 "airframe ground contacts, CAD gear (outer wheel faces)")
     if "fuselage" in P:
-        rep.add("nose x (CAD fuselage front) from the flow5 origin", P["fuselage"][:, 0].min(), None, None, "m",
+        rep.add("nose x (CAD fuselage front) from the flow5 origin", P["fuselage"][:, 0].max(), None, None, "m",
                 "CAD fuselage. The nose is this far ahead of the design origin")
     _skin_checks(rep, doc, root)
     _geometry_age(rep, doc, air)

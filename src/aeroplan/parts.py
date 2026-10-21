@@ -24,6 +24,7 @@ import numpy as np
 
 from . import adh_doc, assets
 from .geometry import body_mesh, foils_of, planform_wing, surface_mesh
+from .frame import planform_le_x
 from .visual import PIVOT, _wing_to_design, box, cylinder, disc, lifting_surface, mirror_y, read_stl, to_design, tube
 
 
@@ -182,9 +183,9 @@ def _planform_part(item: Dict[str, Any], out: PartSet) -> np.ndarray:
     h0, h1 = (np.array(p) for p in rudder.hinge)
 
     def cut(y, le_x, chord):
-        z = wing.position[2] + y
+        z = wing.position[2] - y                  # a fin stands up: z falls with y (z down)
         hx = float(h0[0] + (z - h0[2]) / (h1[2] - h0[2]) * (h1[0] - h0[0]))
-        return min(1.0, (hx - le_x) / chord)
+        return min(1.0, (le_x - hx) / chord)      # x falls from the leading edge to the trailing edge
 
     return surface_mesh(item, cut)
 
@@ -206,10 +207,10 @@ def _tube_part(doc: Dict[str, Any], v: Dict[str, Any], out: PartSet) -> np.ndarr
     if fus is None:
         raise ValueError("the boom tube needs the fuselage part")
     pts = fus.tri.reshape(-1, 3)
-    aft = pts[pts[:, 0] >= pts[:, 0].max() - 0.02]
-    start = np.array([aft[:, 0].max() - 0.001, 0.0, aft[:, 2].mean()])
+    aft = pts[pts[:, 0] <= pts[:, 0].min() + 0.02]
+    start = np.array([aft[:, 0].min() + 0.001, 0.0, aft[:, 2].mean()])
     htail = adh_doc.find(doc, v["tube"]["to_instance"])
     wing = planform_wing(htail["muas"]["planform"])
     s0 = wing.sections[0]
-    end = np.array([wing.position[0] + s0.x_offset + PIVOT * s0.chord, 0.0, wing.position[2]])
+    end = np.array([planform_le_x(wing.position[0], s0.x_offset) - PIVOT * s0.chord, 0.0, wing.position[2]])
     return tube(start, end, float(v["tube"]["radius_m"]))

@@ -2,7 +2,7 @@
   "wbs_no": "1.2.2.3.3",
   "name": "Ailerons",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "ailerons"
   },
   "subcomponents": [
@@ -10,7 +10,7 @@
       "name": "Aileron L",
       "description": "Currawong aileron l. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "aileron_l",
         "fidelity": "L0",
         "control_surface": {
@@ -39,7 +39,7 @@
       "name": "Aileron R",
       "description": "Currawong aileron r. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "aileron_r",
         "fidelity": "L0",
         "control_surface": {

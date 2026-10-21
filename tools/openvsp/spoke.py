@@ -32,11 +32,16 @@ What ingest writes, only for the items that differ from the document (the change
   - bodies: `geometry.body`
   - `muas.geometry_tool = "OpenVSP"` and an OpenVSP pointer on each changed item. The air vehicle gets the pointer of
     the model it read. When the model sha256 equals that pointer, ingest reads nothing.
+Frames. OpenVSP works in x aft, y right, z up. The ADH design frame is FRD (aeroplan.frame). The spoke flips every
+position and direction at the edge of the worker (the SPEC, the skin STL, the shape gate points, the points that the
+worker reads back) and the VSPAERO forces and moments of an analysis point. The worker keeps the OpenVSP frame.
+
 Before it writes, ingest puts the ADH shape of each item on the OpenVSP surface. A gap above SHAPE_TOL stops the build:
 the model then holds a change that the ADH form cannot hold.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -46,6 +51,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from aeroplan import adh_doc
+from aeroplan.frame import flip_array, flip_point
 from aeroplan.geometry import (body_adh, body_frames, distance_to_mesh, foils_of, lifting_surface_adh, planform_wing,
                                section_points)
 from aeroplan.spokes import Context, set_sources
@@ -197,6 +203,18 @@ def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any]) -> Dict[str, Any]:
             "reference_meshes": []}
 
 
+def vsp_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
+    """The SPEC of `spec_from_doc` (design frame, FRD) in the frame of OpenVSP (x aft, z up). A copy."""
+    out = copy.deepcopy(spec)
+    for w in out["wings"]:
+        w["position"] = flip_point(w["position"])
+    for b in out["bodies"]:                         # out["body"] is the first of them: the same object
+        b["frames"] = [flip_array(np.asarray(f)).tolist() for f in b["frames"]]
+    for p in out["parts"] + out["rotors"]:
+        p["p0"], p["axis"] = flip_point(p["p0"]), flip_point(p["axis"])
+    return out
+
+
 # ------------------------------------------------------------------------------------------------- shape gate
 def _shape_sets(wings: Dict[str, Tuple[Dict[str, Any], Dict[str, np.ndarray]]],
                 frames: Optional[List[Tuple[str, List[np.ndarray]]]]) -> List[Dict[str, Any]]:
@@ -205,11 +223,11 @@ def _shape_sets(wings: Dict[str, Tuple[Dict[str, Any], Dict[str, np.ndarray]]],
         pts = section_points(planform_wing(pf), foils)
         n = len(pts)
         u0 = np.concatenate([np.full(len(p), (i + 1) / (n + 1)) for i, p in enumerate(pts)])
-        sets.append({"geom": inst, "points": np.vstack(pts).tolist(), "u0": u0.tolist()})
+        sets.append({"geom": inst, "points": flip_array(np.vstack(pts)).tolist(), "u0": u0.tolist()})
     if frames and isinstance(frames[0], str):       # one body as (instance, frames): the old form
         frames = [frames]
     for inst, fr in frames or []:
-        sets.append({"geom": inst, "points": np.vstack(fr).tolist()})
+        sets.append({"geom": inst, "points": flip_array(np.vstack(fr)).tolist()})
     return sets
 
 
@@ -248,11 +266,12 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
                       f"triangles removed, {fixed['needles']} needle triangles removed, {fixed['tjunction_splits']} "
                       "triangles split at T-junctions (volume unchanged).")
             stl = out / f"{st['reference_skin']}_skin.stl"
-            stl.write_bytes(write_stl(skin, f"{st['reference_skin']} CAD skin, design frame, m"))
+            stl.write_bytes(write_stl(flip_array(skin.reshape(-1, 3)).reshape(-1, 3, 3),
+                                      f"{st['reference_skin']} CAD skin, OpenVSP frame (x aft, z up), m"))
             spec["reference_meshes"].append({"name": f"{st['reference_skin']}_skin", "stl": str(stl)})
             files.append(stl)
     path = out / f"{ctx.aircraft}.vsp3"
-    runner.run({"job": "write", "spec": spec, "path": str(path)})
+    runner.run({"job": "write", "spec": vsp_spec(spec), "path": str(path)})
     files.insert(0, path)
     wings = {w["instance"]: (adh_doc.find(doc, w["instance"])["muas"]["planform"],
                              {k: np.asarray(v) for k, v in w["foils"].items()}) for w in spec["wings"]}
@@ -272,7 +291,7 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
         uu, ww = np.meshgrid(u, w)
         pts = runner.run({"job": "probe", "path": str(path), "geom": st["reference_skin"],
                           "u": uu.ravel().tolist(), "w": ww.ravel().tolist()})["points"]
-        d = distance_to_mesh(np.array(pts), skin)
+        d = distance_to_mesh(flip_array(np.array(pts)), skin)
         print(f"OpenVSP: gap from the OpenVSP fuselage to the CAD skin: largest {d.max() * 1e3:.1f} mm, "
               f"RMS {np.sqrt(np.mean(d ** 2)) * 1e3:.1f} mm ({len(d)} surface points)")
     return files
@@ -303,7 +322,7 @@ def _wing_from_spec(w: Dict[str, Any], item: Dict[str, Any], model: str) -> Tupl
         secs.append({**{k: float(s[k]) for k in SECTION_KEYS}, "foil": name})
     if len(secs) == len(old_pf["sections"]):
         secs[-1]["dihedral_deg"] = old_pf["sections"][-1]["dihedral_deg"]   # sets no panel: OpenVSP has no slot for it
-    pf = {**old_pf, "position": {**old_pf["position"], "xyz": [float(v) for v in w["position"]]},
+    pf = {**old_pf, "position": {**old_pf["position"], "xyz": flip_point(w["position"])},
           "rx_deg": float(w["rx_deg"]), "ry_deg": float(w["ry_deg"]), "sections": secs,
           "source": f"OpenVSP model {model}", "placeholder": False}
     return pf, foils
@@ -367,7 +386,7 @@ def ingest(doc: Dict[str, Any], ctx: Context):
     for b in body_items(st):
         if b not in read_bodies:
             raise ValueError(f"OpenVSP model {path.name}: no fuselage named {b!r}")
-        frames.append((b, [np.asarray(f, float) for f in read_bodies[b]["frames"]]))
+        frames.append((b, [flip_array(np.asarray(f, float)) for f in read_bodies[b]["frames"]]))
     extra = sorted(set(read_bodies) - set(body_items(st)))
     if extra:
         raise ValueError(f"OpenVSP model {path.name}: fuselages {extra} are not in the settings")
@@ -446,7 +465,9 @@ def _rows(res: Dict[str, Any], key: str) -> np.ndarray:
 def summarize(alpha_res: Dict[str, Any], beta_res: Dict[str, Any], alpha_trim: float, x_ref: float, c_ref: float,
               window_deg: float = 4.0) -> Dict[str, Any]:
     """Derivatives of one configuration: CLa, Cma, NP_x (alpha sweep, within +-window of the trim alpha) and Cnb, Cyb, Clb
-    (beta sweep). Slopes per radian. VSPAERO moments: CMytot pitch (nose up positive), CMxtot and CMztot (signs flipped)."""
+    (beta sweep). Slopes per radian. VSPAERO moments: CMytot pitch (nose up positive), CMxtot and CMztot (signs flipped).
+    `x_ref` and NP_x are in the design frame (FRD, x forward). A stable aircraft has Cma < 0, so the neutral point is
+    behind the reference point (lower x): NP_x = x_ref + c_ref Cma / CLa."""
     out: Dict[str, Any] = {}
     a = _rows(alpha_res, "AoA")
     near = np.abs(a - alpha_trim) <= window_deg + 1e-9
@@ -457,7 +478,7 @@ def summarize(alpha_res: Dict[str, Any], beta_res: Dict[str, Any], alpha_trim: f
         fits[name] = f
     if fits["CL"] and fits["Cm"]:
         cla, cma = fits["CL"][0] * k, fits["Cm"][0] * k
-        out.update({"CLa": cla, "Cma": cma, "CL0": fits["CL"][1], "Cm0": fits["Cm"][1], "NP_x": x_ref - c_ref * cma / cla,
+        out.update({"CLa": cla, "Cma": cma, "CL0": fits["CL"][1], "Cm0": fits["Cm"][1], "NP_x": x_ref + c_ref * cma / cla,
                     "alpha_window_deg": [alpha_trim - window_deg, alpha_trim + window_deg]})
         out["CL_at_trim"] = fits["CL"][0] * alpha_trim + fits["CL"][1]
         out["Cm_at_trim"] = fits["Cm"][0] * alpha_trim + fits["Cm"][1]
@@ -499,13 +520,14 @@ def _adh_reference(cond: Dict[str, Any], outputs: Dict[str, float]) -> Dict[str,
 
 
 def point_summary(row: Dict[str, float], case: Dict[str, Any], alpha_deg: float) -> Dict[str, Any]:
-    """The forces (N, body axes of OpenVSP: x aft, y right, z up) and moments (N m, about the MRP) of one VSPAERO point.
-    CF and CM are per q S, q S b or q S c with q from the speed of the case."""
+    """The forces (N) and moments (N m, about the MRP) of one VSPAERO point, in the design frame (FRD: x forward, y
+    right, z down). VSPAERO gives x aft, z up: x and z change sign. CF and CM are per q S, q S b or q S c with q from the
+    speed of the case."""
     q = 0.5 * case["rho"] * case["vinf"] ** 2
     s, b, c = case["sref"], case["bref"], case["cref"]
     return {"speed_m_s": case["vinf"], "alpha_deg": alpha_deg, "q_Pa": q,
-            "force_N": {a: row[f"CF{a}tot"] * q * s for a in ("x", "y", "z")},
-            "moment_Nm": {"x": row["CMxtot"] * q * s * b, "y": row["CMytot"] * q * s * c, "z": row["CMztot"] * q * s * b},
+            "force_N": {"x": -row["CFxtot"] * q * s, "y": row["CFytot"] * q * s, "z": -row["CFztot"] * q * s},
+            "moment_Nm": {"x": -row["CMxtot"] * q * s * b, "y": row["CMytot"] * q * s * c, "z": -row["CMztot"] * q * s * b},
             "rotor_thrust_N": sum(v["thrust_N"] for v in (case.get("rotors") or {}).values())}
 
 
@@ -541,7 +563,8 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
     rg = f5["ranges"]
     alpha_rng, beta_rng = _range(rg["alpha_deg"]), _range(rg["beta_deg"])
     mach = f5["speed_m_s"] / ISA_SOUND_SPEED
-    base = {"sref": s_ref, "bref": b_ref, "cref": c_ref, "xcg": mrp[0], "ycg": mrp[1], "zcg": mrp[2], "mach": mach,
+    mrp_vsp = flip_point(mrp)                      # VSPAERO takes the reference point in the OpenVSP frame
+    base = {"sref": s_ref, "bref": b_ref, "cref": c_ref, "xcg": mrp_vsp[0], "ycg": mrp_vsp[1], "zcg": mrp_vsp[2], "mach": mach,
             "vinf": f5["speed_m_s"], "rho": ISA_DENSITY, "wake_iter": int(an.get("wake_iterations", 3)),
             "fixed_wake": True, "ncpu": an.get("ncpu")}
     sets = {k: list(v) for k, v in (an.get("sets") or {}).items()}
@@ -663,7 +686,7 @@ def format_sweep(res: Dict[str, Any]) -> str:
         a, t = f5["alpha"], f5.get("t7") or {}
         out.append(f"    {'flow5 ' + f5['sweep']:20s}   " + "".join(
             f"{v:9.4f}" if v is not None else f"{'':>9s}" for v in (a.get("CLa"), a.get("Cma"), None, None,
-                                                                    t.get("NP_x"), t.get("Cnb"), None, None)))
+                                                                    None if t.get("NP_x") is None else -t["NP_x"], t.get("Cnb"), None, None)))   # flow5 x aft -> FRD
     for run, p in res.get("points", {}).items():
         out.append(f"  point run {run}: V {p['speed_m_s']:.2f} m/s, alpha {p['alpha_deg']:.1f} deg, rotor thrust "
                    f"{p['rotor_thrust_N']:.1f} N; wing and body force x/y/z "

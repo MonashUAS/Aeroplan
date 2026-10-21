@@ -171,7 +171,7 @@ For the survey, $\bar{n^2}$ mixes the straight lines (n = 1) and the turns ($n =
 
 ### 4.4 Lift rotor: the three models
 
-The lift blade is a geometric scale of the Proptimiser `MAD_FLUXER_22x6_6` blade (Fit C, R = 0.2794 m, P/D 0.30). The scale is $s = R/0.2794$.
+The lift blade is a geometric scale of the Proptimiser `MAD_FLUXER_22x6_6_jung` blade (R = 0.2794 m, P/D 0.30). Its chord and twist have the mean shape of the Jung et al. 2021 T-motor blades, with a chord scale and two twist parameters fitted to the MAD FLUXER 22x6.6 maker table (k_chord 1.158, k_twist 0.962, dtheta -1.81 deg). The scale is $s = R/0.2794$.
 
 **Momentum (L0).** Actuator disc with a constant figure of merit [6]. FM and the hover CT come from one BEMT solve of the base blade at 435 rad/s:
 
@@ -472,7 +472,7 @@ The settings hold about 40 placeholders. These ones are on an active constraint 
 2. **Fix the voltage (about 2 hours).** Prefer an S count that common packs give: 12S (2 x 6S) or 10S (2 x 5S). Run the ladder for the chosen S to L4.
 3. **Make the candidate list (about 1 day).** Use the optimum as a target, not as a part: for H4 12S, Kv near 140 rpm/V, peak torque 2.4 N m, peak current 36 A, about 310 g. The survey holds parts near this point, for example T-Motor MN605-S KV170 and MAD MAD8108 170KV. Find 26 in (or the largest available) carbon props with maker thrust and power data. Select ESCs rated at 1.2 x I_pk continuous, and packs that give the capacity as whole parallel strings.
 4. **Check each set (about 30 min each).** Type each set into the notebook manual window. Leave the booms free. Run `evaluate` of `optimise.py` at level L4 (`rosella.py evaluate NAME --level L4` before 2026-10-21). Keep the sets that pass every constraint. Rank them by energy.
-5. **Replace the blade model (about 2 days).** Use the maker CT and CP data of the chosen prop, or build a Proptimiser design from its measured chord and twist (see `jung_compare` in `component.py` for the check method). Run the check again.
+5. **Replace the blade model (about 2 days).** Use the maker CT and CP data of the chosen prop, or build a Proptimiser design from its measured chord and twist with `fit_prop --shape <csv> --no-fit` (see `tools/aerosandbox/README.md`, "Load a custom propeller", and `jung_compare` in `component.py` for the check method). Run the check again.
 6. **Bench test one set (about 1 week, with delivery).** Measure thrust, torque, current and temperature on a thrust stand. Update R_m, I_0 and the prop data in the settings. Get the tube data sheet. Weigh the clamp, mount, gear and fuselage. Replace each placeholder with a sourced value.
 7. **Hand the mass model back.** When the SpecSheet exists, it takes the mass model back (ADR 12). The AeroSandbox spoke then writes `aircraft/rosella/` from the chosen manual block (`build_from`).
 

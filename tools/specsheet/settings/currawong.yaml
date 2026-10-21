@@ -3,8 +3,8 @@
 # weights_sheet: the weight log. A sheet group (column A) is one subassembly. Its row with the text "Subassembly weight
 #   override" in column F is the weighed mass of the whole subassembly (the sheet rule).
 # positions_sheet: the CG calculation sheet. Column F is the distance of the CG from the wing root leading edge in mm,
-#   positive forward, so x_design = -F / 1000 (design frame x aft). The nose sheet "1 forward tank" is the layout of
-#   the ADH fuselage (nose at x = -0.586 m).
+#   positive forward, so x_design = +F / 1000 (design frame FRD, x forward). The nose sheet "1 forward tank" is the layout of
+#   the ADH fuselage (nose at x = +0.586 m).
 # datum_x_m: the design x of the sheet datum, the wing root leading edge (the sheet measures from it, positive forward).
 #   0.000 m: the Creo assembly puts the wing root leading edge at x = 0.000 (the shrinkwrap holds the wing panel there,
 #   user decision 2026-10-15). `aeroplan build` warns when the wing_main root leading edge of the document differs.

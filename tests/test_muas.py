@@ -302,8 +302,8 @@ def test_lifting_surface_and_foils_round_trip():
 
 
 def test_body_round_trip():
-    frames = [np.array([[0.0, 0.0, 0.0]] * 4), np.array([[0.5, 0.0, 0.1], [0.5, 0.1, 0.0], [0.5, 0.05, -0.08],
-                                                          [0.5, 0.0, -0.1]]), np.array([[1.0, 0.0, 0.0]] * 4)]
+    frames = [np.array([[1.0, 0.0, 0.0]] * 4), np.array([[0.5, 0.0, -0.1], [0.5, 0.1, 0.0], [0.5, 0.05, 0.08],
+                                                          [0.5, 0.0, 0.1]]), np.array([[0.0, 0.0, 0.0]] * 4)]   # FRD: nose first, x falls
     back = body_frames(body_adh(frames))
     assert all(np.allclose(a, b) for a, b in zip(frames, back))
 

@@ -33,7 +33,7 @@ def test_frame_lies_on_the_ellipsoid():
     assert np.allclose(f[:, 0], 0.2)
     # every point is on the ellipse (within the facet error)
     assert np.abs((f[:, 1] / (B * r)) ** 2 + (f[:, 2] / (C * r)) ** 2 - 1).max() < 0.02
-    assert f[0, 2] > 0 > f[-1, 2]            # top to bottom
+    assert f[0, 2] < 0 < f[-1, 2]            # top to bottom (z down)
     assert (f[:, 1] >= 0).all()
 
 
@@ -43,7 +43,7 @@ def test_frames_nose_and_tail_are_points():
     assert np.ptp(fr[0][:, 1]) == 0 and np.ptp(fr[0][:, 2]) == 0
     assert np.ptp(fr[-1][:, 1]) == 0 and np.ptp(fr[-1][:, 2]) == 0
     xs = [f[0, 0] for f in fr]
-    assert xs == sorted(xs) and len(set(xs)) == 15
+    assert xs == sorted(xs, reverse=True) and len(set(xs)) == 15     # nose (highest x) to tail
 
 
 def test_fit_report_and_volume():

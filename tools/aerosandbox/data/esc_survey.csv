@@ -1,0 +1,10 @@
+maker,model,cells_min,cells_max,i_cont_A,i_burst_A,mass_g,mass_note,url,note
+Hobbywing,XRotor Pro H60A 14S FOC,6,14,25,,67,without wire,https://www.hobbywing.com/en/drone-propulsion/multirotor/esc/14s,read 2026-10-21 from the maker 14S ESC list; continuous current at 7 m/s air speed (maker convention of the H series)
+Hobbywing,XRotor Pro H80A 14S FOC,6,14,40,,87,without wire,https://www.hobbywing.com/en/drone-propulsion/multirotor/esc/14s,read 2026-10-21 from the maker 14S ESC list; continuous current at 7 m/s air speed
+Hobbywing,XRotor Pro H100A 14S FOC,12,14,40,,144.1,without wire,https://www.hobbywing.com/en/drone-propulsion/multirotor/esc/14s,read 2026-10-21 from the maker 14S ESC list; 12-14S only (44-63 V)
+Hobbywing,XRotor Pro H110A 14S FOC,6,14,50,110,130,without wire,https://www.hobbywing.com/en/products/xrotor-pro-h110a-14s-foc,read 2026-10-21; the list and the page text give 130 g but the page table gives 155 g (conflict); peak 110 A for 15 s; continuous at 7 m/s air speed and 28 C
+Hobbywing,XRotor Pro H130A 14S FOC,6,14,60,,148,without wire,https://www.hobbywing.com/en/drone-propulsion/multirotor/esc/14s,read 2026-10-21 from the maker 14S ESC list; continuous current at 7 m/s air speed
+Hobbywing,XRotor Pro H200A 14S FOC,6,14,100,,270,without wire,https://www.hobbywing.com/en/drone-propulsion/multirotor/esc/14s,read 2026-10-21 from the maker 14S ESC list; continuous current at 7 m/s air speed
+T-Motor,ALPHA 60A 12S V1.2,12,12,60,80,73,with cables,https://www.ligpower.com/product/alpha-60a-12s-esc.html,read 2026-10-21 (LIGPOWER is the T-Motor store); peak for 10 s; waterproof FOC
+T-Motor,ALPHA 80A 12S,12,12,80,100,110,with cables,https://www.ligpower.com/product/alpha-80a-12s-esc.html,read 2026-10-21; peak for 10 s; waterproof FOC
+T-Motor,ALPHA 120A 12S,6,12,100,120,359.5,with cables,https://www.ligpower.com/product/alpha-120a-12s-esc.html,read 2026-10-21; the name says 120A but the table gives 100 A continuous and 120 A peak for 10 s; waterproof FOC

@@ -1,12 +1,12 @@
 """Shape helpers between the ADH geometry classes and the tool shapes (flow5 wings and bodies, meshes).
 
 ADH forms used (upstream airframe_geometry.py):
-  - `LiftingSurface`: leading_edge_spline and trailing_edge_spline (one point per section, design frame, m) and
+  - `LiftingSurface`: leading_edge_spline and trailing_edge_spline (one point per section, design frame FRD, m) and
     airfoil_sections (one `Airfoil` per section, in the order of `muas.planform.sections`). An airfoil spline holds
     the normalised foil contour: x = x/c, y = 0, z = z/c (Selig order: upper surface from the trailing edge to the
     leading edge, then the lower surface back to the trailing edge), degree 1.
   - `Body`: reference_axis (the body axis, design frame) and cross_sections. A cross section holds one flow5 frame:
-    station = (x - x_nose) / length, upper_curve = the frame points from the top to the widest point, lower_curve =
+    station = (x_nose - x) / length (x falls from the nose to the tail), upper_curve = the frame points from the top to the widest point, lower_curve =
     the widest point to the bottom. A frame that is one point (nose, tail) splits after its second point (right half, design frame, m).
 """
 from __future__ import annotations
@@ -110,13 +110,13 @@ def surface_mesh(item: Dict[str, Any], x_over_c_max=1.0) -> np.ndarray:
 def body_adh(frames: List[np.ndarray]) -> Dict[str, Any]:
     """The ADH `Body` of flow5 frames (each frame: the right-half points from the top to the bottom, design frame)."""
     xs = [float(f[0, 0]) for f in frames]
-    x0, length = xs[0], xs[-1] - xs[0]
+    x0, length = xs[0], xs[0] - xs[-1]
     if length <= 0:
-        raise ValueError("body frames must run from the nose to the tail")
+        raise ValueError("body frames must run from the nose to the tail (x falls, FRD)")
     secs = []
     for f in frames:
         k = min(max(int(np.argmax(f[:, 1])), 1), len(f) - 2)  # each ADH curve needs 2 points (a nose frame is one point)
-        secs.append({"station": (float(f[0, 0]) - x0) / length,
+        secs.append({"station": (x0 - float(f[0, 0])) / length,
                      "upper_curve": {"points": [_pt(p) for p in f[: k + 1]], "degree": 1},
                      "lower_curve": {"points": [_pt(p) for p in f[k:]], "degree": 1}})
     axis = [_pt((x, 0.0, float(np.mean(f[:, 2])))) for x, f in zip(xs, frames)]

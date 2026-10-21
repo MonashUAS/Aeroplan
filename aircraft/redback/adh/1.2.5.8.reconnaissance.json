@@ -2,7 +2,7 @@
   "wbs_no": "1.2.5.8",
   "name": "Reconnaissance",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "payload_vision",
     "mass_properties": {
       "mass": {

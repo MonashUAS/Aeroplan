@@ -9,16 +9,16 @@ multirotor:
   # The arm that the user measured in CAD (rear left arm, hub to the body origin).
   #   distance 549.968 mm; direction angles to the CAD axes X 132.822, Y 85.000, Z 43.2582 deg.
   #   Components d*cos(angle): X_cad = -373.8 mm, Y_cad = +47.9 mm, Z_cad = +400.6 mm.
-  # CAD axes: -Z is forward, +Y is up, X is right (right-handed). Design frame: x aft, y right, z up. So
-  #   x_design = +Z_cad = +0.4006 m (aft),  y_design = +X_cad = -0.3738 m (left),  z_design = +Y_cad = +0.0479 m (up).
-  # This arm is the rear left one. The other hubs are its mirror images: x = +/-0.4006, y = +/-0.3738, z = +0.0479.
+  # CAD axes: -Z is forward, +Y is up, X is right (right-handed). Design frame: FRD (x forward, y right, z down). So
+  #   x_design = -Z_cad = -0.4006 m (aft),  y_design = +X_cad = -0.3738 m (left),  z_design = -Y_cad = -0.0479 m (up).
+  # This arm is the rear left one. The other hubs are its mirror images: x = +/-0.4006, y = +/-0.3738, z = -0.0479.
   # The code keeps the exact values of the angles (no rounding to mm).
-  # Hubs in the design frame (code output, m): M1 (-0.4006, +0.3738), M2 (+0.4006, -0.3738), M3 (-0.4006, -0.3738),
-  #   M4 (+0.4006, +0.3738), all at z = +0.0479. Adjacent hubs are 0.7476 m apart in y and 0.8012 m apart in x.
+  # Hubs in the design frame (code output, m): M1 (+0.4006, +0.3738), M2 (-0.4006, -0.3738), M3 (+0.4006, -0.3738),
+  #   M4 (-0.4006, +0.3738), all at z = -0.0479. Adjacent hubs are 0.7476 m apart in y and 0.8012 m apart in x.
   arm:
     distance_mm: 549.968
     angles_deg: {x: 132.822, y: 85.000, z: 43.2582}
-    design_from_cad: {x: z, y: x, z: y}
+    design_from_cad: {x: -z, y: x, z: -y}
     position: rear_left
   # ArduPilot Quad X (AP_MotorsMatrix, FRAME_CLASS 1, FRAME_TYPE 1). spin_ardupilot is the turn direction seen from
   # above. The code stores muas.propeller.spin as seen along the thrust vector from behind (from below for a lift
@@ -34,7 +34,7 @@ multirotor:
   body_box: {size_m: [0.30, 0.30, 0.20], centre_m: [0.0, 0.0, 0.0]}
   arm_tube: {radius_m: 0.0125}
   motor_shape: {radius_m: 0.0375, length_m: 0.05}
-  # Landing gear: four feet, stand-in positions (measure the gear). z = lowest airframe point less leg_length_m.
+  # Landing gear: four feet, stand-in positions (measure the gear). z = lowest airframe point plus leg_length_m (z is down).
   # Spring and damping: the stand-in values of the Currawong gear.
   gear:
     foot_x_m: 0.25

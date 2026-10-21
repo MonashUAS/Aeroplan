@@ -32,6 +32,7 @@ import numpy as np
 import pandas as pd
 
 from .adapters.flow5_geometry import read_t7_scalars
+from .frame import flip_point
 
 NS, MATHML = "http://daveml.org/2010/DAVEML", "http://www.w3.org/1998/Math/MathML"
 DOCTYPE = ('<!DOCTYPE DAVEfunc PUBLIC "-//AIAA//DTD for Flight Dynamic Models - Functions 2.0//EN" '
@@ -130,7 +131,7 @@ def from_flow5(sweep_dir: Path, viscous: pd.DataFrame, stall: dict) -> AeroBuild
     table_src = (f"linear CL0 + CLa alpha inside CL_min {stall['CL_min']} to CL_max {stall['CL_max']} (stall settings, "
                  f"placeholder {str(ph).lower()}), post-stall shape of Aerolink 6f7edb7 jsbsim_xml.cl_alpha_table (placeholder)")
     trim = {"speed_mps": op["VInf"], "alpha_rad": a0, "mass_kg": op["mass"],
-            "cog": [op["CoG_x"], op["CoG_y"], op["CoG_z"]], "NP_x": op["NP_x"]}
+            "cog": flip_point([op["CoG_x"], op["CoG_y"], op["CoG_z"]]), "NP_x": -op["NP_x"]}   # flow5 axes -> FRD
     notes = [f"Trim point of the T7 analysis: V {op['VInf']} m/s, alpha {op['alpha']} deg, CL {cl_t}.",
              "The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."]
     return AeroBuildUp(co, table, table_src, trim, notes)

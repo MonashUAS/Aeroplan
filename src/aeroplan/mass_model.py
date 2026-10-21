@@ -1,4 +1,4 @@
-"""The mass model: point masses -> mass, CG and inertia. Design frame (x aft, y right, z up), SI.
+"""The mass model: point masses -> mass, CG and inertia. Design frame (FRD: x forward, y right, z down), SI.
 
 Only numpy. A point mass has no inertia of its own by default, so the inertia is the parallel-axis sum. An item can
 carry `inertia_own` (its inertia about its own CG, axes parallel to the design frame). The roll-up then adds it.

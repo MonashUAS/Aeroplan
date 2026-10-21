@@ -48,8 +48,8 @@ DEFAULT_SIGNS: Dict[str, str] = {
 
 
 class ReferenceData(MuasModel):
-    design_frame: Literal["x_aft_y_right_z_up_m_noseDatum", "x_aft_y_right_z_up_m_flow5Origin",
-                          "x_aft_y_right_z_up_m_bodyOrigin"] = "x_aft_y_right_z_up_m_noseDatum"
+    design_frame: Literal["x_fwd_y_right_z_down_m_wingLE", "x_fwd_y_right_z_down_m_bodyOrigin"] = \
+        "x_fwd_y_right_z_down_m_wingLE"
     kind: Optional[Literal["multirotor", "quadplane"]] = Field(
         None, description="Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the "
         "frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. quadplane: "

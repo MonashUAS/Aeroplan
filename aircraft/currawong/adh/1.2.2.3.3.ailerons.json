@@ -2,7 +2,7 @@
   "wbs_no": "1.2.2.3.3",
   "name": "Ailerons",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "ailerons"
   },
   "subcomponents": [
@@ -10,7 +10,7 @@
       "name": "Aileron L",
       "description": "Currawong aileron l. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "aileron_l",
         "fidelity": "L0",
         "control_surface": {
@@ -44,9 +44,9 @@
             "units": "mm",
             "transform": {
               "axes": [
-                "-z",
+                "z",
                 "-x",
-                "y"
+                "-y"
               ],
               "origin_m": [
                 0.0,
@@ -56,14 +56,14 @@
             },
             "hinge": [
               [
-                0.176631,
+                -0.176631,
                 -1.424385,
-                0.05722
+                -0.05722
               ],
               [
-                0.18349,
+                -0.18349,
                 -1.306005,
-                0.052196
+                -0.052196
               ]
             ],
             "source": "Creo export aileron_l.stl with the CREO settings transform",
@@ -76,7 +76,7 @@
       "name": "Aileron R",
       "description": "Currawong aileron r. Limit: hand config controls.aileron_max_deg, a command scale (F-3).",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "aileron_r",
         "fidelity": "L0",
         "control_surface": {
@@ -110,9 +110,9 @@
             "units": "mm",
             "transform": {
               "axes": [
-                "z",
+                "-z",
                 "x",
-                "y"
+                "-y"
               ],
               "origin_m": [
                 0.0,
@@ -122,14 +122,14 @@
             },
             "hinge": [
               [
-                0.18349,
+                -0.18349,
                 1.306005,
-                0.052196
+                -0.052196
               ],
               [
-                0.176631,
+                -0.176631,
                 1.424385,
-                0.05722
+                -0.05722
               ]
             ],
             "source": "Creo export aileron_r.stl with the CREO settings transform",

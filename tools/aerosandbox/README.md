@@ -63,6 +63,22 @@ This makes `tools/aerosandbox/.venv` (Python 3.12, uv). It holds aerosandbox, ca
 
 Copy the Proptimiser design and state file of each blade by hand into `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/`. The Rosella notebook copies them from the work folders of Redback (lift blade) and Currawong (cruise blade).
 
+## Load a custom propeller
+
+A blade is a Proptimiser design: `designs/<name>.yaml` and `propellers/<name>.state.json`. The BEMT reads chord and twist from the state file at 25 stations from the hub radius to the tip.
+
+1. Make the design in the Proptimiser checkout. Use one of these three ways:
+   - Measured chord and twist (a scan or a maker drawing): write a shape CSV with the columns `blade,r_over_R,c_over_R,beta_rad`. Then run `.venv/Scripts/python -m proptimiser.fit_prop --shape <csv> --no-fit --name <name> --save`.
+   - A maker bench table only: run `.venv/Scripts/python -m proptimiser.fit_prop --table <csv> --name <name> --save`. Add `--shape <csv>` to fit a scale of a known shape. The Rosella lift blade `MAD_FLUXER_22x6_6_jung` uses the Jung 2021 T-motor shape.
+   - A new blade: use the Proptimiser optimiser.
+2. Copy the two files by hand into `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/`.
+3. Set the rotor params in the notebook model cell: `design`, `design_aircraft`, `reference_radius_m` (the tip radius of the design file), `blade_diameter_m` and `blade_pitch_m`. For a bought prop, also set `mass_kg` and `pitch_m`.
+4. Run the notebook again.
+
+A copy in the aircraft folder that differs from its source is replaced (sha256). The CT/CP table cache key holds the sha256 of the design, so a changed blade with the same name makes new samples.
+
+Limit: the `fit_prop` command line targets the FLUXER (22 in, 6.6 in, 2 blades, hub 0.025 m, hover 22.4 N). A prop of another size needs a new `Target` and a new setup function in `fit_prop.py`.
+
 ## Fixed-wing and multirotor models (`generate`)
 
 | Item | Place |

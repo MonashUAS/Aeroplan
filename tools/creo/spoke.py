@@ -9,9 +9,11 @@ Settings (committed): tools/creo/settings/<aircraft>.yaml
                     the OpenVSP panel analysis. With `body: {frames, points, cut}` the spoke also slices the skin into
                     the ADH body of the item (aeroplan.skin_body): `frames` frames of `points` points each, and `cut`
                     {x_m: [x0, x1], y_max_m} removes the wing centre panel that the shrinkwrap holds.
-    tubes           instance -> {node, name, description, radius_m, from_instance, to_instance, source, placeholder}:
-                    a round tube body (the tail boom) until the CAD has the part. It goes into the ADH as a
-                    subcomponent of `node` with `geometry.body` (ADH Body) and `muas.tube` (inputs, source). It runs
+    tubes           instance -> {node, name, description, radius_m, [inner_radius_m], (from_instance, to_instance) or
+                    (p0_m, p1_m), source, placeholder}: a round tube body (the tail boom). The ends are the aft end of
+                    the body of `from_instance` and the root quarter chord of `to_instance`, or two points of the design
+                    frame (FRD, m, from the forward end to the aft end). It goes into the ADH as a subcomponent of `node`
+                    with `geometry.body` (ADH Body, the outer shape) and `muas.tube` (inputs, bore, source). It runs
                     without the CAD folder.
 
 The meshes stay raw files on the user's machine. The `.muas` file holds, for each part: a pointer (path, sha256),
@@ -28,6 +30,7 @@ from typing import Any, Dict, List
 import numpy as np
 
 from aeroplan import MUAS_SCHEMA_VERSION, adh_doc
+from aeroplan.frame import planform_le_x
 from aeroplan.geometry import body_adh, body_frames, planform_wing
 from aeroplan.spokes import Context, set_sources
 from aeroplan.visual import MOVABLE, PIVOT, front_edge_axis, read_stl, to_design
@@ -36,9 +39,15 @@ NAME = "CREO"
 TUBE_POINTS = 17              # points of each right-half frame of a tube (top to bottom), the same in every frame
 
 
-def tube_ends(doc: Dict[str, Any], from_instance: str, to_instance: str) -> np.ndarray:
-    """Start and end of a tube: the centre of the last frame of the body of `from_instance`, and the root quarter
-    chord of the planform of `to_instance` (the rule of the visual boom, aeroplan.parts._tube_part)."""
+def tube_ends(doc: Dict[str, Any], spec: Dict[str, Any]) -> np.ndarray:
+    """Start and end of a tube: the two points `p0_m` and `p1_m` of the settings, or the centre of the last frame of the
+    body of `from_instance` and the root quarter chord of the planform of `to_instance` (the rule of the visual boom,
+    aeroplan.parts._tube_part)."""
+    if "p0_m" in spec or "p1_m" in spec:
+        if not ("p0_m" in spec and "p1_m" in spec):
+            raise ValueError("tube: give both p0_m and p1_m")
+        return np.array([spec["p0_m"], spec["p1_m"]], float)
+    from_instance, to_instance = spec["from_instance"], spec["to_instance"]
     body = adh_doc.find(doc, from_instance).get("geometry", {}).get("body")
     if body is None:
         raise ValueError(f"tube: {from_instance} has no ADH body geometry")
@@ -49,23 +58,24 @@ def tube_ends(doc: Dict[str, Any], from_instance: str, to_instance: str) -> np.n
         raise ValueError(f"tube: {to_instance} has no planform")
     wing = planform_wing(pf)
     s0 = wing.sections[0]
-    end = [wing.position[0] + s0.x_offset + PIVOT * s0.chord, 0.0, wing.position[2]]
+    end = [planform_le_x(wing.position[0], s0.x_offset) - PIVOT * s0.chord, 0.0, wing.position[2]]
     return np.array([start, end], float)
 
 
 def tube_frames(p0: np.ndarray, p1: np.ndarray, radius: float) -> List[np.ndarray]:
-    """Frames of a round tube from p0 to p1 (x must rise) with closed ends. A frame is the right half, top to bottom,
-    in the plane x = constant. The ends are one point (zero area); the full radius starts one radius inside each end."""
-    length = float(p1[0] - p0[0])
+    """Frames of a round tube from p0 to p1 (x must fall: p0 is the forward end, FRD) with closed ends. A frame is the
+    right half, top to bottom, in the plane x = constant. The ends are one point (zero area); the full radius starts one
+    radius inside each end."""
+    length = float(p0[0] - p1[0])
     if length <= 2 * radius:
-        raise ValueError("tube: the end must be aft of the start by more than a diameter")
+        raise ValueError("tube: the end must be aft of the start by more than a diameter (x falls from p0 to p1)")
     th = np.linspace(0.0, math.pi, TUBE_POINTS)
     frames = []
-    for x in (p0[0], p0[0] + radius, p1[0] - radius, p1[0]):
-        t = (x - p0[0]) / length
+    for x in (p0[0], p0[0] - radius, p1[0] + radius, p1[0]):
+        t = (p0[0] - x) / length
         c = p0 + t * (p1 - p0)
-        r = radius if p0[0] < x < p1[0] else 0.0
-        frames.append(np.column_stack([np.full_like(th, c[0]), r * np.sin(th), c[2] + r * np.cos(th)]))
+        r = radius if p1[0] < x < p0[0] else 0.0
+        frames.append(np.column_stack([np.full_like(th, c[0]), r * np.sin(th), c[2] - r * np.cos(th)]))
     return frames
 
 
@@ -73,15 +83,20 @@ def write_tubes(doc: Dict[str, Any], tubes: Dict[str, Dict[str, Any]]) -> List[s
     """Write each tube of the settings as a subcomponent of its ADH node (geometry.body and muas.tube)."""
     changes = []
     for inst, spec in tubes.items():
-        ends = tube_ends(doc, spec["from_instance"], spec["to_instance"])
+        ends = tube_ends(doc, spec)
         radius = float(spec["radius_m"])
         body = body_adh(tube_frames(ends[0], ends[1], radius))
+        tube = {"radius": {"value": radius, "units": "m"}}
+        if spec.get("inner_radius_m") is not None:
+            tube["inner_radius"] = {"value": float(spec["inner_radius_m"]), "units": "m"}
+        if "p0_m" in spec:
+            tube.update(p0=[float(v) for v in ends[0]], p1=[float(v) for v in ends[1]])
+        else:
+            tube.update(from_instance=spec["from_instance"], to_instance=spec["to_instance"])
+        tube.update(source=spec["source"], placeholder=bool(spec.get("placeholder", False)))
         comp = {"name": spec["name"], "description": spec.get("description", spec["name"]),
                 "geometry": {"body": body},
-                "muas": {"ext_version": MUAS_SCHEMA_VERSION, "instance": inst, "geometry_tool": NAME,
-                         "tube": {"radius": {"value": radius, "units": "m"}, "from_instance": spec["from_instance"],
-                                  "to_instance": spec["to_instance"], "source": spec["source"],
-                                  "placeholder": bool(spec.get("placeholder", False))}}}
+                "muas": {"ext_version": MUAS_SCHEMA_VERSION, "instance": inst, "geometry_tool": NAME, "tube": tube}}
         parent = adh_doc.node(doc, str(spec["node"]), create=True)
         old = next((s for s in parent.get("subcomponents") or [] if (s.get("muas") or {}).get("instance") == inst), None)
         if old is not None and old.get("geometry") == comp["geometry"] and old["muas"].get("tube") == comp["muas"]["tube"]:

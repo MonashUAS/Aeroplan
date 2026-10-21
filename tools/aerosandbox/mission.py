@@ -57,7 +57,7 @@ class Mission(Component):
       survey_lines, survey_line_length_m, survey_turn_bank_deg
       deployment_hover_s, reserve_hover_s
       vtol_climb_m, vtol_climb_rate_m_s, vtol_descent_rate_m_s, transition_s
-    The payload masses are point-mass components of the model (cargo, camera). The cargo is gone in the H_L condition.
+    The payload is the cargo, a point-mass component of the model. It is released at the deployment: gone in the H_L condition.
     """
     KIND = "mission"
 

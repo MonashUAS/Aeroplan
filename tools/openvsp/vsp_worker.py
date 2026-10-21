@@ -22,7 +22,7 @@ SETS = {name: [geometry names]}: user sets, made in the model before the analysi
 CASE = {sref, bref, cref, xcg, ycg, zcg, mach, vinf, rho, alpha: [start, end, n], beta: [start, end, n], wake_iter,
         fixed_wake, ncpu}. Metres, degrees, SI.
 
-SPEC (design frame: x aft, y right, z up, metres, degrees):
+SPEC (OpenVSP frame: x aft, y right, z up, metres, degrees. The spoke flips it from the FRD design frame):
     {"wings": [{"instance", "position": [x, y, z], "rx_deg", "ry_deg", "mirror": bool,
                 "sections": [{"y", "chord", "x_offset", "dihedral_deg", "twist_deg", "foil"}],
                 "foils": {name: [[x/c, z/c], ...]},          Selig order (upper TE -> LE -> lower TE)

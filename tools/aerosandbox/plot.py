@@ -4,10 +4,11 @@ Plots of a model, a `Result` or a `Snapshot`. Nothing here calls the solver: the
 Static plots (matplotlib, so a notebook shows them on GitHub):
     view_3d(model, design)        the AeroSandbox 3D view with the lift booms and the rotor discs
     three_view(model, design)     AeroSandbox three-view with the rotor discs added
-    mass_chart(result)            mass of each item of the mass list
-    energy_chart(result)          energy of each mission segment
+    weight_chart(result)          one stacked bar of the take-off mass, by system and item
+    energy_chart(result)          one stacked bar of the mission energy by segment, with the usable and nominal battery energy
+    fit_chart(model, result)      the motor and ESC mass fits against the maker rows, with the design point
     margin_chart(result)          the limits with the smallest margin, and what one more unit of each costs
-    frequency_chart(result)       boom mode against the rotor speed lines (1P, 2P) and the hover band
+    frequency_chart(result)       boom modes f1, f2 against the rotor speed lines (1P, 2P) and the hover band
     ladder_chart(run)             mass and energy at each level of the ladder
 
 Interactive (plotly):
@@ -47,9 +48,9 @@ def view_3d(model, design: Dict[str, float], elev: float = 24.0, azim: float = -
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
     style()
-    fig = plt.figure(figsize=size)
     plane = model.airplane(design)
-    plane.draw(backend="matplotlib", show=False, set_axis_visibility=False)
+    plane.draw(backend="matplotlib", show=False, set_axis_visibility=False)      # draw makes its own figure
+    plt.gcf().set_size_inches(*size)
     ax = plt.gcf().axes[0]
     for d in model.rotor_discs(design):
         ax.add_collection(Poly3DCollection([d["rim"]], facecolors=ORANGE, edgecolors=ORANGE, alpha=0.35, linewidths=0.8, zorder=4))
@@ -77,39 +78,152 @@ def three_view(model, design: Dict[str, float], size=(8.0, 8.0)):
 
 
 # ==================================================================================================== charts of a Result
-def _bars(ax, labels, values, colors=BLUE, fmt="{:.2f}"):
-    y = np.arange(len(labels))
-    ax.barh(y, values, color=colors, height=0.62, edgecolor=SURFACE, linewidth=1.5)
-    ax.set_yticks(y, labels)
-    ax.invert_yaxis()
-    ax.grid(axis="y", visible=False)
-    for yi, v in zip(y, values):
-        ax.text(v, yi, " " + fmt.format(v), va="center", ha="left", color=INK, fontsize=8.5)
-    ax.set_xlim(0, max(values) * 1.18 if len(values) else 1.0)
+# Item name -> system, for the stacked weight chart. An item that is not listed goes to "Other". The lift_* parts come from the
+# split of lift_front and lift_rear (see _lift_parts). An older result with no m_mount keeps the two items.
+WEIGHT_GROUPS = (
+    ("Airframe", ("wing", "tail", "tail_boom", "fuselage", "landing_gear")),
+    ("VTOL propulsion", ("lift_motor", "lift_esc", "lift_prop", "lift_mount", "lift_front", "lift_rear", "boom", "boom_clamp",
+                         "cables")),
+    ("Cruise propulsion", ("cruise_motor", "cruise_esc", "cruise_prop", "cruise_rest")),
+    ("Battery", ("battery",)),
+    ("Flight avionics", ("avionics_flight",)),
+    ("Avionics projects", ("avionics_projects",)),
+    ("Payload, released at the deployment", ("payload_cargo",)),
+)
+
+# Mission segment -> group, for the stacked energy chart.
+ENERGY_GROUPS = (
+    ("VTOL", ("vtol_takeoff_climb", "transitions", "deploy_hover", "landing")),
+    ("Cruise", ("fw_climb", "transit_laps_rtl", "survey")),
+    ("Reserve hover", ("reserve",)),
+)
+
+STACK_COLORS = (BLUE, ORANGE, AQUA, YELLOW, MAGENTA, GREEN, VIOLET, MUTED)
 
 
-def mass_chart(result, size=(6.4, 4.6)):
-    """The mass of each item of the mass list (kg), largest first."""
+def _grouped(values: Dict[str, float], groups):
+    """[(group, [(item, value), ...]), ...] in the order of `groups`, plus "Other" for the items that no group lists. Empty
+    groups are left out."""
+    listed = {k for _, ks in groups for k in ks}
+    rows = [(g, [(k, values[k]) for k in ks if k in values]) for g, ks in groups]
+    rows.append(("Other", [(k, v) for k, v in values.items() if k not in listed]))
+    return [(g, items) for g, items in rows if items]
+
+
+def _stack(ax, rows, unit: str, fmt: str = "{:.2f}"):
+    """One stacked bar at x = 0. Each group is one colour, split by thin lines into its items. The labels on the right give the
+    group value, its share and the items. The labels move apart so that they do not overlap, with a leader line to the
+    segment. Returns the total."""
+    total = sum(v for _, items in rows for _, v in items)
+    bottom, seg = 0.0, []
+    for (g, items), col in zip(rows, STACK_COLORS):
+        top = bottom
+        for _, v in items:
+            ax.bar(0, v, bottom=top, width=0.5, color=col, edgecolor=SURFACE, linewidth=1.2)
+            top += v
+        seg.append((g, items, top - bottom, 0.5 * (bottom + top)))
+        bottom = top
+    gap = 0.065 * total                                     # the least distance of two labels, so that they do not overlap
+    ys = [m for *_, m in seg]
+    for i in range(1, len(ys)):
+        ys[i] = max(ys[i], ys[i - 1] + gap)
+    ys[-1] = min(ys[-1], total * 0.985)
+    for i in range(len(ys) - 2, -1, -1):
+        ys[i] = min(ys[i], ys[i + 1] - gap)
+    for (g, items, m, mid), y in zip(seg, ys):
+        ax.plot([0.25, 0.3, 0.33], [mid, y, y], color=MUTED, lw=0.7)
+        ax.text(0.35, y + 0.012 * total, f"{g}  {fmt.format(m)} {unit} ({100 * m / total:.0f} %)", va="center", ha="left",
+                color=INK, fontsize=9)
+        ax.text(0.35, y - 0.016 * total, ", ".join(f"{k.replace('_', ' ')} {fmt.format(v)}" for k, v in items), va="center",
+                ha="left", color=MUTED, fontsize=7.5)
+    ax.set_xlim(-0.35, 1.75)
+    ax.set_xticks([])
+    ax.grid(axis="x", visible=False)
+    ax.spines["bottom"].set_visible(False)
+    return total
+
+
+def _lift_parts(result, by_item: Dict[str, float]) -> Dict[str, float]:
+    """Split the lift_front and lift_rear items into motors, ESCs, props and mounts (the unit masses of the result names times
+    the number of rotors). The parts must add up to the two items."""
+    n = result["names"]
+    if "m_mount" not in n or "lift_front" not in by_item:
+        return by_item
+    unit = {"lift_motor": n["m_motor"], "lift_esc": n["m_esc"], "lift_prop": n["m_prop"], "lift_mount": n["m_mount"]}
+    n_rot = (by_item["lift_front"] + by_item["lift_rear"]) / sum(unit.values())
+    assert abs(n_rot - round(n_rot)) < 1e-6, f"the lift items are not a whole number of rotor units ({n_rot})"
+    out = {k: v for k, v in by_item.items() if k not in ("lift_front", "lift_rear")}
+    out.update({k: round(n_rot) * v for k, v in unit.items()})
+    return out
+
+
+def weight_chart(result, size=(7.0, 5.4), groups=WEIGHT_GROUPS):
+    """One stacked bar of the take-off mass (kg). Each segment is a system (WEIGHT_GROUPS) and is split by thin lines into its
+    items. The labels give the mass and the share of the total."""
     import matplotlib.pyplot as plt
     style()
-    m = sorted(result.mass_by_item().items(), key=lambda kv: -kv[1])
     fig, ax = plt.subplots(figsize=size)
-    _bars(ax, [k for k, _ in m], [v for _, v in m], fmt="{:.3f}")
-    ax.set_xlabel("mass [kg]")
-    ax.set_title(f"Mass list, total {result.mass_kg:.2f} kg")
+    total = _stack(ax, _grouped(_lift_parts(result, result.mass_by_item()), groups), "kg")
+    ax.set_ylim(0, total * 1.02)
+    ax.set_ylabel("mass [kg]")
+    ax.set_title(f"Weight breakdown, take-off mass {total:.2f} kg")
     fig.tight_layout()
     return fig
 
 
-def energy_chart(result, size=(6.4, 3.6)):
-    """The energy of each mission segment (Wh)."""
+def energy_chart(result, size=(7.0, 4.6), groups=ENERGY_GROUPS):
+    """One stacked bar of the mission energy (Wh), by segment (ENERGY_GROUPS), with the usable and the nominal battery energy
+    as lines."""
     import matplotlib.pyplot as plt
     style()
-    e = result.energy_by_segment()
     fig, ax = plt.subplots(figsize=size)
-    _bars(ax, [k.replace("_", " ") for k in e], list(e.values()), fmt="{:.1f}")
-    ax.set_xlabel("energy [Wh]")
-    ax.set_title(f"Mission energy {result.energy_Wh:.1f} Wh of {result['energy_nominal_Wh']:.0f} Wh nominal")
+    total = _stack(ax, _grouped(result.energy_by_segment(), groups), "Wh", "{:.1f}")
+    nominal = result["energy_nominal_Wh"]
+    usable = (result["constraints"].get("energy_Wh") or {}).get("hi")
+    for y, txt, ls in ((usable, "usable", "--"), (nominal, "nominal", ":")):
+        if y is not None:
+            ax.plot([-0.33, 0.25], [y, y], color=INK, lw=1.0, ls=ls)
+            ax.text(-0.33, y, f"{txt} {y:.0f} Wh", va="bottom", ha="left", color=INK, fontsize=8)
+    ax.set_ylim(0, max(total, nominal) * 1.08)
+    ax.set_ylabel("energy [Wh]")
+    share = f", {100 * total / usable:.0f} % of usable" if usable else ""
+    ax.set_title(f"Mission energy {total:.1f} Wh{share}")
+    fig.tight_layout()
+    return fig
+
+
+def fit_chart(model, result, size=(10.0, 4.0)):
+    """The motor and ESC mass fits against the maker rows. Left: motor mass against q_cap (data/motor_survey.csv). Right: ESC
+    mass against the continuous current (data/esc_survey.csv), with AIAA 2016-0581 Eq. 2 for comparison. The diamond is the
+    design."""
+    import matplotlib.pyplot as plt
+    from component import esc_model, motor_model
+    style()
+    mm = motor_model(model.c["motor"])
+    esc, cells = model.c["esc"], int(model.c["battery"]["cells_s"])
+    em = esc_model(esc, cells)
+    n, d = result["names"], result.design
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=size)
+    q = np.linspace(0.8 * mm.q_cap.min(), 1.05 * mm.q_cap.max(), 60)
+    a1.plot(mm.q_cap, mm.m_g, "o", color=BLUE, ms=4, alpha=0.75, label=f"maker rows ({mm.n})")
+    a1.plot(q, np.exp(mm.mass_fit[0]) * q ** mm.mass_fit[1], color=INK, lw=1.4,
+            label=f"fit {np.exp(mm.mass_fit[0]):.0f} q^{mm.mass_fit[1]:.2f} g (log RMS {mm.mass_rms:.2f})")
+    a1.plot([d["q_cap"]], [1000.0 * n["m_motor"]], "D", color=ORANGE, ms=7, label=f"design {1000.0 * n['m_motor']:.0f} g")
+    a1.set_xlabel("q_cap: torque for the 180 s peak current [N m]")
+    a1.set_ylabel("motor mass [g]")
+    a1.set_title("Lift motor mass")
+    a1.legend(fontsize=8, loc="upper left")
+    i = np.linspace(1.0, 1.05 * em.i_A.max(), 60)
+    a2.plot(em.i_A, em.m_g, "o", color=BLUE, ms=4, alpha=0.75, label=f"maker rows ({em.n})")
+    a2.plot(i, np.exp(em.fit[0]) * i ** em.fit[1], color=INK, lw=1.4,
+            label=f"fit {np.exp(em.fit[0]):.2f} I^{em.fit[1]:.2f} g (log RMS {em.rms:.2f})")
+    a2.plot(i, 0.8421 * i, color=MUTED, lw=1.0, ls="--", label="AIAA 2016-0581 Eq. 2 (0.84 g/A)")
+    i_d = esc.num("peak_factor") * n["I_pk"]
+    a2.plot([i_d], [1000.0 * n["m_esc"]], "D", color=ORANGE, ms=7, label=f"design {1000.0 * n['m_esc']:.0f} g at {i_d:.0f} A")
+    a2.set_xlabel("ESC continuous current [A]")
+    a2.set_ylabel("ESC mass [g]")
+    a2.set_title(f"Lift ESC mass ({cells}S rows)")
+    a2.legend(fontsize=8, loc="upper left")
     fig.tight_layout()
     return fig
 
@@ -139,30 +253,45 @@ def margin_chart(result, n: int = 14, size=(7.4, 4.8)):
     return fig
 
 
-def frequency_chart(result, size=(6.4, 4.2), margin_frac: Optional[float] = None):
-    """The first bending frequency of the boom against the rotor speed. Lines: 1P and 2P (rotation and two-blade passing). The
-    band is hover 1P +/- the resonance margin. A crossing of f1 with a line is a speed the rotors must not dwell at."""
+def frequency_chart(result, size=(6.4, 4.8), margin_frac: Optional[float] = None):
+    """The first two bending frequencies of the boom against the rotor speed. Lines: 1P and 2P (rotation and two-blade passing).
+    The band is hover 1P +/- the resonance margin. A crossing of f1 or f2 with a line is a speed the rotors must not dwell at.
+    f2 includes the tip rotary inertia of the motor and prop (an estimate). A dot marks each crossing up to full throttle.
+    The text labels sit in boxes off the lines, and the legend is below the axes."""
     import matplotlib.pyplot as plt
     style()
     rpm_h = result["rotors"]["H_TO_f"]["rpm"]
     rpm_max = max(result["rotors"]["MAX_f"]["rpm"], result["rotors"]["MAX_r"]["rpm"])
-    f1 = result["f1_Hz"]
+    f1, f2 = result["f1_Hz"], result["f2_Hz"]
     mg = margin_frac if margin_frac is not None else 0.2
     r = np.linspace(0.0, 1.05 * rpm_max, 50)
     fig, ax = plt.subplots(figsize=size)
-    f_h = rpm_h / 60.0
     ax.axvspan(rpm_h * (1 - mg), rpm_h * (1 + mg), color=YELLOW, alpha=0.18, lw=0)
     ax.plot(r, r / 60.0, color=BLUE, label="1P (rotation)")
     ax.plot(r, 2.0 * r / 60.0, color=VIOLET, label="2P (two blades assumed)")
     ax.axhline(f1, color=ORANGE, label=f"boom mode f1 {f1:.1f} Hz")
-    ax.axvline(rpm_h, color=MUTED, lw=1.0, ls=":")
-    ax.text(rpm_h, ax.get_ylim()[1] * 0.97, " hover", color=MUTED, va="top", fontsize=8.5)
-    ax.axvline(rpm_max, color=MUTED, lw=1.0, ls=":")
-    ax.text(rpm_max, ax.get_ylim()[1] * 0.97, " full throttle", color=MUTED, va="top", ha="right", fontsize=8.5)
+    ax.axhline(f2, color=ORANGE, ls="--", label=f"boom mode f2 {f2:.0f} Hz (tip rotary inertia)")
+    ax.set_ylim(0, 1.1 * max(f2, 2.0 * rpm_max / 60.0))
+    box = dict(boxstyle="round,pad=0.3", fc=SURFACE, ec="none", alpha=0.9)
+    cross = []
+    for name, f in (("f1", f1), ("f2", f2)):
+        for k in (1, 2):
+            rpm_x = 60.0 * f / k
+            if rpm_x <= rpm_max:
+                ax.plot([rpm_x], [f], "o", color=INK, ms=4, zorder=5)
+                cross.append(f"{name} = {k}P at {rpm_x:.0f} rpm")
+    if cross:                                               # one box in the empty top left corner, not on the lines
+        ax.text(0.02, 0.80, "Crossings (dots):\n" + "\n".join(cross), transform=ax.transAxes, color=INK, fontsize=8,
+                ha="left", va="top", bbox=box, zorder=6)
+    y_txt = 0.5 * ax.get_ylim()[1]
+    for x, txt in ((rpm_h, "hover"), (rpm_max, "full throttle")):
+        ax.axvline(x, color=MUTED, lw=1.0, ls=":")
+        ax.text(x, y_txt, txt, color=MUTED, rotation=90, ha="center", va="center", fontsize=8.5, bbox=box, zorder=6)
     ax.set_xlabel("rotor speed [rpm]")
     ax.set_ylabel("frequency [Hz]")
-    ax.set_title(f"Boom mode against rotor speed (hover band +/- {100 * mg:.0f} %)")
-    ax.legend(loc="upper left", fontsize=8.5)
+    above = "f2 above 2P at full throttle" if f2 > 2.0 * rpm_max / 60.0 else "f2 crosses 2P"
+    ax.set_title(f"Boom modes against rotor speed\n(hover band +/- {100 * mg:.0f} %, {above})")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2, fontsize=8.5)
     ax.set_xlim(0, 1.05 * rpm_max)
     fig.tight_layout()
     return fig

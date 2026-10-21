@@ -1,0 +1,662 @@
+{
+  "$defs": {
+    "Correlation": {
+      "additionalProperties": false,
+      "properties": {
+        "coefficient": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "var_id": {
+          "title": "Var Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var_id",
+        "coefficient"
+      ],
+      "title": "Correlation",
+      "type": "object"
+    },
+    "Distribution": {
+      "enum": [
+        "normal",
+        "uniform",
+        "interval"
+      ],
+      "title": "Distribution",
+      "type": "string"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight, REF a published reference model.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "REF"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "Inertia": {
+      "additionalProperties": false,
+      "properties": {
+        "axes": {
+          "default": "parallel_to_design",
+          "title": "Axes",
+          "type": "string"
+        },
+        "ixx": {
+          "title": "Ixx",
+          "type": "number"
+        },
+        "ixy": {
+          "default": 0.0,
+          "title": "Ixy",
+          "type": "number"
+        },
+        "ixz": {
+          "default": 0.0,
+          "title": "Ixz",
+          "type": "number"
+        },
+        "iyy": {
+          "title": "Iyy",
+          "type": "number"
+        },
+        "iyz": {
+          "default": 0.0,
+          "title": "Iyz",
+          "type": "number"
+        },
+        "izz": {
+          "title": "Izz",
+          "type": "number"
+        },
+        "products_convention": {
+          "default": "+integral(xy dm)",
+          "title": "Products Convention",
+          "type": "string"
+        },
+        "units": {
+          "default": "kg*m^2",
+          "title": "Units",
+          "type": "string"
+        },
+        "unverified_products": {
+          "description": "Product terms (for example ixz) stored as written by the source, sign convention unverified",
+          "items": {
+            "type": "string"
+          },
+          "title": "Unverified Products",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ixx",
+        "iyy",
+        "izz"
+      ],
+      "title": "Inertia",
+      "type": "object"
+    },
+    "MassProperties": {
+      "additionalProperties": false,
+      "properties": {
+        "cg": {
+          "$ref": "#/$defs/Position"
+        },
+        "inertia": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Inertia"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mass": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": false,
+          "description": "True when the values are a stand-in, not data",
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "$ref": "#/$defs/MassSource"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uncertainty"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "mass",
+        "cg",
+        "source"
+      ],
+      "title": "MassProperties",
+      "type": "object"
+    },
+    "MassSource": {
+      "enum": [
+        "estimate",
+        "cad",
+        "weighed"
+      ],
+      "title": "MassSource",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "config_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the source does not record a date",
+          "title": "Created"
+        },
+        "geometry_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometry Hash"
+        },
+        "input_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Sha256"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "tool_version",
+        "author"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QualitativeLevel": {
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "QualitativeLevel",
+      "type": "string"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "SafetyFactor": {
+      "additionalProperties": false,
+      "description": "[M&S 29] b: a margin or factor of safety, with what it covers.",
+      "properties": {
+        "covers": {
+          "title": "Covers",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "covers"
+      ],
+      "title": "SafetyFactor",
+      "type": "object"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "[M&S 28]/[M&S 34]: process and rationale",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "correlations": {
+          "items": {
+            "$ref": "#/$defs/Correlation"
+          },
+          "title": "Correlations",
+          "type": "array"
+        },
+        "covariance_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File that holds a sysID covariance matrix",
+          "title": "Covariance Ref"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability inside lower..upper (interval only)",
+          "title": "Coverage"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Distribution"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/$defs/SafetyFactor"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "num_sigmas": {
+          "default": 1.0,
+          "description": "Sigmas that `sigma` represents (DAVE-ML numSigmas)",
+          "exclusiveMinimum": 0,
+          "title": "Num Sigmas",
+          "type": "number"
+        },
+        "per_point_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Column in the points file that holds sigma",
+          "title": "Per Point Column"
+        },
+        "qualitative_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualitativeLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/UncertaintyScope"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset-level value, in the units of the quantity",
+          "title": "Sigma"
+        },
+        "status": {
+          "$ref": "#/$defs/UncertaintyStatus"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "status",
+        "scope",
+        "basis"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    },
+    "UncertaintyEffect": {
+      "description": "Same values as ADH behavior.UncertaintyEffect (DAVE-ML).",
+      "enum": [
+        "additive",
+        "multiplicative",
+        "percentage",
+        "absolute"
+      ],
+      "title": "UncertaintyEffect",
+      "type": "string"
+    },
+    "UncertaintyMethod": {
+      "enum": [
+        "repeat_scatter",
+        "binning",
+        "grid_study",
+        "tool_spread",
+        "sysid_cov",
+        "measurement_chain",
+        "vendor_spec",
+        "monte_carlo",
+        "engineering"
+      ],
+      "title": "UncertaintyMethod",
+      "type": "string"
+    },
+    "UncertaintyScope": {
+      "description": "[M&S 29] a, b, c.",
+      "enum": [
+        "input",
+        "result",
+        "derived"
+      ],
+      "title": "UncertaintyScope",
+      "type": "string"
+    },
+    "UncertaintyStatus": {
+      "description": "[M&S 33] a, b, c.",
+      "enum": [
+        "quantitative",
+        "qualitative",
+        "unavailable"
+      ],
+      "title": "UncertaintyStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables).",
+  "properties": {
+    "analysis_mass_model": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MassProperties"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The mass model (mass, CG, inertia) that the source analysis flew. The aero model belongs to this mass model. The mass model of the air vehicle can differ from it after a later change"
+    },
+    "fidelity": {
+      "$ref": "#/$defs/Fidelity"
+    },
+    "form": {
+      "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}. waypoints: a QGC WPL plan. geofence: polygons, circles and a return point (aeroplan.flightfiles)",
+      "enum": [
+        "daveml-adh",
+        "tables",
+        "parameters",
+        "waypoints",
+        "geofence"
+      ],
+      "title": "Form",
+      "type": "string"
+    },
+    "model_description": {
+      "additionalProperties": true,
+      "description": "ADH ModelDescription: generation_tool, version, generation_date_and_time, author, description",
+      "title": "Model Description",
+      "type": "object"
+    },
+    "mrp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Position"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Moment reference point of the moments, design frame"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "placeholder": {
+      "default": false,
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "sigma": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ADH Uncertainty form. None: no uncertainty estimate exists in the source",
+      "title": "Sigma"
+    },
+    "units_system": {
+      "default": "SI",
+      "description": "as-source: a published reference model kept in its own units. Each variable names its units",
+      "enum": [
+        "SI",
+        "as-source"
+      ],
+      "title": "Units System",
+      "type": "string"
+    }
+  },
+  "required": [
+    "form",
+    "model_description",
+    "fidelity"
+  ],
+  "title": "DatasetMeta",
+  "type": "object"
+}

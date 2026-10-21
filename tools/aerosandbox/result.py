@@ -109,7 +109,7 @@ class Result:
         return {"case": f"{d['config']}_{d['cells_s']}S", "level": d.get("level_reached", d.get("level")),
                 "status": d.get("status_word"), "mass_kg": self.mass_kg, "energy_Wh": self.energy_Wh,
                 "energy_nominal_Wh": d["energy_nominal_Wh"], "rotor_diameter_m": d["D_m"], "design": dict(self.design),
-                "active": self.active(), "f1_Hz": d["f1_Hz"], "f_hover_1P_Hz": d["f_hover_1P_Hz"]}
+                "active": self.active(), "f1_Hz": d["f1_Hz"], "f2_Hz": d["f2_Hz"], "f_hover_1P_Hz": d["f_hover_1P_Hz"]}
 
     def compact(self) -> Dict[str, Any]:
         """The part of the report that the spoke reads into the aircraft source tree (settings/<aircraft>.json): the design, the
@@ -119,7 +119,7 @@ class Result:
         keep = ("config", "cells_s", "converged", "ok", "error", "status_word", "level", "level_reached", "design", "R_m", "D_m", "names",
                 "c_ref_m", "boom_z_m", "rotor_z_m", "spacing_m", "boom_material", "pitch_m", "pitch_note", "energy_Wh", "energy_total_Wh",
                 "energy_nominal_Wh", "time_s", "inertia_kg_m2", "control", "cruise", "cda_m2", "P_battery_W", "I_battery_max_A",
-                "V_bus_max_V", "f1_Hz", "f_hover_1P_Hz", "structure", "rotors", "items", "airframe", "placeholders")
+                "V_bus_max_V", "f1_Hz", "f1_exact_Hz", "f2_Hz", "f2_no_J_Hz", "boom_J_tip_kg_m2", "f_hover_1P_Hz", "structure", "rotors", "items", "airframe", "placeholders")
         out = {k: d[k] for k in keep if k in d}
         out["case"] = f"{d['config']}_{d['cells_s']}S"
         out["constraints"] = {k: {f: c.get(f) for f in ("value", "lo", "hi", "group", "enabled", "equality", "margin", "cost_Wh_per_unit")

@@ -5,8 +5,9 @@ metres, design frame) and a `material`. A movable part (elevator, rudder, ailero
 hinge. The part `propeller` turns about the thrust axis through the hub.
 
 AeroPlan writes each hinge into the glTF node extras, so the reader does not guess it. The hinge is a line through the front
-edge of the movable mesh: the vertices in the front 10 % of its x extent, fitted with a least-squares line. It points
-along +y (or +z for the rudder), so a positive turn about it moves the trailing edge down (or to the right).
+edge of the movable mesh: the vertices in the front 10 % of its x extent (the highest x, FRD), fitted with a
+least-squares line. It points along +y (or up, -z, for the rudder), so a positive turn about it moves the trailing edge
+down (or to the right).
 Method: hand copy of Aerolink `visual/cad.front_edge_axis`.
 
 Parts that the CAD does not hold come from other sources and say so in `source`:
@@ -23,6 +24,7 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 
 from .adapters.flow5_geometry import Wing
+from .frame import flip_array
 
 UNIT_SCALE = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "in": 0.0254}
 MOVABLE = ("elevator", "rudder", "aileron_l", "aileron_r")
@@ -68,12 +70,13 @@ def to_design(tri: np.ndarray, units: str, transform: Optional[dict]) -> np.ndar
 
 
 def front_edge_axis(tri: np.ndarray, vertical: bool, band: float = 0.1) -> Tuple[np.ndarray, np.ndarray]:
-    """Hinge axis of a control surface: a line through the front edge (the lowest 10 % of x)."""
+    """Hinge axis of a control surface: a line through the front edge (the highest 10 % of x). The axis points to
+    +y, or up (-z) for a vertical surface."""
     v = np.unique(np.round(tri.reshape(-1, 3), 6), axis=0)
-    sel = v[v[:, 0] <= v[:, 0].min() + band * np.ptp(v[:, 0])]
+    sel = v[v[:, 0] >= v[:, 0].max() - band * np.ptp(v[:, 0])]
     c = sel.mean(axis=0)
     d = np.linalg.svd(sel - c)[2][0]
-    d = d if d[2 if vertical else 1] > 0 else -d
+    d = d if (d[2] < 0 if vertical else d[1] > 0) else -d
     t = (sel - c) @ d
     return c + t.min() * d, c + t.max() * d
 
@@ -92,13 +95,14 @@ def _foil_surfaces(foil: np.ndarray, xs: np.ndarray) -> Tuple[np.ndarray, np.nda
 
 
 def _wing_to_design(points: np.ndarray, wing: Wing) -> np.ndarray:
-    """Local wing coordinates to the design frame: Rx (about -x), then Ry (nose up), then the root position."""
+    """Local wing coordinates (x aft, y right, z up, as in flow5) to the design frame (FRD): Rx (about -x), then Ry
+    (nose up), then the flip to FRD, then the root position (FRD)."""
     rx, ry = -math.radians(wing.rx_deg), math.radians(wing.ry_deg)
     rot_x = np.array([[1, 0, 0], [0, math.cos(rx), -math.sin(rx)], [0, math.sin(rx), math.cos(rx)]])
     p = (rot_x @ points.T).T
     c, s = math.cos(ry), math.sin(ry)
     p = np.column_stack([p[:, 0] * c + p[:, 2] * s, p[:, 1], -p[:, 0] * s + p[:, 2] * c])
-    return p + np.array(wing.position)
+    return flip_array(p) + np.array(wing.position)
 
 
 def lifting_surface(wing: Wing, foils: Dict[str, np.ndarray], x_over_c_max=1.0, n_chord: int = 24,

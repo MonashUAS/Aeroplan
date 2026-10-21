@@ -2,7 +2,7 @@
   "wbs_no": "1.2.2",
   "name": "Airframe",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "airframe"
   },
   "subcomponents": [
@@ -10,7 +10,7 @@
       "name": "Lift boom left",
       "description": "Lift boom, left side: a carbon tube clamped to the wing, a rotor at each end",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "boom_left",
         "fidelity": "L1",
         "visual": [
@@ -20,14 +20,14 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47834516199094756,
+                0.47834516199094756,
                 -0.4702000482328912,
-                -0.025471137578900176
+                0.025471137578900176
               ],
               "p1": [
-                0.7635179430614027,
+                -0.7635179430614027,
                 -0.4702000482328912,
-                -0.025471137578900176
+                0.025471137578900176
               ],
               "radius_m": 0.0175
             },
@@ -72,14 +72,14 @@
             "placeholder": true
           },
           "p0": [
-            -0.47834516199094756,
+            0.47834516199094756,
             -0.4702000482328912,
-            -0.025471137578900176
+            0.025471137578900176
           ],
           "p1": [
-            0.7635179430614027,
+            -0.7635179430614027,
             -0.4702000482328912,
-            -0.025471137578900176
+            0.025471137578900176
           ],
           "source": "H4_12S sizing, boom component of tools/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm. Wall: user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
           "placeholder": false
@@ -97,7 +97,7 @@
       "name": "Lift boom right",
       "description": "Lift boom, right side: a carbon tube clamped to the wing, a rotor at each end",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "boom_right",
         "fidelity": "L1",
         "visual": [
@@ -107,14 +107,14 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47834516199094756,
+                0.47834516199094756,
                 0.4702000482328912,
-                -0.025471137578900176
+                0.025471137578900176
               ],
               "p1": [
-                0.7635179430614027,
+                -0.7635179430614027,
                 0.4702000482328912,
-                -0.025471137578900176
+                0.025471137578900176
               ],
               "radius_m": 0.0175
             },
@@ -159,14 +159,14 @@
             "placeholder": true
           },
           "p0": [
-            -0.47834516199094756,
+            0.47834516199094756,
             0.4702000482328912,
-            -0.025471137578900176
+            0.025471137578900176
           ],
           "p1": [
-            0.7635179430614027,
+            -0.7635179430614027,
             0.4702000482328912,
-            -0.025471137578900176
+            0.025471137578900176
           ],
           "source": "H4_12S sizing, boom component of tools/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm. Wall: user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
           "placeholder": false

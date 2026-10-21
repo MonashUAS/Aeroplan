@@ -109,15 +109,15 @@ def test_point_masses(tmp_path):
     d = sheet.read_workbook(tmp_path / "sheet.xlsx", SETTINGS)
     subs = {s["group"]: s["point_masses"] for s in sheet.build_point_masses(d, SETTINGS, planform_of(doc))}
     a, rest = subs["Body"]
-    assert a["tag"] == "BODY-A" and a["mass_kg"] == pytest.approx(0.1) and a["xyz"][0] == pytest.approx(0.2)
+    assert a["tag"] == "BODY-A" and a["mass_kg"] == pytest.approx(0.1) and a["xyz"][0] == pytest.approx(-0.2)
     assert a["placeholder"] is False
     # the rest: the weighed total less the mapped part, at the free row (b), not at the excluded tanks
-    assert rest["mass_kg"] == pytest.approx(0.3) and rest["xyz"][0] == pytest.approx(-0.1)
+    assert rest["mass_kg"] == pytest.approx(0.3) and rest["xyz"][0] == pytest.approx(0.1)
     assert rest["placeholder"] is True and "Part B" in rest["source"] and "Part C" in rest["source"]
     wing = subs["Wing"]
     assert len(wing) == 8
     assert sum(p["mass_kg"] for p in wing) == pytest.approx(0.6)
-    assert sum(p["mass_kg"] * p["xyz"][0] for p in wing) / 0.6 == pytest.approx(0.05)
+    assert sum(p["mass_kg"] * p["xyz"][0] for p in wing) / 0.6 == pytest.approx(-0.05)
 
 
 def test_mapped_parts_over_the_total_are_refused(tmp_path):
@@ -143,7 +143,7 @@ def test_ingest_writes_the_mass_model(tmp_path):
     air = adh_doc.node(doc, "1.2")["muas"]
     mp = air["mass_properties"]
     assert mp["mass"]["value"] == pytest.approx(1.0)
-    assert mp["cg"]["xyz"][0] == pytest.approx(0.02)       # (0.1*0.2 + 0.3*(-0.1) + 0.6*0.05) / 1.0
+    assert mp["cg"]["xyz"][0] == pytest.approx(-0.02)      # (0.1*(-0.2) + 0.3*0.1 + 0.6*(-0.05)) / 1.0 (FRD: x = +F / 1000)
     assert mp["inertia"]["iyy"] > 0 and mp["placeholder"] is True
     assert len(air["point_masses"]) == 2 + 8
     assert sum(p["mass"]["value"] for p in air["point_masses"]) == pytest.approx(1.0)
@@ -209,8 +209,8 @@ def cg_of(subs):
 
 
 def test_trim_inside_the_travel_gives_the_goal_margin(tmp_path):
-    st, subs = trim_subs(tmp_path)                      # the synthetic CG is at x = 0.02 m, "BODY-A" weighs 0.1 kg
-    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.10 * 0.33 + 0.003))
+    st, subs = trim_subs(tmp_path)                      # the synthetic CG is at x = -0.02 m (FRD), "BODY-A" weighs 0.1 kg
+    rep = sheet.apply_battery_trim(subs, st, band(-0.02 - 0.10 * 0.33 - 0.003))        # the neutral point is behind the CG
     assert not rep["clamped"] and abs(rep["dx_m"]) < 0.05
     assert rep["sm"] == pytest.approx(0.10, abs=1e-12) and cg_of(subs) == pytest.approx(rep["cg_m"])
     assert "Battery cage trim" in subs[0]["point_masses"][0]["source"]
@@ -219,21 +219,21 @@ def test_trim_inside_the_travel_gives_the_goal_margin(tmp_path):
 def test_trim_outside_the_travel_stops_at_the_limit(tmp_path):
     st, subs = trim_subs(tmp_path)
     x0 = subs[0]["point_masses"][0]["xyz"][0]
-    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.25 * 0.33 + 0.02, 0.0, 0.5))      # goal 0.25, needs more than 50 mm
-    assert rep["clamped"] and rep["dx_m"] == pytest.approx(0.05)
-    assert subs[0]["point_masses"][0]["xyz"][0] == pytest.approx(x0 + 0.05)
+    rep = sheet.apply_battery_trim(subs, st, band(-0.02 - 0.25 * 0.33 - 0.02, 0.0, 0.5))      # goal 0.25, needs more than 50 mm
+    assert rep["clamped"] and rep["dx_m"] == pytest.approx(-0.05)
+    assert subs[0]["point_masses"][0]["xyz"][0] == pytest.approx(x0 - 0.05)
     assert rep["sm"] != pytest.approx(rep["sm_goal"]) and 0.0 <= rep["sm"] <= 0.5          # the margin reached is reported
     lines = sheet.trim_lines(rep, st)
     assert any(line.startswith("WARNING") for line in lines)
     st, subs = trim_subs(tmp_path)
-    rep = sheet.apply_battery_trim(subs, st, band(0.02 + 0.25 * 0.33 - 0.02, 0.0, 0.5))
-    assert rep["dx_m"] == pytest.approx(-0.05)
+    rep = sheet.apply_battery_trim(subs, st, band(-0.02 - 0.25 * 0.33 + 0.02, 0.0, 0.5))
+    assert rep["dx_m"] == pytest.approx(0.05)
 
 
 def test_trim_with_a_margin_outside_the_band_fails(tmp_path):
     st, subs = trim_subs(tmp_path)
     with pytest.raises(ValueError, match="outside the band"):
-        sheet.apply_battery_trim(subs, st, band(0.02 + 0.10 * 0.33 + 0.5))
+        sheet.apply_battery_trim(subs, st, band(-0.02 - 0.10 * 0.33 - 0.5))
 
 
 def test_trim_needs_the_tag_and_the_file(tmp_path):

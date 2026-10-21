@@ -117,8 +117,8 @@ def multirotor_problems(doc: Dict[str, Any]) -> List[str]:
         if r.get("system") not in systems:
             out.append(f"propeller {r['instance']}: system {r.get('system')!r} is not a muas.propulsion_system system_id "
                        f"({sorted(systems) or 'none in the document'})")
-        if abs(r["thrust_axis"][2] - 1.0) > 1e-6:
-            out.append(f"propeller {r['instance']}: a lift rotor thrust_axis must be [0, 0, 1] (up)")
+        if abs(r["thrust_axis"][2] + 1.0) > 1e-6:
+            out.append(f"propeller {r['instance']}: a lift rotor thrust_axis must be [0, 0, -1] (up, FRD)")
     if adh_doc.has_node(doc, "1.2.5.10"):
         ap = (adh_doc.node(doc, "1.2.5.10").get("muas") or {}).get("autopilot") or {}
         outs = {o["function"]: o for o in ap.get("outputs") or []}

@@ -2,7 +2,7 @@
   "wbs_no": "1.2.2",
   "name": "Airframe",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "airframe",
     "ground_contacts": [
       {
@@ -11,9 +11,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            -0.627,
+            0.627,
             0.0,
-            -0.355
+            0.355
           ],
           "units": "m"
         },
@@ -28,9 +28,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            0.159,
+            -0.159,
             -0.33,
-            -0.355
+            0.355
           ],
           "units": "m"
         },
@@ -45,9 +45,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            0.159,
+            -0.159,
             0.33,
-            -0.355
+            0.355
           ],
           "units": "m"
         },
@@ -62,9 +62,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            1.45,
+            -1.45,
             0.0,
-            -0.05
+            0.05
           ],
           "units": "m"
         },
@@ -79,9 +79,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            0.25,
+            -0.25,
             -1.65,
-            0.05
+            -0.05
           ],
           "units": "m"
         },
@@ -96,9 +96,9 @@
         "position": {
           "frame": "design",
           "xyz": [
-            0.25,
+            -0.25,
             1.65,
-            0.05
+            -0.05
           ],
           "units": "m"
         },
@@ -119,9 +119,9 @@
         "units": "mm",
         "transform": {
           "axes": [
-            "-z",
+            "z",
             "-x",
-            "y"
+            "-y"
           ],
           "origin_m": [
             0.0,
@@ -140,7 +140,7 @@
       "name": "Landing gear",
       "description": "Landing gear (mass model of the Master Specification Sheet)",
       "muas": {
-        "ext_version": "0.4.0",
+        "ext_version": "0.5.0",
         "instance": "landing_gear",
         "mass_properties": {
           "mass": {
@@ -150,7 +150,7 @@
           "cg": {
             "frame": "design",
             "xyz": [
-              0.002615600000000003,
+              -0.002615600000000003,
               0.0,
               0.0
             ],
@@ -172,7 +172,7 @@
             "position": {
               "frame": "design",
               "xyz": [
-                0.16,
+                -0.16,
                 0.0,
                 0.0
               ],
@@ -190,7 +190,7 @@
             "position": {
               "frame": "design",
               "xyz": [
-                -0.626922,
+                0.626922,
                 0.0,
                 0.0
               ],

@@ -45,8 +45,9 @@ def tool():
 
 
 # ----------------------------------------------------------------------------------------------- a synthetic quadplane
-def write_survey(path, a=(math.log(300.0), -0.3, 0.8), b=(math.log(0.12), 1.5, -1.0), c=(math.log(0.7), 0.5, 0.6)):
-    """A survey whose rows follow exact power laws (kv in rpm/V, q_cap in N m, m in g). References: kv 150, q 3, m 300."""
+def write_survey(path, a=(math.log(300.0), 0.0, 0.8), b=(math.log(0.12), 1.5, -1.0), c=(math.log(0.7), 0.5, 0.6)):
+    """A survey whose rows follow exact power laws (kv in rpm/V, q_cap in N m, m in g). References: kv 150, q 3, m 300.
+    The mass has no kv term (a[1] = 0), as in the model."""
     rows = []
     for kv in (80.0, 120.0, 160.0, 220.0, 300.0, 400.0):
         for q in (2.0, 3.0, 4.5, 6.0):
@@ -63,14 +64,26 @@ def write_survey(path, a=(math.log(300.0), -0.3, 0.8), b=(math.log(0.12), 1.5, -
     return rows
 
 
+def write_esc_survey(path, k=2.5, e=0.9):
+    """An ESC survey whose 6-14S rows follow m = k I^e exactly (g, A). The 24S row is off the law: the fit must leave it out."""
+    rows = [{"maker": "T", "model": f"E{i:.0f}", "cells_min": 6, "cells_max": 14, "i_cont_A": i, "mass_g": k * i ** e}
+            for i in (20.0, 40.0, 60.0, 100.0)]
+    rows.append({"maker": "T", "model": "E24S", "cells_min": 24, "cells_max": 24, "i_cont_A": 40.0, "mass_g": 999.0})
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    return rows
+
+
 def survey_laws(kv, q):
-    m = 300.0 * (kv / 150.0) ** -0.3 * (q / 3.0) ** 0.8
+    m = 300.0 * (q / 3.0) ** 0.8
     rm = 0.12 * (kv / 150.0) ** 1.5 * (m / 300.0) ** -1.0
     i0 = 0.7 * (kv / 150.0) ** 0.5 * (m / 300.0) ** 0.6
     return m, rm, i0
 
 
-def synthetic_components(survey: Path, layout_cells=12):
+def synthetic_components(survey: Path, layout_cells=12, esc_survey: Path = None):
     """Components with synthetic numbers (not the Rosella numbers). Same names as QuadplaneModel needs."""
     c, mi, m, o, r = tool()
     P = c.P
@@ -86,6 +99,7 @@ def synthetic_components(survey: Path, layout_cells=12):
         "airframe": c.Airframe("airframe", base=P("none", "", s), static_margin_target=P(0.1, "nd", s), cg_nose_prop_m=P(0.8, "m", s)),
         "fuselage": c.Fuselage("fuselage", stations=P(21, "nd", s), width_m=P(0.24, "m", s), height_m=P(0.18, "m", s),
                                superellipse_n=P(2.5, "nd", s), z_centre_m=P(0.02, "m", s), nose_behind_hub_m=P(0.07, "m", s),
+                               x_tail_m=P(0.561, "m", s),
                                mass_kg_per_m2=P(1.0, "kg/m2", s), bay_x_m=P([-0.45, 0.40], "m", s), battery_Wh_per_L=P(330.0, "Wh/L", s)),
         "boom_material": c.Material("test_tube", E_Pa=P(60e9, "Pa", s), E_c_Pa=P(50e9, "Pa", s), density_kg_m3=P(1500.0, "kg/m3", s),
                                     tensile_strength_Pa=P(370e6, "Pa", s), compressive_strength_Pa=P(350e6, "Pa", s),
@@ -108,7 +122,7 @@ def synthetic_components(survey: Path, layout_cells=12):
                          q_cap=P(3.0, "N*m", s, free=True, lo=0.5, hi=9.0, scale=3.0), survey=P(str(survey), "", s),
                          kv_min=P(60.0, "rpm/V", s), kv_max=P(450.0, "rpm/V", s), mass_min_g=P(150.0, "g", s), mass_max_g=P(1600.0, "g", s),
                          mass_kg=P(None), rm_ohm=P(None), i0_A=P(None), mount_kg=P(0.045, "kg", s)),
-        "esc": c.ESC("esc", g_per_A=P(0.8421, "g/A", s), peak_factor=P(1.2, "nd", s), re_ohm=P(0.02, "ohm", s), duty_max=P(0.95, "nd", s),
+        "esc": c.ESC("esc", survey=P(str(esc_survey or survey.parent / "esc_survey.csv"), "", s), peak_factor=P(1.2, "nd", s), re_ohm=P(0.02, "ohm", s), duty_max=P(0.95, "nd", s),
                      mass_kg=P(None), current_A=P(None)),
         "battery": c.Battery("battery", cells_s=P(layout_cells, "nd", s), cap_Ah=P(14.0, "A*h", s, free=True, lo=2.0, hi=60.0, scale=14.0),
                              x_m=P(0.0, "m", s, free=True, lo=-0.45, hi=0.4, scale=0.1), cell_nominal_V=P(3.7, "V", s),
@@ -116,10 +130,9 @@ def synthetic_components(survey: Path, layout_cells=12):
                              usable_fraction=P(0.8, "nd", s), eq4_p1=P(0.026373, "g/mAh", s), eq4_p2=P(2.0499e-05, "g/mAh", s),
                              cal_cells_s=P(6, "nd", s), cal_capacity_Ah=P(4.5, "A*h", s), cal_mass_kg=P(0.631, "kg", s), mass_kg=P(None)),
         "cables": c.Cables("cables", current_density_A_m2=P(10e6, "A/m2", s), insulation_factor=P(1.4, "nd", s), run_extra_m=P(0.15, "m", s)),
-        "avionics": c.PointMass("avionics", mass_kg=P(0.35, "kg", s), power_W=P(25.0, "W", s)),
+        "avionics": c.PointMass("avionics", projects_mass_kg=P(0.35, "kg", s), power_W=P(25.0, "W", s)),
         "landing_gear": c.PointMass("landing_gear", mass_kg=P(0.6, "kg", s), x_m=P(0.16, "m", s), z_m=P(-0.1, "m", s)),
         "cargo": c.PointMass("cargo", mass_kg=P(0.572, "kg", s), x_from_cg=P(0.0, "m", s)),
-        "camera": c.PointMass("camera", mass_kg=P(0.11, "kg", s), x_m=P(-0.45, "m", s), z_m=P(-0.05, "m", s)),
         "cruise_aero": c.Spec("cruise_aero", boom_cf=P(0.0045, "nd", s), boom_form_factor=P(1.2, "nd", s), nacelle_cda_m2=P(0.001, "m2", s),
                               stopped_prop_cda_per_r2=P(0.01, "nd", s), cl_max_usable_factor=P(0.85, "nd", s), stall_margin=P(1.3, "nd", s),
                               map_turn_radius_m=P(40.0, "m", s)),
@@ -149,6 +162,7 @@ def stub_airframe(c, fus):
     a.wing_te_x = (0.02, 0.30)
     a.tail_boom_frames = [[[0.561, 0.0, 0.0]]]
     a.tail_boom_z, a.htail_le_x = -0.0255, 1.40
+    a.tail_boom_length = 0.92
     a.fus = fus
     return a
 
@@ -159,6 +173,7 @@ def small_model(layout="H4", cells=12, tmp: Path = None):
     tmp = tmp or Path(tempfile.mkdtemp())
     survey = tmp / "survey.csv"
     write_survey(survey)
+    write_esc_survey(tmp / "esc_survey.csv")
     comps = synthetic_components(survey, cells)
     model = m.QuadplaneModel("test", comps, layout=layout)
     model.af = stub_airframe(c, comps["fuselage"])
@@ -229,7 +244,7 @@ def check_motor_fit_recovers_exact_power_laws():
     kept = [x for x in rows if 150.0 <= x["mass_g"] <= 1600.0]
     assert fit.n == len(kept) and fit.n >= 8
     assert fit.mass_rms < 1e-9 and fit.rm_rms < 1e-9 and fit.i0_rms < 1e-9
-    assert all(abs(x - y) < 1e-9 for x, y in zip(fit.mass_fit[1:], (-0.3, 0.8)))
+    assert len(fit.mass_fit) == 2 and abs(fit.mass_fit[1] - 0.8) < 1e-9                # no kv term in the mass
     assert all(abs(x - y) < 1e-9 for x, y in zip(fit.rm_fit[1:], (1.5, -1.0)))
     assert all(abs(x - y) < 1e-9 for x, y in zip(fit.i0_fit[1:], (0.5, 0.6)))
     for kv, q in ((100.0, 2.5), (250.0, 5.0)):                                      # between the survey rows
@@ -245,7 +260,21 @@ def check_motor_fit_on_the_committed_survey():
     """The committed survey gives a motor near the Redback M6C10 (234 g, KV150, holds about 2.3 N m)."""
     c, mi, m, o, r = tool()
     fit = c.MotorModel(TOOL / "data" / "motor_survey.csv")
-    assert fit.n >= 10 and 150.0 < float(fit.mass_g(150.0, 2.3)) < 1200.0 and fit.mass_fit[2] > 0.0
+    assert fit.n >= 10 and 150.0 < float(fit.mass_g(150.0, 2.3)) < 1200.0 and 0.0 < fit.mass_fit[1] < 1.0
+    assert float(fit.mass_g(100.0, 2.3)) == float(fit.mass_g(300.0, 2.3))               # kv does not change the mass
+
+
+@check
+def check_esc_fit_recovers_the_power_law_and_skips_other_cells():
+    c, mi, m, o, r = tool()
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "esc.csv"
+        write_esc_survey(p)
+        fit = c.ESCModel(p, 12)
+    assert fit.n == 4 and fit.rms < 1e-9 and abs(fit.fit[1] - 0.9) < 1e-9          # the 24S row is out
+    assert rel(float(fit.mass_g(50.0)), 2.5 * 50.0 ** 0.9, 1e-9)
+    real = c.ESCModel(TOOL / "data" / "esc_survey.csv", 12)                         # the committed maker rows
+    assert real.n >= 6 and 0.5 < real.fit[1] < 1.5
 
 
 @check
@@ -302,8 +331,8 @@ def check_l0_solve_and_the_hand_formulas():
     assert n["M"] <= 20.0 + 1e-6
     assert abs(sum(i["mass_kg"] * i["x"] for i in rep["items"]) / n["M"] - air.x_cg) < 1e-6
     assert abs(sum(i["mass_kg"] for i in rep["items"]) - n["M"]) < 1e-9
-    # Bershadsky Eq. 2: ESC mass = 0.8421 g/A on 1.2 x the peak current. Eq. 5 and Eq. 4 for the propeller and the battery.
-    assert rel(n["m_esc"], 0.8421e-3 * 1.2 * n["I_pk"], 1e-9)
+    # ESC mass: the synthetic survey law m = 2.5 I^0.9 (g) on 1.2 x the peak current. Eq. 5 and Eq. 4 for the propeller and the battery.
+    assert rel(n["m_esc"], 2.5e-3 * (1.2 * n["I_pk"]) ** 0.9, 1e-9)
     assert abs(n["m_prop"] - comps["rotor"].mass_kg_of(2.0 * rep["R_m"])) < 1e-9
     assert abs(n["m_batt"] - comps["battery"].mass_kg_of(12, d["cap_Ah"])) < 1e-9
 
@@ -323,6 +352,13 @@ def check_l0_solve_and_the_hand_formulas():
     m_eff = m_unit + 0.236 * m_arm                                                  # H4: one rotor on each end
     f1 = math.sqrt(3.0 * E * I / (a ** 3 * m_eff)) / (2.0 * math.pi)
     assert rel(rep["f1_Hz"], f1, 1e-9)
+    # f2: the tip rotary inertia from the prop rod and the mount offset, then the exact beam equation
+    J = n["m_prop"] * n["D"] ** 2 / 24.0 + m_unit * comps["boom"]["mount_offset_m"] ** 2
+    assert rel(rep["boom_J_tip_kg_m2"], J, 1e-9)
+    assert rep["f2_Hz"] > rep["f1_Hz"] and rep["f2_no_J_Hz"] >= rep["f2_Hz"]
+    f1_no_J, f2_no_J = c.Tube.modes_hz(E, I, a, m_unit, m_arm, 0.0)                 # without J: Rayleigh within 1 %
+    assert rel(f1_no_J, f1, 0.01) and rel(rep["f2_no_J_Hz"], f2_no_J, 1e-9)
+    assert rep["f1_exact_Hz"] < f1_no_J                                             # the tip inertia lowers f1
     Ec, kd = mat["E_c_Pa"], mat["buckling_knockdown"]
     assert rel(n["sigma_cr"], 0.605 * Ec * t / (ro - 0.5 * t) * kd, 1e-9)
     SF, n_g = comps["limits"]["safety_factor"], comps["limits"]["load_factor"]
@@ -351,6 +387,70 @@ def check_l0_solve_and_the_hand_formulas():
     cp = res.compact()
     assert cp["case"] == "H4_12S" and cp["names"]["M"] == n["M"] and "multistart" not in cp and "slack" not in cp["constraints"]["mtow_kg"]
     assert set(cp["constraints"]["mtow_kg"]) >= {"value", "hi", "group", "enabled", "equality", "margin"}
+
+
+@check
+def check_boom_mode_roots_and_frequencies():
+    c, *_ = tool()
+    x = c.Tube.mode_roots(0.0, 0.0, 2)                                              # bare cantilever
+    assert abs(x[0] - 1.87510) < 1e-4 and abs(x[1] - 4.69409) < 1e-4
+    assert abs(c.Tube.mode_roots(1e4, 0.0, 2)[1] - 3.92660) < 1e-3                  # heavy tip mass: tan x = tanh x
+    assert abs(c.Tube.mode_roots(0.0, 1e4, 2)[1] - 2.36502) < 1e-3                  # large tip inertia: tan x = -tanh x
+    for mu in (1.0, 3.0, 10.0):                                                     # mode 1 against the Rayleigh f1
+        f = c.Tube.modes_hz(2.0, 3.0, 0.5, mu * 0.7, 0.7, 0.0, 1)[0]
+        assert rel(f, c.Tube.f1_hz(2.0, 3.0, 0.5, mu * 0.7, 0.7), 0.01)
+    f1, f2 = c.Tube.modes_hz(2.0, 3.0, 0.5, 1.4, 0.7, 0.0)
+    f1j, f2j = c.Tube.modes_hz(2.0, 3.0, 0.5, 1.4, 0.7, 0.01)                       # a tip inertia lowers both modes
+    assert f1j < f1 and f2j < f2 and f2j > f1j
+
+
+@check
+def check_weight_chart_stacks_every_item():
+    import matplotlib
+    matplotlib.use("Agg")
+    tool()                                                                          # puts tools/aerosandbox on the path
+    import plot
+
+    class R:                                                                        # a result with synthetic items
+        names = {}
+
+        def mass_by_item(self):
+            return {"wing": 1.0, "battery": 2.0, "cables": 0.5, "unlisted": 0.25}
+
+        def __getitem__(self, k):
+            return {"names": self.names}[k]
+
+    fig = plot.weight_chart(R())
+    ax = fig.axes[0]
+    assert abs(sum(p.get_height() for p in ax.patches) - 3.75) < 1e-12              # every item is in the stack, "unlisted" too
+    assert "3.75 kg" in ax.get_title("left")
+    # the lift items split into motors, ESCs, props and mounts: 4 rotors of 0.1 + 0.05 + 0.03 + 0.02 kg
+    split = R()
+    split.names = {"m_motor": 0.1, "m_esc": 0.05, "m_prop": 0.03, "m_mount": 0.02}
+    split.mass_by_item = lambda: {"lift_front": 0.4, "lift_rear": 0.4, "avionics_flight": 0.6}
+    parts = plot._lift_parts(split, split.mass_by_item())
+    assert set(parts) == {"lift_motor", "lift_esc", "lift_prop", "lift_mount", "avionics_flight"} and rel(parts["lift_motor"], 0.4)
+    groups = dict(plot._grouped(parts, plot.WEIGHT_GROUPS))
+    assert len(groups["VTOL propulsion"]) == 4 and groups["Flight avionics"] == [("avionics_flight", 0.6)]
+
+
+@check
+def check_energy_chart_stacks_every_segment():
+    import matplotlib
+    matplotlib.use("Agg")
+    tool()
+    import plot
+
+    class R:
+        def energy_by_segment(self):
+            return {"vtol_takeoff_climb": 5.0, "fw_climb": 6.0, "transit_laps_rtl": 100.0, "reserve": 50.0, "unlisted": 1.0}
+
+        def __getitem__(self, k):
+            return {"energy_nominal_Wh": 250.0, "constraints": {"energy_Wh": {"hi": 200.0}}}[k]
+
+    ax = plot.energy_chart(R()).axes[0]
+    assert abs(sum(p.get_height() for p in ax.patches) - 162.0) < 1e-12
+    assert "162.0 Wh" in ax.get_title("left") and "81 % of usable" in ax.get_title("left")
 
 
 @check
@@ -473,8 +573,10 @@ if pytest is not None:
 
     for _name in ("check_param_json_roundtrip_free_fix_and_placeholders", "check_material_with_E_keeps_the_compression_ratio",
                   "check_bershadsky_mass_equations", "check_motor_fit_recovers_exact_power_laws", "check_motor_fit_on_the_committed_survey",
+                  "check_esc_fit_recovers_the_power_law_and_skips_other_cells", "check_energy_chart_stacks_every_segment",
                   "check_levels_and_the_rotor_model_kind", "check_mission_segments_and_energy", "check_l0_solve_and_the_hand_formulas",
-                  "check_resonance_side_above_flips_the_limit", "check_h8_has_eight_rotors_and_the_coaxial_factor",
+                  "check_resonance_side_above_flips_the_limit", "check_boom_mode_roots_and_frequencies", "check_weight_chart_stacks_every_item",
+                  "check_h8_has_eight_rotors_and_the_coaxial_factor",
                   "check_fixed_params_are_parameters_and_free_ones_are_variables",
                   "check_the_solver_gives_a_snapshot_at_each_iteration_and_the_plotter_reads_it", "check_the_model_file_roundtrip",
                   "check_evaluate_fixes_every_param_except_the_battery_x", "check_jung_check_functions"):

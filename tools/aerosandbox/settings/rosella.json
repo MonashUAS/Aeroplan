@@ -171,6 +171,11 @@
      "units": "m",
      "source": "Currawong V1 is 0.07 m behind the nose propeller hub at the nose"
     },
+    "x_tail_m": {
+     "value": 0.561261779785036,
+     "units": "m",
+     "source": "user 2026-10-21: the pod tail end stays 561 mm aft of the wing root leading edge (the start of the old tail boom). The new tail boom starts inside the pod, so the pod end no longer follows the boom"
+    },
     "mass_kg_per_m2": {
      "value": 1.0,
      "units": "kg/m2",
@@ -243,9 +248,9 @@
    "name": "boom",
    "params": {
     "r_o": {
-     "value": 0.0175,
+     "value": 0.0127,
      "units": "m",
-     "source": "user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm",
+     "source": "user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm)",
      "lo": 0.008,
      "hi": 0.045,
      "scale": 0.01
@@ -253,7 +258,7 @@
     "t": {
      "value": 0.001,
      "units": "m",
-     "source": "user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
+     "source": "user 2026-10-21: the lift boom tube is the tail boom tube, 23.4 mm inner diameter (wall 1.0 mm)",
      "lo": 0.001,
      "hi": 0.005,
      "scale": 0.001
@@ -316,7 +321,7 @@
      "placeholder": true
     },
     "tip_slope_max_deg": {
-     "value": 1.0,
+     "value": 2.0,
      "units": "deg",
      "source": "stand-in: boom tip slope at T_max",
      "placeholder": true
@@ -341,8 +346,8 @@
    "name": "rotor",
    "params": {
     "design": {
-     "value": "MAD_FLUXER_22x6_6",
-     "source": "Proptimiser design, Fit C of the MAD FLUXER 22x6.6 (Redback)"
+     "value": "MAD_FLUXER_22x6_6_jung",
+     "source": "Proptimiser design, Jung 2021 T-motor shape fitted to the MAD FLUXER 22x6.6 maker table (Redback)"
     },
     "design_aircraft": {
      "value": "redback",
@@ -576,10 +581,9 @@
    "kind": "esc",
    "name": "esc",
    "params": {
-    "g_per_A": {
-     "value": 0.8421,
-     "units": "g/A",
-     "source": "AIAA 2016-0581 Eq. 2"
+    "survey": {
+     "value": "data/esc_survey.csv",
+     "source": "maker ESC rows, Hobbywing XRotor Pro H series and T-Motor ALPHA (tools/aerosandbox/data); the fit uses the rows rated for the pack cell count"
     },
     "peak_factor": {
      "value": 1.2,
@@ -614,7 +618,7 @@
     "cells_s": {
      "value": 12,
      "units": "nd",
-     "source": "team decision: H4 12S is the most efficient"
+     "source": "team decision: H4 12S"
     },
     "cap_Ah": {
      "value": 14.0,
@@ -721,16 +725,16 @@
    "kind": "point_mass",
    "name": "avionics",
    "params": {
-    "mass_kg": {
-     "value": 0.35,
+    "projects_mass_kg": {
+     "value": 1.01,
      "units": "kg",
-     "source": "stand-in: autopilot, GPS, receiver, telemetry",
+     "source": "user 2026-10-21: avionics projects (project equipment). Stand-in value. The flight avionics is the Currawong AVIONICS-REST mass (0.609 kg, weighed)",
      "placeholder": true
     },
     "power_W": {
      "value": 25.0,
      "units": "W",
-     "source": "stand-in: autopilot, GPS, receiver, telemetry, camera, servos",
+     "source": "stand-in: flight avionics, avionics projects and servos",
      "placeholder": true
     }
    }
@@ -762,35 +766,14 @@
    "name": "cargo",
    "params": {
     "mass_kg": {
-     "value": 0.572,
+     "value": 0.41,
      "units": "kg",
-     "source": "aircraft/redback 1.2.17 cargo"
+     "source": "user 2026-10-21: payload 410 g, released at the deployment (aircraft/redback 1.2.17 cargo)"
     },
     "x_from_cg": {
      "value": 0.0,
      "units": "m",
      "source": "cargo sits at the CG"
-    }
-   }
-  },
-  "camera": {
-   "kind": "point_mass",
-   "name": "camera",
-   "params": {
-    "mass_kg": {
-     "value": 0.11,
-     "units": "kg",
-     "source": "SIYI A8 mini"
-    },
-    "x_m": {
-     "value": -0.45,
-     "units": "m",
-     "source": "camera x"
-    },
-    "z_m": {
-     "value": -0.05,
-     "units": "m",
-     "source": "camera z"
     }
    }
   },
@@ -897,238 +880,243 @@
   "level": "L4",
   "design": {
    "t_boom": 0.001,
-   "r_boom": 0.0175,
-   "y_b": 0.4702000482328912,
-   "dx": -0.05268559620096357,
-   "a": 0.5609315525261752,
-   "scale": 1.181818188903959,
-   "kv": 136.60504194162743,
-   "q_cap": 2.3390779585174206,
-   "cant": 0.06870847339875287,
-   "cap_Ah": 8.836506324315653,
-   "x_batt": -0.21096732305549334
+   "r_boom": 0.0127,
+   "y_b": 0.4702000640102272,
+   "dx": -0.056275840971917436,
+   "a": 0.564521806010355,
+   "scale": 1.181818186070108,
+   "kv": 143.08086734344977,
+   "q_cap": 2.52807327561734,
+   "cant": 0.06310882310831156,
+   "cap_Ah": 9.604707046584123,
+   "x_batt": -0.20397606728663656
   },
-  "R_m": 0.3302000019797661,
-  "D_m": 0.6604000039595322,
+  "R_m": 0.33020000118798815,
+  "D_m": 0.6604000023759763,
   "names": {
-   "M": 13.198648511944679,
-   "m_motor": 0.30138425716218487,
-   "m_prop": 0.0682760008985644,
-   "m_esc": 0.03479070013165642,
-   "m_wire": 0.43765852452972265,
-   "m_batt": 2.4779886113745144,
-   "m_boom": 0.40378219307422547,
-   "rm": 0.09091712461943376,
-   "i0": 0.9674250979348632,
-   "I_pk": 34.428512183486156,
-   "R_b": 0.030555062158110352,
-   "Th": 32.43516233082716,
-   "Qh": 0.935153152572137,
-   "W": 129.43452642966227,
-   "share_f": 0.5030645149323802,
-   "x_f": -0.4183451619909476,
-   "x_r": 0.7035179430614028,
-   "x_c": 0.14258639053522756,
-   "L_boom": 1.2418631050523503,
-   "V_lap": 16.87986302272474,
-   "V_map": 17.217467371355234,
-   "Vs": 12.589981673017673,
-   "m_fuse": 0.6424153501965915,
-   "A_cu": 3.4428512183486154e-06,
-   "R": 0.3302000019797661,
-   "D": 0.6604000039595322,
-   "kv_rad": 14.305246540238077,
-   "r_i": 0.0165,
-   "sigma_cr": 1237358101.1351907,
-   "L_run_f": 0.9132899905514855,
-   "L_run_r": 1.620211125860825,
-   "R_w_f": 0.009146558151101198,
-   "R_w_r": 0.016226341504956807,
-   "E_Wh": 313.87270420811257
+   "M": 14.219677455029377,
+   "m_motor": 0.3427246901726085,
+   "m_prop": 0.06827600053919695,
+   "m_esc": 0.11161949804834162,
+   "m_mount": 0.045,
+   "m_wire": 0.4948354969188366,
+   "m_batt": 2.6934122834871883,
+   "m_boom": 0.29144858406382,
+   "rm": 0.07230349774061891,
+   "i0": 1.088344882119698,
+   "I_pk": 38.96746101046346,
+   "R_b": 0.028111216582709254,
+   "Th": 34.93138792552721,
+   "Qh": 1.0098208671648568,
+   "W": 139.44739991436384,
+   "share_f": 0.5000001194757138,
+   "x_f": -0.42552566024608124,
+   "x_r": 0.7035179517746286,
+   "x_c": 0.13899614576427372,
+   "L_boom": 1.24904361202071,
+   "V_lap": 17.456233105159765,
+   "V_map": 17.820643498597768,
+   "Vs": 13.068298179242943,
+   "m_fuse": 0.6425003355189458,
+   "A_cu": 3.896746101046346e-06,
+   "R": 0.33020000118798815,
+   "D": 0.6604000023759763,
+   "kv_rad": 14.983393390514584,
+   "r_i": 0.011699999999999999,
+   "sigma_cr": 1724187517.975266,
+   "L_run_f": 0.9225272252445178,
+   "L_run_r": 1.6083011781808971,
+   "R_w_f": 0.00816289742816186,
+   "R_w_r": 0.014230905269600932,
+   "E_Wh": 341.1591928766983
   },
   "c_ref_m": 0.33,
-  "boom_z_m": -0.025471137578900176,
-  "rotor_z_m": -0.005471137578900175,
+  "boom_z_m": -0.020552,
+  "rotor_z_m": -0.0005520000000000004,
   "spacing_m": null,
   "boom_material": {
    "E_Pa": 80000000000.0,
    "E_c_Pa": 69537480063.79585,
    "rho_kg_m3": 1522.0
   },
-  "pitch_m": 0.1981200011878597,
-  "pitch_note": "no pitch given: P/D of the base blade (MAD_FLUXER_22x6_6), scaled",
+  "pitch_m": 0.19812000071279293,
+  "pitch_note": "no pitch given: P/D of the base blade (MAD_FLUXER_22x6_6_jung), scaled",
   "energy_Wh": {
-   "vtol_takeoff_climb": 5.2956503905896675,
-   "transitions": 11.149537911865883,
-   "fw_climb": 6.167929866427364,
-   "transit_laps_rtl": 149.20425089445868,
-   "survey": 9.578308166468439,
-   "deploy_hover": 20.917425312363566,
-   "landing": 6.972475104121187,
-   "reserve": 104.58712656181781
+   "vtol_takeoff_climb": 5.994825549437588,
+   "transitions": 12.411845228348977,
+   "fw_climb": 6.537508849343863,
+   "transit_laps_rtl": 155.58777061551368,
+   "survey": 10.000747096006958,
+   "deploy_hover": 23.78313087442851,
+   "landing": 7.92771029147617,
+   "reserve": 118.91565437214255
   },
-  "energy_total_Wh": 313.87270420811257,
-  "energy_nominal_Wh": 392.34088079961504,
+  "energy_total_Wh": 341.1591928766983,
+  "energy_nominal_Wh": 426.44899286833515,
   "time_s": {
    "vtol_takeoff_climb": 12.0,
    "transitions": 30.0,
    "fw_climb": 24.23076923076923,
-   "transit_laps_rtl": 2074.4244164102065,
-   "survey": 126.75026376694,
+   "transit_laps_rtl": 2005.9310499038804,
+   "survey": 122.46014185120062,
    "deploy_hover": 60.0,
    "landing": 20.0,
    "reserve": 300.0
   },
   "inertia_kg_m2": {
-   "ixx": 2.9373707877097277,
-   "iyy": 3.851997096329135,
-   "izz": 6.7594651512577
+   "ixx": 3.016884629306727,
+   "iyy": 3.9907966537400306,
+   "izz": 6.978445212509558
   },
   "control": {
-   "alpha_req": 6.808943367086357,
-   "w_bw": 5.7023191745897375,
-   "L_hub": 1.4638747104552883,
-   "roll": 17.653015019795507,
-   "pitch": 16.059015291581197,
-   "yaw": 1.500000140479941
+   "alpha_req": 6.783410013287482,
+   "w_bw": 5.691617360811305,
+   "L_hub": 1.469384864024963,
+   "roll": 18.51052516512683,
+   "pitch": 16.80025531016071,
+   "yaw": 1.5000003261944685
   },
   "cruise": {
    "lap": {
-    "V": 16.87986302272474,
-    "drag_N": 7.852005648281956,
-    "omega": 485.35881780697343,
-    "P": 258.9322122179628,
-    "eta_total": 0.5118744349412064,
-    "CL": 0.689149145777339,
-    "I": 10.857595406634893,
-    "thrust": 7.852005649495583,
-    "Q": 0.38447184351109365
+    "V": 17.456233105159765,
+    "drag_N": 8.380178363104175,
+    "omega": 500.3594847084533,
+    "P": 279.2299238015627,
+    "eta_total": 0.5238920849596872,
+    "CL": 0.6942410262877998,
+    "I": 11.427789006568895,
+    "thrust": 8.380178362781804,
+    "Q": 0.4092216062244189
    },
    "map": {
-    "V": 17.217467371355234,
-    "drag_N": 8.215386811259002,
-    "omega": 494.6899255511151,
-    "P": 272.0460563513259,
-    "eta_total": 0.5199419399607866,
-    "CL": 0.6934450816456706,
-    "I": 11.234270221173984,
-    "thrust": 8.215386807313932,
-    "Q": 0.4008217504216717
+    "V": 17.820643498597768,
+    "drag_N": 8.769968749858666,
+    "omega": 510.3083943764042,
+    "P": 293.9951644786705,
+    "eta_total": 0.5315952510523395,
+    "CL": 0.6973713910342706,
+    "I": 11.838326423990212,
+    "thrust": 8.76996575805527,
+    "Q": 0.4270413496717234
    }
   },
   "cda_m2": {
-   "boom": 0.0014747397868715424,
+   "boom": 0.001076427904132653,
    "nacelles": 0.004,
-   "stopped_props": 0.004361281652297502
+   "stopped_props": 0.0043612816313818945
   },
   "P_battery_W": {
-   "H_TO": 1337.9445494239058,
-   "C_TO": 1588.6951171769,
-   "H_L": 1255.0455187418138,
-   "MAX": 5448.044553955543
+   "H_TO": 1489.4214274018773,
+   "C_TO": 1798.4476648312766,
+   "H_L": 1426.9878524657106,
+   "MAX": 6175.695159355005
   },
-  "I_battery_max_A": 119.35213697417228,
-  "V_bus_max_V": 38.35318803605087,
-  "f1_Hz": 33.6123934164021,
-  "f_hover_1P_Hz": 47.14205273736417,
+  "I_battery_max_A": 134.86625807866866,
+  "V_bus_max_V": 38.208745409450984,
+  "f1_Hz": 18.196529429656675,
+  "f1_exact_Hz": 18.036832025133894,
+  "f2_Hz": 221.18775275603858,
+  "f2_no_J_Hz": 485.36884156830234,
+  "boom_J_tip_kg_m2": 0.0014677600214033088,
+  "f_hover_1P_Hz": 48.709945131913294,
   "structure": [
    {
-    "F_N": 81.58489573205948,
-    "sigma_Pa": 79142139.35650404,
-    "von_mises_Pa": 79178557.46452883,
-    "slope_deg": 0.5950589486412043
+    "F_N": 87.32849049187615,
+    "sigma_Pa": 166388326.83639097,
+    "von_mises_Pa": 166464719.93895084,
+    "slope_deg": 1.7440616374598896
    },
    {
-    "F_N": 13.222824717472665,
-    "sigma_Pa": 14439897.217187488,
-    "von_mises_Pa": 14445140.594230987,
-    "slope_deg": 0.09644383441130361
+    "F_N": 16.69935757231409,
+    "sigma_Pa": 34302841.739214845,
+    "von_mises_Pa": 34316392.02461226,
+    "slope_deg": 0.3335075271317976
    },
    {
-    "F_N": 80.59091615083868,
-    "sigma_Pa": 78193463.50164995,
-    "von_mises_Pa": 78229430.76668487,
-    "slope_deg": 0.5878091208481456
+    "F_N": 87.32844926376158,
+    "sigma_Pa": 166388249.14324608,
+    "von_mises_Pa": 166464642.2093461,
+    "slope_deg": 1.7440608140817158
    },
    {
-    "F_N": 13.222824717472665,
-    "sigma_Pa": 14426560.530223267,
-    "von_mises_Pa": 14431808.752764042,
-    "slope_deg": 0.09644383441130361
+    "F_N": 16.69935757231409,
+    "sigma_Pa": 34302840.76029044,
+    "von_mises_Pa": 34316391.0460744,
+    "slope_deg": 0.3335075271317976
    }
   ],
   "rotors": {
    "H_TO_f": {
-    "omega_rad_s": 296.20225310969175,
-    "rpm": 2828.5231642418503,
-    "Q_Nm": 0.9408062101624685,
-    "T_N": 32.63395829325445,
-    "P_shaft_W": 278.66891918971334,
-    "I_A": 14.425889880896012,
-    "Pe_W": 323.6862843699042
+    "omega_rad_s": 306.05361156636144,
+    "rpm": 2922.5967079147977,
+    "Q_Nm": 1.0098211058266073,
+    "T_N": 34.931396196750576,
+    "P_shaft_W": 309.05939647417006,
+    "I_A": 16.218891764764216,
+    "Pe_W": 357.71806513872446
    },
    "H_TO_r": {
-    "omega_rad_s": 294.4368071401755,
-    "rpm": 2811.66439707324,
-    "Q_Nm": 0.9295000949818055,
-    "T_N": 32.2363664605392,
-    "P_shaft_W": 273.6790402029327,
-    "I_A": 14.2641531158243,
-    "Pe_W": 319.4603850329063
+    "omega_rad_s": 306.05354021239685,
+    "rpm": 2922.5960265346275,
+    "Q_Nm": 1.0098206285031062,
+    "T_N": 34.93137970550311,
+    "P_shaft_W": 309.0591783328833,
+    "I_A": 16.218884612838423,
+    "Pe_W": 359.31402142910605
    },
    "C_TO_f": {
-    "omega_rad_s": 312.81660101068053,
-    "rpm": 2987.1784999232996,
-    "Q_Nm": 1.0597737844559632,
-    "T_N": 32.63395829140618,
-    "P_shaft_W": 331.51483309374,
-    "I_A": 16.127750361458542,
-    "Pe_W": 383.8988569686392
+    "omega_rad_s": 329.4526528242365,
+    "rpm": 3146.041092702919,
+    "Q_Nm": 1.136662998878377,
+    "T_N": 34.93139619598947,
+    "P_shaft_W": 374.47664034763346,
+    "I_A": 18.119413746756457,
+    "Pe_W": 431.39144686057455
    },
    "C_TO_r": {
-    "omega_rad_s": 311.0641219123316,
-    "rpm": 2970.4435572532516,
-    "Q_Nm": 1.0476788336835694,
-    "T_N": 32.23636645910127,
-    "P_shaft_W": 325.8952964459152,
-    "I_A": 15.954729108767408,
-    "Pe_W": 379.29652009810565
+    "omega_rad_s": 329.4525810299327,
+    "rpm": 3146.040407117818,
+    "Q_Nm": 1.1366624936817242,
+    "T_N": 34.931379704785705,
+    "P_shaft_W": 374.4763923033636,
+    "I_A": 18.11940617719627,
+    "Pe_W": 433.38337117385515
    },
    "H_L_f": {
-    "omega_rad_s": 289.8562214526716,
-    "rpm": 2767.9230258079056,
-    "Q_Nm": 0.9004718041272761,
-    "T_N": 31.219675298339236,
-    "P_shaft_W": 261.0073546690025,
-    "I_A": 13.848896258508518,
-    "Pe_W": 303.6367914099249
+    "omega_rad_s": 301.6632769460561,
+    "rpm": 2880.672100515854,
+    "Q_Nm": 0.9806576723321472,
+    "T_N": 33.92420932584041,
+    "P_shaft_W": 295.82840699800727,
+    "I_A": 15.781924568098608,
+    "Pe_W": 342.76332361160075
    },
    "H_L_r": {
-    "omega_rad_s": 288.11987131032856,
-    "rpm": 2751.342103322373,
-    "Q_Nm": 0.8895863041959395,
-    "T_N": 30.839314209574134,
-    "P_shaft_W": 256.3074914843649,
-    "I_A": 13.693176498277003,
-    "Pe_W": 299.6320502472499
+    "omega_rad_s": 301.6632066367451,
+    "rpm": 2880.67142911139,
+    "Q_Nm": 0.9806572087953978,
+    "T_N": 33.924193310298556,
+    "P_shaft_W": 295.82819821665976,
+    "I_A": 15.78191762274514,
+    "Pe_W": 344.27443988175315
    },
    "MAX_f": {
-    "omega_rad_s": 462.0866281722598,
-    "rpm": 4412.602260616908,
-    "Q_Nm": 2.3390779390302803,
-    "T_N": 81.58489573205948,
-    "P_shaft_W": 1080.8566378786209,
-    "I_A": 34.428511692594995,
-    "Pe_W": 1254.4204803316657
+    "omega_rad_s": 481.6702813775908,
+    "rpm": 4599.612373302461,
+    "Q_Nm": 2.528073211792808,
+    "T_N": 87.32849049187615,
+    "P_shaft_W": 1217.6977352673916,
+    "I_A": 38.967460334433035,
+    "Pe_W": 1405.2391955756746
    },
    "MAX_r": {
-    "omega_rad_s": 459.34611992319566,
-    "rpm": 4386.432334551548,
-    "Q_Nm": 2.310401658961168,
-    "T_N": 80.59091615083868,
-    "P_shaft_W": 1061.2740375079268,
-    "I_A": 34.018290436349425,
-    "Pe_W": 1239.4743961259524
+    "omega_rad_s": 481.6701689702147,
+    "rpm": 4599.6112998910885,
+    "Q_Nm": 2.5280720166599537,
+    "T_N": 87.32844926376158,
+    "P_shaft_W": 1217.6968754334714,
+    "I_A": 38.967442427287324,
+    "Pe_W": 1414.4522240763672
    }
   },
   "items": [
@@ -1308,39 +1296,32 @@
     "z": 0.0
    },
    {
-    "name": "avionics",
+    "name": "avionics_flight",
     "mass_kg": 0.609,
     "x": 0.044369561718928564,
     "y": 0.0,
     "z": 0.0
    },
    {
-    "name": "avionics_vtol",
-    "mass_kg": 0.35,
-    "x": 0.13914842429770818,
+    "name": "avionics_projects",
+    "mass_kg": 1.01,
+    "x": 0.13899601087098223,
     "y": 0.0,
     "z": 0.0
    },
    {
     "name": "fuselage",
-    "mass_kg": 0.6424153501965915,
-    "x": -0.014794897958627928,
+    "mass_kg": 0.6425003355189458,
+    "x": -0.014871104671990876,
     "y": 0.0,
     "z": 0.02
    },
    {
     "name": "payload_cargo",
-    "mass_kg": 0.572,
-    "x": 0.13914842429770818,
+    "mass_kg": 0.41,
+    "x": 0.13899601087098223,
     "y": 0.0,
     "z": 0.0
-   },
-   {
-    "name": "payload_camera",
-    "mass_kg": 0.11,
-    "x": -0.45,
-    "y": 0.0,
-    "z": -0.05
    },
    {
     "name": "landing_gear",
@@ -1352,112 +1333,112 @@
    {
     "name": "cruise_motor",
     "mass_kg": 0.436,
-    "x": -0.6225235757022919,
+    "x": -0.6226759891290178,
     "y": 0.0,
     "z": -0.035
    },
    {
     "name": "cruise_esc",
     "mass_kg": 0.208,
-    "x": -0.5152907757022919,
+    "x": -0.5154431891290178,
     "y": 0.0,
     "z": -0.035
    },
    {
     "name": "cruise_prop",
     "mass_kg": 0.045,
-    "x": -0.6482735757022919,
+    "x": -0.6484259891290178,
     "y": 0.0,
     "z": -0.035
    },
    {
     "name": "cruise_rest",
     "mass_kg": 0.179,
-    "x": -0.5542295355915808,
+    "x": -0.5543819490183067,
     "y": 0.0,
     "z": -0.035
    },
    {
     "name": "battery",
-    "mass_kg": 2.4779886113745144,
-    "x": -0.21096732305549334,
+    "mass_kg": 2.6934122834871883,
+    "x": -0.20397606728663656,
     "y": 0.0,
     "z": 0.0
    },
    {
     "name": "boom",
-    "mass_kg": 0.20189109653711274,
-    "x": 0.14258639053522756,
-    "y": -0.4702000482328912,
-    "z": -0.025471137578900176
+    "mass_kg": 0.14572429203191,
+    "x": 0.13899614576427372,
+    "y": -0.4702000640102272,
+    "z": -0.020552
    },
    {
     "name": "boom_clamp",
     "mass_kg": 0.06,
-    "x": 0.14258639053522756,
-    "y": -0.4702000482328912,
-    "z": -0.025471137578900176
+    "x": 0.13899614576427372,
+    "y": -0.4702000640102272,
+    "z": -0.020552
    },
    {
     "name": "lift_front",
-    "mass_kg": 0.44945095819240566,
-    "x": -0.4183451619909476,
-    "y": -0.4702000482328912,
-    "z": -0.005471137578900175
+    "mass_kg": 0.5676201887601471,
+    "x": -0.42552566024608124,
+    "y": -0.4702000640102272,
+    "z": -0.0005520000000000004
    },
    {
     "name": "lift_rear",
-    "mass_kg": 0.44945095819240566,
-    "x": 0.7035179430614028,
-    "y": -0.4702000482328912,
-    "z": -0.005471137578900175
+    "mass_kg": 0.5676201887601471,
+    "x": 0.7035179517746286,
+    "y": -0.4702000640102272,
+    "z": -0.0005520000000000004
    },
    {
     "name": "boom",
-    "mass_kg": 0.20189109653711274,
-    "x": 0.14258639053522756,
-    "y": 0.4702000482328912,
-    "z": -0.025471137578900176
+    "mass_kg": 0.14572429203191,
+    "x": 0.13899614576427372,
+    "y": 0.4702000640102272,
+    "z": -0.020552
    },
    {
     "name": "boom_clamp",
     "mass_kg": 0.06,
-    "x": 0.14258639053522756,
-    "y": 0.4702000482328912,
-    "z": -0.025471137578900176
+    "x": 0.13899614576427372,
+    "y": 0.4702000640102272,
+    "z": -0.020552
    },
    {
     "name": "lift_front",
-    "mass_kg": 0.44945095819240566,
-    "x": -0.4183451619909476,
-    "y": 0.4702000482328912,
-    "z": -0.005471137578900175
+    "mass_kg": 0.5676201887601471,
+    "x": -0.42552566024608124,
+    "y": 0.4702000640102272,
+    "z": -0.0005520000000000004
    },
    {
     "name": "lift_rear",
-    "mass_kg": 0.44945095819240566,
-    "x": 0.7035179430614028,
-    "y": 0.4702000482328912,
-    "z": -0.005471137578900175
+    "mass_kg": 0.5676201887601471,
+    "x": 0.7035179517746286,
+    "y": 0.4702000640102272,
+    "z": -0.0005520000000000004
    },
    {
     "name": "cables",
-    "mass_kg": 0.43765852452972265,
-    "x": 0.14258639053522756,
+    "mass_kg": 0.4948354969188366,
+    "x": 0.13899614576427372,
     "y": 0.0,
-    "z": -0.012735568789450088
+    "z": -0.010276
    }
   ],
   "airframe": {
    "c_ref_m": 0.33,
    "htail_le_x_m": 1.422,
-   "neutral_point_m": 0.17214842429770819,
-   "x_cg_m": 0.13914842429770818,
-   "x_nose_hub_m": -0.6608515757022919,
+   "neutral_point_m": 0.17199601087098224,
+   "x_cg_m": 0.13899601087098223,
+   "x_nose_hub_m": -0.6610039891290178,
    "polar": {
-    "cd0": 0.013780899012968256,
-    "k": 0.039766157933393574,
-    "cl_max": 1.4574106432128429
+    "cd0": 0.013789957695643788,
+    "k": 0.0397563951706752,
+    "cl_max": 1.4573180503169834
    }
   },
   "placeholders": [
@@ -1493,7 +1474,7 @@
    "cables.current_density_A_m2",
    "cables.insulation_factor",
    "cables.run_extra_m",
-   "avionics.mass_kg",
+   "avionics.projects_mass_kg",
    "avionics.power_W",
    "landing_gear.mass_kg",
    "cruise_aero.boom_cf",
@@ -1510,472 +1491,472 @@
   "case": "H4_12S",
   "constraints": {
    "mtow_kg": {
-    "value": 13.198648511944679,
+    "value": 14.219677455029377,
     "hi": 15.0,
     "group": "mass",
     "enabled": true,
     "equality": false,
-    "margin": 0.12009009920368806,
-    "cost_Wh_per_unit": 2.7326786040457515e-07
+    "margin": 0.05202150299804155,
+    "cost_Wh_per_unit": 1.1282866154312765e-06
    },
    "cg_x_m": {
-    "value": 0.13914842437732441,
-    "lo": 0.13914842429770818,
-    "hi": 0.13914842429770818,
+    "value": 0.13899601096376316,
+    "lo": 0.13899601087098223,
+    "hi": 0.13899601087098223,
     "group": "cg",
     "enabled": true,
     "equality": true,
-    "margin": -5.721676740288009e-10
+    "margin": -6.675078029427079e-10
    },
    "tip_mach_H_TO_f": {
-    "value": 97.8059845632314,
+    "value": 101.05890290280061,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5578291346403337,
-    "cost_Wh_per_unit": 3.9975293232586555e-09
+    "margin": 0.5431230231117312,
+    "cost_Wh_per_unit": 7.358356802690084e-09
    },
    "tip_mach_H_TO_r": {
-    "value": 97.22303430060197,
+    "value": 101.05887934172142,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5604645932294945,
-    "cost_Wh_per_unit": 3.950540381656905e-09
+    "margin": 0.5431231296289635,
+    "cost_Wh_per_unit": 7.393614931656458e-09
    },
    "tip_mach_C_TO_f": {
-    "value": 103.29204227303042,
+    "value": 108.78526635394874,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5330272281334099,
-    "cost_Wh_per_unit": 4.184153638908884e-09
+    "margin": 0.5081929231946982,
+    "cost_Wh_per_unit": 7.86266573226914e-09
    },
    "tip_mach_C_TO_r": {
-    "value": 102.7133736712861,
+    "value": 108.78524264746953,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5356433297710794,
-    "cost_Wh_per_unit": 4.133073813430966e-09
+    "margin": 0.5081930303692691,
+    "cost_Wh_per_unit": 7.903163786846065e-09
    },
    "tip_mach_H_L_f": {
-    "value": 95.71052489751969,
+    "value": 99.60921440596012,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5673024937384675,
-    "cost_Wh_per_unit": 3.930335236666624e-09
+    "margin": 0.549676916720721,
+    "cost_Wh_per_unit": 7.271065973906396e-09
    },
    "tip_mach_H_L_r": {
-    "value": 95.13718207708045,
+    "value": 99.60919118982554,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5698945180628837,
-    "cost_Wh_per_unit": 3.885641638471738e-09
+    "margin": 0.549677021678494,
+    "cost_Wh_per_unit": 7.304984589511313e-09
    },
    "tip_mach_MAX_f": {
-    "value": 152.58100553730364,
+    "value": 159.04752748309906,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.31019686006779706,
-    "cost_Wh_per_unit": 7.235802414807806e-09
+    "margin": 0.28096237490404824,
+    "cost_Wh_per_unit": 1.4156865488141195e-08
    },
    "tip_mach_MAX_r": {
-    "value": 151.6760897080371,
+    "value": 159.04749036618335,
     "hi": 221.19500000000002,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.3142878920950425,
-    "cost_Wh_per_unit": 7.001907065175538e-09
+    "margin": 0.2809625427058327,
+    "cost_Wh_per_unit": 1.4361230949103163e-08
    },
    "motor_torque_front": {
-    "value": 2.3390779390302803,
-    "hi": 2.3390779585174206,
+    "value": 2.528073211792808,
+    "hi": 2.52807327561734,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 8.331120506211052e-09,
-    "cost_Wh_per_unit": 12.403402154871271
+    "margin": 2.524631405955625e-08,
+    "cost_Wh_per_unit": 10.522051649859451
    },
    "motor_current_front": {
-    "value": 34.428511692594995,
-    "hi": 34.428512183486156,
+    "value": 38.967460334433035,
+    "hi": 38.96746101046346,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 1.4258274014084956e-08,
-    "cost_Wh_per_unit": 0.5640017916980189
+    "margin": 1.7348587950020427e-08,
+    "cost_Wh_per_unit": 0.7965746928175961
    },
    "duty_front": {
-    "value": 0.9499995885635677,
+    "value": 0.9438117396537257,
     "hi": 0.95,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 4.330909813233282e-07,
-    "cost_Wh_per_unit": 2.5488761007334193
+    "margin": 0.006513958259236093,
+    "cost_Wh_per_unit": 9.651336269255937e-05
    },
    "motor_torque_rear": {
-    "value": 2.310401658961168,
-    "hi": 2.3390779585174206,
+    "value": 2.5280720166599537,
+    "hi": 2.52807327561734,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.012259659602978147,
-    "cost_Wh_per_unit": 1.732687096054257e-05
+    "margin": 4.979908606618309e-07,
+    "cost_Wh_per_unit": 0.9604988795921341
    },
    "motor_current_rear": {
-    "value": 34.018290436349425,
-    "hi": 34.428512183486156,
+    "value": 38.967442427287324,
+    "hi": 38.96746101046346,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.011915174984921261,
-    "cost_Wh_per_unit": 1.0856755504351793e-06
+    "margin": 4.768895805320276e-07,
+    "cost_Wh_per_unit": 0.06642303697730802
    },
    "duty_rear": {
-    "value": 0.9500000006470151,
+    "value": 0.9499999942660846,
     "hi": 0.95,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": -6.810685349023515e-10,
-    "cost_Wh_per_unit": 47.12102175816948
+    "margin": 6.035700360559747e-09,
+    "cost_Wh_per_unit": 54.82341106973754
    },
    "c_rate_max": {
-    "value": 13.506710977589387,
+    "value": 14.04168366870006,
     "hi": 25.0,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.45973156089642453,
-    "cost_Wh_per_unit": 4.271615889790568e-08
+    "margin": 0.4383326532519976,
+    "cost_Wh_per_unit": 8.091985939137843e-08
    },
    "stall_margin_lap": {
-    "value": 16.87986302272474,
-    "lo": 16.366976174922975,
+    "value": 17.456233105159765,
+    "lo": 16.988787633015825,
     "group": "energy",
     "enabled": true,
     "equality": false,
-    "margin": 0.031336689338351785,
-    "cost_Wh_per_unit": 9.596014294672074e-07
+    "margin": 0.027514939985211845,
+    "cost_Wh_per_unit": 2.0008339551028993e-06
    },
    "cruise_duty_lap": {
-    "value": 0.4850592347097124,
+    "value": 0.5008629477325018,
     "hi": 0.95,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.48941133188451325,
-    "cost_Wh_per_unit": 1.0570859404129085e-06
+    "margin": 0.4727758444921033,
+    "cost_Wh_per_unit": 1.9718512833502097e-06
    },
    "cruise_current_lap": {
-    "value": 10.857595406634893,
+    "value": 11.427789006568895,
     "hi": 72.4,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.8500332126155402,
-    "cost_Wh_per_unit": 7.985391693039642e-09
+    "margin": 0.842157610406507,
+    "cost_Wh_per_unit": 1.4533432717341583e-08
    },
    "cruise_tip_mach_lap": {
-    "value": 123.28113972297126,
+    "value": 127.09130911594714,
     "hi": 289.255,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.5737977226911505,
-    "cost_Wh_per_unit": 2.9611511155322377e-09
+    "margin": 0.5606253682185368,
+    "cost_Wh_per_unit": 5.462475512650732e-09
    },
    "stall_margin_map": {
-    "value": 17.217467371355234,
-    "lo": 16.366976174922975,
+    "value": 17.820643498597768,
+    "lo": 16.988787633015825,
     "group": "energy",
     "enabled": true,
     "equality": false,
-    "margin": 0.051963856203038755,
-    "cost_Wh_per_unit": 6.117813488452266e-07
+    "margin": 0.04896499288538538,
+    "cost_Wh_per_unit": 1.1605339040034418e-05
    },
    "cruise_duty_map": {
-    "value": 0.49507747729133245,
+    "value": 0.5115760680620206,
     "hi": 0.95,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.47886581337754475,
-    "cost_Wh_per_unit": 1.0788255624621083e-06
+    "margin": 0.4614988757241888,
+    "cost_Wh_per_unit": 1.965915537930509e-06
    },
    "cruise_current_map": {
-    "value": 11.234270221173984,
+    "value": 11.838326423990212,
     "hi": 72.4,
     "group": "elec",
     "enabled": true,
     "equality": false,
-    "margin": 0.8448305218069891,
-    "cost_Wh_per_unit": 8.033115470964735e-09
+    "margin": 0.836487204088533,
+    "cost_Wh_per_unit": 1.4576861467110014e-08
    },
    "cruise_tip_mach_map": {
-    "value": 125.65124108998323,
+    "value": 129.61833217160668,
     "hi": 289.255,
     "group": "tw",
     "enabled": true,
     "equality": false,
-    "margin": 0.565603909733684,
-    "cost_Wh_per_unit": 3.0009734761520633e-09
+    "margin": 0.5518890523185194,
+    "cost_Wh_per_unit": 5.4380850261824926e-09
    },
    "energy_Wh": {
-    "value": 313.87270420811257,
-    "hi": 313.8727046396921,
+    "value": 341.1591928766983,
+    "hi": 341.1591942946681,
     "group": "energy",
     "enabled": true,
     "equality": false,
-    "margin": 1.3750144620779836e-09,
-    "cost_Wh_per_unit": 0.2669799247801465
+    "margin": 4.156328923863864e-09,
+    "cost_Wh_per_unit": 0.28452896112861326
    },
    "boom_stress_Pa_front_T": {
-    "value": 79178557.46452883,
+    "value": 166464719.93895084,
     "hi": 359000000.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.7794469151405883,
-    "cost_Wh_per_unit": 1.7563000585432866e-15
+    "margin": 0.5363099723149002,
+    "cost_Wh_per_unit": 4.60087453421142e-15
    },
    "boom_buckling_Pa_front_T": {
-    "value": 79142139.35650404,
-    "hi": 1237358101.1351907,
+    "value": 166388326.83639097,
+    "hi": 1724187517.975266,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9360394219879463,
-    "cost_Wh_per_unit": 4.2414706460665377e-16
+    "margin": 0.9034975458865502,
+    "cost_Wh_per_unit": 5.68817301365152e-16
    },
    "boom_tip_slope_deg_front_T": {
-    "value": 0.5950589486412043,
-    "hi": 1.0,
+    "value": 1.7440616374598896,
+    "hi": 2.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.40494105135879566,
-    "cost_Wh_per_unit": 1.197835488590582e-06
+    "margin": 0.1279691812700552,
+    "cost_Wh_per_unit": 3.6163871421912287e-06
    },
    "boom_stress_Pa_front_g": {
-    "value": 14445140.594230987,
+    "value": 34316392.02461226,
     "hi": 359000000.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9597628395703871,
-    "cost_Wh_per_unit": 1.4260320213758088e-15
+    "margin": 0.9044111642768461,
+    "cost_Wh_per_unit": 2.7303849112287423e-15
    },
    "boom_buckling_Pa_front_g": {
-    "value": 14439897.217187488,
-    "hi": 1237358101.1351907,
+    "value": 34302841.739214845,
+    "hi": 1724187517.975266,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9883300580454925,
-    "cost_Wh_per_unit": 4.05551088913235e-16
+    "margin": 0.98010492398211,
+    "cost_Wh_per_unit": 5.244144502099277e-16
    },
    "boom_tip_slope_deg_front_g": {
-    "value": 0.09644383441130361,
-    "hi": 1.0,
+    "value": 0.3335075271317976,
+    "hi": 2.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9035561655886963,
-    "cost_Wh_per_unit": 5.430870526097612e-07
+    "margin": 0.8332462364341012,
+    "cost_Wh_per_unit": 5.327458731176892e-07
    },
    "boom_stress_Pa_rear_T": {
-    "value": 78229430.76668487,
+    "value": 166464642.2093461,
     "hi": 359000000.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.7820907220983708,
-    "cost_Wh_per_unit": 1.7415293673699372e-15
+    "margin": 0.5363101888319051,
+    "cost_Wh_per_unit": 4.652366504278086e-15
    },
    "boom_buckling_Pa_rear_T": {
-    "value": 78193463.50164995,
-    "hi": 1237358101.1351907,
+    "value": 166388249.14324608,
+    "hi": 1724187517.975266,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9368061166529619,
-    "cost_Wh_per_unit": 4.2332201750292335e-16
+    "margin": 0.9034975909472782,
+    "cost_Wh_per_unit": 5.695642141818076e-16
    },
    "boom_tip_slope_deg_rear_T": {
-    "value": 0.5878091208481456,
-    "hi": 1.0,
+    "value": 1.7440608140817158,
+    "hi": 2.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.4121908791518544,
-    "cost_Wh_per_unit": 1.146979447892871e-06
+    "margin": 0.12796959295914212,
+    "cost_Wh_per_unit": 4.356743694108063e-06
    },
    "boom_stress_Pa_rear_g": {
-    "value": 14431808.752764042,
+    "value": 34316391.0460744,
     "hi": 359000000.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9597999756190416,
-    "cost_Wh_per_unit": 1.425944778739974e-15
+    "margin": 0.9044111670025783,
+    "cost_Wh_per_unit": 2.7305845329262632e-15
    },
    "boom_buckling_Pa_rear_g": {
-    "value": 14426560.530223267,
-    "hi": 1237358101.1351907,
+    "value": 34302840.76029044,
+    "hi": 1724187517.975266,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9883408364021797,
-    "cost_Wh_per_unit": 4.0179897886483195e-16
+    "margin": 0.98010492454987,
+    "cost_Wh_per_unit": 5.174640866636925e-16
    },
    "boom_tip_slope_deg_rear_g": {
-    "value": 0.09644383441130361,
-    "hi": 1.0,
+    "value": 0.3335075271317976,
+    "hi": 2.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.9035561655886963,
-    "cost_Wh_per_unit": 5.430870526097665e-07
+    "margin": 0.8332462364341012,
+    "cost_Wh_per_unit": 5.327458731176892e-07
    },
    "boom_r_over_t": {
-    "value": 17.5,
+    "value": 12.7,
     "hi": 60.0,
     "group": "structure",
     "enabled": true,
     "equality": false,
-    "margin": 0.7083333333333334,
+    "margin": 0.7883333333333333,
     "cost_Wh_per_unit": 0.0
    },
    "boom_f1_over_1P_hover_front": {
-    "value": 33.6123934164021,
-    "hi": 37.71364218989134,
+    "value": 18.196529429656675,
+    "hi": 38.96795610553064,
     "group": "stiffness",
     "enabled": true,
     "equality": false,
-    "margin": 0.10874708819792872,
-    "cost_Wh_per_unit": 1.2713534500724447e-07
+    "margin": 0.5330386489766632,
+    "cost_Wh_per_unit": 4.26630362678983e-08
    },
    "boom_f1_over_1P_hover_rear": {
-    "value": 33.6123934164021,
-    "hi": 37.4888586276432,
+    "value": 18.196529429656675,
+    "hi": 38.96794702046171,
     "group": "stiffness",
     "enabled": true,
     "equality": false,
-    "margin": 0.10340312703952806,
-    "cost_Wh_per_unit": 1.47755670001037e-07
+    "margin": 0.533038540108314,
+    "cost_Wh_per_unit": 4.225573359082638e-08
    },
    "boom_f1_over_1P_landing_front": {
-    "value": 33.6123934164021,
-    "hi": 36.905640344105414,
+    "value": 18.196529429656675,
+    "hi": 38.408961340211384,
     "group": "stiffness",
     "enabled": true,
     "equality": false,
-    "margin": 0.0892342443322302,
-    "cost_Wh_per_unit": 1.6082853336106057e-07
+    "margin": 0.5262426060293842,
+    "cost_Wh_per_unit": 4.3839313528656235e-08
    },
    "boom_f1_over_1P_landing_rear": {
-    "value": 33.6123934164021,
-    "hi": 36.684561377631645,
+    "value": 18.196529429656675,
+    "hi": 38.40895238815187,
     "group": "stiffness",
     "enabled": true,
     "equality": false,
-    "margin": 0.08374552797850258,
-    "cost_Wh_per_unit": 1.9403628910763395e-07
+    "margin": 0.5262424956097002,
+    "cost_Wh_per_unit": 4.3416929144935045e-08
    },
    "clear_fuselage_m": {
-    "value": 0.02000004625312507,
+    "value": 0.02000006282223904,
     "lo": 0.02,
     "group": "clear",
     "enabled": true,
     "equality": false,
-    "margin": 2.3126562534794837e-06,
-    "cost_Wh_per_unit": 10.571783774567477
+    "margin": 3.141111951966702e-06,
+    "cost_Wh_per_unit": 13.995774366747684
    },
    "clear_front_to_wing_LE_m": {
-    "value": 0.08827055804641665,
+    "value": 0.09545105708959845,
     "lo": 0.02,
     "group": "clear",
     "enabled": true,
     "equality": false,
-    "margin": 3.413527902320832,
-    "cost_Wh_per_unit": 8.396243394647777e-06
+    "margin": 3.772552854479922,
+    "cost_Wh_per_unit": 1.1657512939009396e-05
    },
    "clear_rear_to_wing_TE_m": {
-    "value": 0.020000010545805857,
+    "value": 0.02000002129197409,
     "lo": 0.02,
     "group": "clear",
     "enabled": true,
     "equality": false,
-    "margin": 5.272902928524226e-07,
-    "cost_Wh_per_unit": 45.63558484594449
+    "margin": 1.064598704504649e-06,
+    "cost_Wh_per_unit": 41.73613918220133
    },
    "clear_rear_to_htail_m": {
-    "value": 0.38828205495883106,
+    "value": 0.3882820470373831,
     "lo": 0.02,
     "group": "clear",
     "enabled": true,
     "equality": false,
-    "margin": 18.414102747941552,
-    "cost_Wh_per_unit": 1.3339808801097716e-06
+    "margin": 18.414102351869154,
+    "cost_Wh_per_unit": 2.404835053893276e-06
    },
    "clear_prop_to_prop_m": {
-    "value": 0.4614631010928182,
+    "value": 0.4686436096447336,
     "lo": 0.02,
     "group": "clear",
     "enabled": true,
     "equality": false,
-    "margin": 22.073155054640907,
-    "cost_Wh_per_unit": 1.139288726932285e-06
+    "margin": 22.432180482236678,
+    "cost_Wh_per_unit": 1.9503402004889963e-06
    },
    "control_roll_rad_s2": {
-    "value": 17.653015019795507,
-    "lo": 6.808943367086357,
+    "value": 18.51052516512683,
+    "lo": 6.783410013287482,
     "group": "control",
     "enabled": true,
     "equality": false,
-    "margin": 1.5926218016628153,
-    "cost_Wh_per_unit": 4.5503777382784056e-08
+    "margin": 1.7287935019213099,
+    "cost_Wh_per_unit": 7.550846724505432e-08
    },
    "control_pitch_rad_s2": {
-    "value": 16.059015291581197,
-    "lo": 6.808943367086357,
+    "value": 16.80025531016071,
+    "lo": 6.783410013287482,
     "group": "control",
     "enabled": true,
     "equality": false,
-    "margin": 1.3585179705280874,
-    "cost_Wh_per_unit": 5.4208838260255294e-08
+    "margin": 1.47666811784221,
+    "cost_Wh_per_unit": 8.761135544451783e-08
    },
    "control_yaw_rad_s2": {
-    "value": 1.500000140479941,
+    "value": 1.5000003261944685,
     "lo": 1.5,
     "group": "control",
     "enabled": true,
     "equality": false,
-    "margin": 9.365329400878863e-08,
-    "cost_Wh_per_unit": 2.0190598703313283
+    "margin": 2.1746297903154263e-07,
+    "cost_Wh_per_unit": 2.0861686697127277
    },
    "bay_volume_L": {
-    "value": 1.1889117599988335,
+    "value": 1.2922696753585914,
     "hi": 14.688,
     "group": "mass",
     "enabled": true,
     "equality": false,
-    "margin": 0.9190555718955044,
-    "cost_Wh_per_unit": 3.6402426799153345e-08
+    "margin": 0.9120186767865883,
+    "cost_Wh_per_unit": 6.615232370342291e-08
    }
   }
  }

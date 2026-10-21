@@ -2,7 +2,7 @@
   "wbs_no": "1.8.1.4",
   "name": "FlightTests",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "flight_tests",
     "flight_tests": [
       {
@@ -18,7 +18,7 @@
           "xyz": [
             0.0,
             0.0,
-            0.009729312470317632
+            -0.009729312470317632
           ],
           "units": "m"
         },

@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from ..frame import flip_point
+
 _GREEK = {"α": "alpha", "β": "beta", "φ": "phi", "γ": "gamma"}
 _UNIT = re.compile(r"\(([^)]*)\)$")
 
@@ -92,7 +94,9 @@ def _vec(text: str) -> Tuple[float, float, float]:
 
 
 def read_plane(path: Path) -> Plane:
-    """Read the wings of a flow5 plane XML. Only SI units (all factors 1) are accepted."""
+    """Read the wings of a flow5 plane XML. Only SI units (all factors 1) are accepted. flow5 works in x aft, z up: the
+    wing `position` is returned in the design frame (FRD, aeroplan.frame). The section numbers (x_offset, dihedral, twist)
+    stay in the local frame of flow5."""
     path = Path(path)
     root = ET.fromstring(path.read_bytes())
     if _tag(root) != "xflplane":
@@ -112,7 +116,7 @@ def read_plane(path: Path) -> Plane:
                     _text(s, "left_side_foilname") or _text(s, "right_side_foilname"))
             for s in (secs if secs is not None else []) if _tag(s) == "section")
         plane.wings.append(Wing(
-            _text(w, "name"), _text(w, "type").upper(), _vec(_text(w, "position", "0 0 0")),
+            _text(w, "name"), _text(w, "type").upper(), tuple(flip_point(_vec(_text(w, "position", "0 0 0")))),
             float(_text(w, "rx_angle", "0")), float(_text(w, "ry_angle", "0")),
             _text(w, "symmetric", "true").lower() == "true", _text(w, "two_sided", "false").lower() == "true", sections))
     return plane

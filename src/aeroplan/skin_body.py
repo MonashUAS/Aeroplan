@@ -1,7 +1,7 @@
 """Flow5-style body frames from a closed outer skin mesh (the Creo shrinkwrap of the fuselage).
 
-A frame is the right half of the skin in a plane x = constant, from the top point to the bottom point (design frame,
-m). That is the form of `geometry.body_adh`. The slice casts rays from the centre of the pod and keeps the farthest
+A frame is the right half of the skin in a plane x = constant, from the top point to the bottom point (design frame
+FRD: x forward, z down, m). The frames run from the nose (highest x) to the tail (lowest x). That is the form of `geometry.body_adh`. The slice casts rays from the centre of the pod and keeps the farthest
 hit of each ray.
 
 The shrinkwrap also holds the centre panel of the wing. A `cut` removes it: in the stations from x0 to x1, a ray
@@ -35,12 +35,12 @@ def _slice_segments(tri: np.ndarray, x: float) -> np.ndarray:
 
 
 def _farthest_hits(segs: np.ndarray, centre: np.ndarray, theta: np.ndarray) -> np.ndarray:
-    """Farthest hit (y, z) of each ray from `centre`; the ray angle is measured from +z toward +y."""
+    """Farthest hit (y, z) of each ray from `centre`; the ray angle is measured from the top (-z, up) toward +y."""
     p, q = segs[:, 0], segs[:, 1]
     e = q - p
     out = np.full((len(theta), 2), np.nan)
     for k, th in enumerate(theta):
-        d = np.array([np.sin(th), np.cos(th)])
+        d = np.array([np.sin(th), -np.cos(th)])
         den = d[0] * e[:, 1] - d[1] * e[:, 0]
         ok = np.abs(den) > 1e-14
         w = p - centre
@@ -56,7 +56,7 @@ def _farthest_hits(segs: np.ndarray, centre: np.ndarray, theta: np.ndarray) -> n
         # a thin or ragged section (the tail end of a shrinkwrap): take the segment end point nearest in angle
         pts = segs.reshape(-1, 2)
         rel = pts - centre
-        ang = np.arctan2(rel[:, 0], rel[:, 1])
+        ang = np.arctan2(rel[:, 0], -rel[:, 1])
         for k in np.flatnonzero(miss):
             diff = np.abs(ang - theta[k])
             near = diff <= diff.min() + 1e-3
@@ -95,23 +95,23 @@ def slice_frame(tri: np.ndarray, x: float, n_points: int, cut: Optional[Dict[str
 
 
 def _monotone(y: np.ndarray, z: np.ndarray):
-    """A frame of a faired body: y rises to the widest point and falls again, z falls from the top to the bottom.
+    """A frame of a faired body: y rises to the widest point and falls again, z rises from the top to the bottom (z down).
     A ragged section (the thin tail end of a shrinkwrap) breaks this. The envelope changes only the points that break it."""
     k = int(np.argmax(y))
     y = y.copy()
     y[: k + 1] = np.maximum.accumulate(y[: k + 1])
     y[k:] = np.maximum.accumulate(y[k:][::-1])[::-1]
-    return y, np.minimum.accumulate(z)
+    return y, np.maximum.accumulate(z)
 
 
-def _end_x(tri: np.ndarray, x1: float, min_height: float) -> float:
-    """The aft x where the section is at least `min_height` tall (1 mm steps from the tail end forward)."""
-    x = x1 - 1e-3
-    while x > x1 - 0.2:
+def _end_x(tri: np.ndarray, x_tail: float, min_height: float) -> float:
+    """The aft x where the section is at least `min_height` tall (1 mm steps from the tail end forward, x rises)."""
+    x = x_tail + 1e-3
+    while x < x_tail + 0.2:
         segs = _slice_segments(tri, x)
         if len(segs) and float(np.ptp(segs[:, :, 1])) >= min_height:
             return x
-        x -= 1e-3
+        x += 1e-3
     raise ValueError(f"no section of the last 0.2 m of the skin is {min_height} m tall")
 
 
@@ -122,17 +122,17 @@ def slice_frames(tri: np.ndarray, n_frames: int, n_points: int, cut: Optional[Di
     thinner than `min_height`, which no frame can describe) is left out: the body closes at the aft station that is
     `min_height` tall, plus END_STEP."""
     v = tri.reshape(-1, 3)
-    x0, x1 = float(v[:, 0].min()), float(v[:, 0].max())
+    x_nose, x_tail = float(v[:, 0].max()), float(v[:, 0].min())
     if n_frames < 5:
         raise ValueError("a body needs at least 5 frames")
-    last = _end_x(tri, x1, min_height) if min_height > 0 else x1 - END_STEP
-    a, b = x0 + END_STEP, last
+    last = _end_x(tri, x_tail, min_height) if min_height > 0 else x_tail + END_STEP
+    a, b = x_nose - END_STEP, last
     inner = a + (b - a) * 0.5 * (1.0 - np.cos(np.linspace(0.0, np.pi, n_frames - 2)))
     frames = [slice_frame(tri, float(x), n_points, cut) for x in inner]
-    for x, ref in ((x0, frames[0]), (last + END_STEP if min_height > 0 else x1, frames[-1])):
+    for x, ref in ((x_nose, frames[0]), (last - END_STEP if min_height > 0 else x_tail, frames[-1])):
         z = float(0.5 * (ref[:, 2].min() + ref[:, 2].max()))
         point = np.column_stack([np.full(n_points, x), np.zeros(n_points), np.full(n_points, z)])
-        frames.insert(0 if x == x0 else len(frames), point)
+        frames.insert(0 if x == x_nose else len(frames), point)
     return frames
 
 
@@ -150,7 +150,7 @@ def fit_report(frames: List[np.ndarray], tri: np.ndarray, cut: Optional[Dict[str
     if cut:
         panel = (v[:, 0] >= cut["x_m"][0]) & (v[:, 0] <= cut["x_m"][1]) & (np.abs(v[:, 1]) > cut["y_max_m"])
         v = v[~panel]
-    v = v[v[:, 0] <= frames[-1][0, 0]]     # the thin tail end that the body leaves out
+    v = v[v[:, 0] >= frames[-1][0, 0]]     # the thin tail end that the body leaves out
     v = v[np.random.default_rng(0).choice(len(v), min(len(v), 600), replace=False)]
     d = distance_to_mesh(v, body)
     return {"largest_gap_m": float(d.max()), "rms_gap_m": float(np.sqrt(np.mean(d ** 2))),

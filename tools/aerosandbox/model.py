@@ -31,7 +31,7 @@ import numpy as np
 
 from component import (A0, CU_RES, CU_RHO, G0, HERE, RHO0, ROOT, Airframe, Battery, Cables, Component, Control, CruiseRotor,
                        ESC, Fuselage, Material, Motor, PointMass, Rotor, Spec, Tube, airframe_model, build_airplane,
-                       electric_chain, level, motor_model, rotor_model, work_dir)
+                       electric_chain, esc_model, level, motor_model, rotor_model, work_dir)
 from mission import FlightCondition, Mission
 
 FORMAT = "aeroplan-asb-model/1"
@@ -131,7 +131,7 @@ class QuadplaneModel(AircraftModel):
     A quadplane: the base airframe (Currawong), a new fuselage, two lift booms with a rotor at each end (layout H4: one rotor
     on each end, H8: a coaxial pair on each end), and the nose propeller for cruise. Components (keys):
       limits, mission, airframe, fuselage, boom_material, boom, rotor, cruise_rotor, motor, esc, battery, cables,
-      avionics, landing_gear, cargo, camera, cruise_aero, control
+      avionics, landing_gear, cargo, cruise_aero, control
     Design variables (the params that are `free`): see DESIGN_VARS. The layout and the cell count are `config`.
     Equations: Bershadsky, Haviland, Johnson, AIAA 2016-0581 (masses, motor chain), the beam and control rules in the
     comments below. The frame is x aft, y right, z up.
@@ -221,7 +221,7 @@ class QuadplaneModel(AircraftModel):
         d.m_wire = sum(2 * 2.0 * d.n_per * L * CU_RHO * d.A_cu for L in d.L_runs) * cab.num("insulation_factor")
         d.R_w = [CU_RES * 2.0 * L / d.A_cu for L in d.L_runs]                 # out and back, one motor
         d.R_e = esc.num("re_ohm")
-        d.m_esc = esc["mass_kg"] if esc.get("mass_kg") is not None else esc.num("g_per_A") / 1000.0 * esc.num("peak_factor") * d.I_pk
+        d.m_esc = esc["mass_kg"] if esc.get("mass_kg") is not None else esc_model(esc, d.S).mass_g(esc.num("peak_factor") * d.I_pk) / 1000.0
         d.m_batt = bat.mass_kg_of(d.S, d.cap)
         d.R_b = d.S * (bat.num("cell_resistance_mohm") / 1000.0) * 4.5 / d.cap
 
@@ -239,15 +239,13 @@ class QuadplaneModel(AircraftModel):
             add("tail", p["mass"]["value"], *p["position"]["xyz"])
         tb = air.points["TAIL-BOOM"]
         add("tail_boom", air.m_tail_boom, tb["position"]["xyz"][0], 0.0, 0.0,
-            (0.0, air.m_tail_boom * 0.92 ** 2 / 12.0, air.m_tail_boom * 0.92 ** 2 / 12.0))
-        add("avionics", air.m_avionics, air.points["AVIONICS-REST"]["position"]["xyz"][0], 0.0, 0.0)
-        av = c["avionics"]
-        add("avionics_vtol", av.num("mass_kg"), d.x_cg, 0.0, 0.0)
+            (0.0, air.m_tail_boom * air.tail_boom_length ** 2 / 12.0, air.m_tail_boom * air.tail_boom_length ** 2 / 12.0))
+        add("avionics_flight", air.m_avionics, air.points["AVIONICS-REST"]["position"]["xyz"][0], 0.0, 0.0)
+        add("avionics_projects", c["avionics"].num("projects_mass_kg"), d.x_cg, 0.0, 0.0)
         Lf = air.fuselage_length()
         add("fuselage", d.m_fuse, air.fuselage_mid_x(), 0.0, float(fz["z_centre_m"]), (0.0, d.m_fuse * Lf ** 2 / 12.0, d.m_fuse * Lf ** 2 / 12.0))
-        cg_, cm_, gear = c["cargo"], c["camera"], c["landing_gear"]
-        add("payload_cargo", cg_.num("mass_kg"), d.x_cg + cg_.num("x_from_cg"), 0.0, 0.0)
-        add("payload_camera", cm_.num("mass_kg"), cm_.num("x_m"), 0.0, cm_.num("z_m"))
+        cg_, gear = c["cargo"], c["landing_gear"]
+        add("payload_cargo", cg_.num("mass_kg"), d.x_cg + cg_.num("x_from_cg"), 0.0, 0.0)      # released at the deployment (H_L)
         add("landing_gear", gear.num("mass_kg"), gear.num("x_m"), 0.0, gear.num("z_m"))
         for k in ("motor", "esc", "prop", "rest"):
             m_k = {"motor": air.cruise["mass_kg"], "esc": air.m_cruise_esc, "prop": air.m_cruise_prop, "rest": air.m_cruise_rest}[k]
@@ -436,6 +434,10 @@ class QuadplaneModel(AircraftModel):
                 struct.append({"F_N": F, "sigma_Pa": sigma, "von_mises_Pa": vm, "slope_deg": slope * 180.0 / math.pi})
         ctx.limit("boom_r_over_t", d.r_o / d.t, hi=boom.num("r_over_t_max"), scale=10.0, group="structure")
         f1 = Tube.f1_hz(E_ax, d.I_sec, d.a, m_tip, m_arm)
+        # Tip rotary inertia about the bending axis for f2 (an estimate): each prop as a rod of length D, averaged over one
+        # turn (m D^2 / 24), plus the tip mass at the mount offset. The gyroscopic coupling of the turning prop is not modelled.
+        J_tip = n_per * d.m_prop * d.D ** 2 / 24.0 + m_tip * mo_off ** 2
+        boom_modal = {"E": E_ax, "I": d.I_sec, "a": d.a, "m_tip": m_tip, "m_arm": m_arm, "J_tip": J_tip}
         freq_hover = [states["H_TO"][i]["omega"] / (2.0 * math.pi) for i in (0, 1)]       # 1P at the front and the rear end
         # Resonance check: f1 stays out of the band 1P hover +/- margin (take-off and landing mass). "below": f1 under the band,
         # so every speed from hover to full throttle is above the boom mode. "above": f1 over the band.
@@ -478,7 +480,7 @@ class QuadplaneModel(AircraftModel):
         V_bat_L = E_nom / fz.num("battery_Wh_per_L")
         ctx.limit("bay_volume_L", V_bat_L, hi=(bay[1] - bay[0]) * fz.num("width_m") * fz.num("height_m") * 0.4 * 1000.0, scale=1.0, group="mass")
 
-        names = dict(M=d.M, m_motor=d.m_motor, m_prop=d.m_prop, m_esc=d.m_esc, m_wire=d.m_wire, m_batt=d.m_batt, m_boom=d.m_boom,
+        names = dict(M=d.M, m_motor=d.m_motor, m_prop=d.m_prop, m_esc=d.m_esc, m_mount=d.m_mount, m_wire=d.m_wire, m_batt=d.m_batt, m_boom=d.m_boom,
                      rm=d.rm, i0=d.i0, I_pk=d.I_pk, R_b=d.R_b, Th=Th, Qh=Qh, W=d.W, share_f=d.share_f, x_f=d.x_f, x_r=d.x_r,
                      x_c=d.x_c, L_boom=d.L_boom, V_lap=d.V_lap, V_map=d.V_map, Vs=d.Vs, m_fuse=d.m_fuse, A_cu=d.A_cu, R=d.R,
                      D=d.D, kv_rad=d.kv_rad, r_i=d.r_i, sigma_cr=sigma_cr, L_run_f=d.L_runs[0], L_run_r=d.L_runs[1],
@@ -486,7 +488,7 @@ class QuadplaneModel(AircraftModel):
         return {"R": d.R, "names": names, "E_total": E_total, "E_nom": E_nom, "seg_J": seg_J, "t": t,
                 "inertia": (d.Ixx, d.Iyy, d.Izz), "ctl": ctl_out, "lap": lap, "map": mapc, "cda": d.cda,
                 "P": P, "P_max": P_max, "I_b_max": I_b_max, "V_bus": V_bus, "f1": f1, "freq_hover": freq_hover,
-                "struct": struct, "rotors": d.rotors, "items": d.items, "objective": E_total}
+                "boom_modal": boom_modal, "struct": struct, "rotors": d.rotors, "items": d.items, "objective": E_total}
 
     # -- the numbers of the model that are not expressions
     def static_report(self, R_m: float) -> Dict[str, Any]:

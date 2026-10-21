@@ -1,0 +1,3286 @@
+{
+  "$defs": {
+    "Actuator": {
+      "additionalProperties": false,
+      "description": "Servo of one control surface: a first-order lag and a rate limit (surface deflection, rad).",
+      "properties": {
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Servo make and model, when known",
+          "title": "Model"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "rate_limit_rad_s": {
+          "description": "Largest deflection rate, rad/s",
+          "exclusiveMinimum": 0,
+          "title": "Rate Limit Rad S",
+          "type": "number"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "tau_s": {
+          "description": "First-order lag time constant, s",
+          "exclusiveMinimum": 0,
+          "title": "Tau S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "tau_s",
+        "rate_limit_rad_s",
+        "source"
+      ],
+      "title": "Actuator",
+      "type": "object"
+    },
+    "AeroSettings": {
+      "additionalProperties": false,
+      "description": "Hand values that shape the aero model where the analysis has no data (the stall).",
+      "properties": {
+        "cl_max": {
+          "title": "Cl Max",
+          "type": "number"
+        },
+        "cl_min": {
+          "title": "Cl Min",
+          "type": "number"
+        },
+        "placeholder": {
+          "default": true,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cl_max",
+        "cl_min",
+        "source"
+      ],
+      "title": "AeroSettings",
+      "type": "object"
+    },
+    "Asset": {
+      "additionalProperties": false,
+      "properties": {
+        "built_against": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "<aircraft>@<version> that the asset was made from",
+          "title": "Built Against"
+        },
+        "dataset": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DatasetMeta"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The metadata of a dataset asset"
+        },
+        "dataset_role": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DatasetRole"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "derived_from": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Derived From",
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "inline": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The dataset of an inline asset",
+          "title": "Inline"
+        },
+        "kind": {
+          "enum": [
+            "file",
+            "dataset"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "title": "Locations",
+          "type": "array"
+        },
+        "media_type": {
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "name": {
+          "description": "File name (file) or dataset name (dataset). Unique in the register",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.-]+$",
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "package_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path in the package of an embedded asset",
+          "title": "Package Path"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ADH Reference items (the published source)",
+          "title": "Reference"
+        },
+        "role": {
+          "description": "What the asset gives, for example 'CAD mesh of aileron_l'",
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "size": {
+          "description": "Bytes of the file, or of the canonical JSON of the dataset",
+          "minimum": 0,
+          "title": "Size",
+          "type": "integer"
+        },
+        "storage": {
+          "anyOf": [
+            {
+              "enum": [
+                "inline",
+                "embedded",
+                "linked"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Set by aeroplan pack",
+          "title": "Storage"
+        },
+        "tool": {
+          "description": "The spoke that registered the asset",
+          "minLength": 1,
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "role",
+        "tool",
+        "media_type",
+        "size"
+      ],
+      "title": "Asset",
+      "type": "object"
+    },
+    "Autopilot": {
+      "additionalProperties": false,
+      "description": "The flight controller and its output map.",
+      "properties": {
+        "board": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example CubeOrange",
+          "title": "Board"
+        },
+        "firmware": {
+          "description": "For example ArduPlane",
+          "title": "Firmware",
+          "type": "string"
+        },
+        "firmware_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Firmware Version"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/ServoOutput"
+          },
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "firmware",
+        "outputs"
+      ],
+      "title": "Autopilot",
+      "type": "object"
+    },
+    "BatteryData": {
+      "additionalProperties": false,
+      "description": "The battery of a propulsion system (contract B /battery). The file has no internal resistance.",
+      "properties": {
+        "capacity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cell_v_max": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cell_v_min": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cells_p": {
+          "minimum": 1,
+          "title": "Cells P",
+          "type": "integer"
+        },
+        "cells_s": {
+          "minimum": 1,
+          "title": "Cells S",
+          "type": "integer"
+        },
+        "mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "v_nominal": {
+          "$ref": "#/$defs/Quantity"
+        }
+      },
+      "required": [
+        "cells_s",
+        "cells_p",
+        "v_nominal"
+      ],
+      "title": "BatteryData",
+      "type": "object"
+    },
+    "BodyFit": {
+      "additionalProperties": false,
+      "description": "How the ADH `geometry.body` of the item was cut from the skin (aeroplan.skin_body), and how well it fits.",
+      "properties": {
+        "body_volume": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "cut": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The wing panel that the skin holds and the body leaves out: x_m [x0, x1] and y_max_m (m)",
+          "title": "Cut"
+        },
+        "frames": {
+          "minimum": 5,
+          "title": "Frames",
+          "type": "integer"
+        },
+        "largest_gap": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "method": {
+          "description": "The slicer and its version",
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        },
+        "min_height": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The body ends where the skin section is this tall. The thin tail end of the skin (a sheet) is left out"
+        },
+        "points": {
+          "description": "Points of each right-half frame, top to bottom",
+          "minimum": 5,
+          "title": "Points",
+          "type": "integer"
+        },
+        "rms_gap": {
+          "$ref": "#/$defs/Quantity",
+          "description": "RMS gap from the skin vertices (the wing panel left out) to the body"
+        },
+        "skin_volume": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Includes the wing panel when the skin holds one"
+        }
+      },
+      "required": [
+        "method",
+        "frames",
+        "points",
+        "rms_gap",
+        "largest_gap",
+        "body_volume",
+        "skin_volume"
+      ],
+      "title": "BodyFit",
+      "type": "object"
+    },
+    "BuildRecord": {
+      "additionalProperties": false,
+      "description": "Who built the file, with which AeroPlan commit, and which spokes gave data.",
+      "properties": {
+        "aeroplan_commit": {
+          "title": "Aeroplan Commit",
+          "type": "string"
+        },
+        "aeroplan_dirty": {
+          "title": "Aeroplan Dirty",
+          "type": "boolean"
+        },
+        "author": {
+          "minLength": 1,
+          "title": "Author",
+          "type": "string"
+        },
+        "built": {
+          "format": "date",
+          "title": "Built",
+          "type": "string"
+        },
+        "placeholder_items": {
+          "description": "Every value marked placeholder",
+          "items": {
+            "type": "string"
+          },
+          "title": "Placeholder Items",
+          "type": "array"
+        },
+        "spokes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Spoke name -> what it gave in this build",
+          "title": "Spokes",
+          "type": "object"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "aeroplan_commit",
+        "aeroplan_dirty",
+        "built",
+        "author",
+        "version"
+      ],
+      "title": "BuildRecord",
+      "type": "object"
+    },
+    "ContactKind": {
+      "enum": [
+        "BOGEY",
+        "STRUCTURE"
+      ],
+      "title": "ContactKind",
+      "type": "string"
+    },
+    "ControlSurface": {
+      "additionalProperties": false,
+      "properties": {
+        "eta_span": {
+          "description": "Span fraction, inboard to outboard",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Eta Span",
+          "type": "array"
+        },
+        "hinge_x_over_c": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Hinge X Over C",
+          "type": "number"
+        },
+        "jsbsim_property": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Jsbsim Property"
+        },
+        "limit_max_rad": {
+          "title": "Limit Max Rad",
+          "type": "number"
+        },
+        "limit_min_rad": {
+          "title": "Limit Min Rad",
+          "type": "number"
+        },
+        "parent": {
+          "description": "muas.instance of the parent surface",
+          "title": "Parent",
+          "type": "string"
+        },
+        "positive_sign": {
+          "title": "Positive Sign",
+          "type": "string"
+        },
+        "s119_name": {
+          "title": "S119 Name",
+          "type": "string"
+        },
+        "side": {
+          "default": "both",
+          "description": "Which half of the parent carries the surface. both: every half the parent has",
+          "enum": [
+            "left",
+            "right",
+            "both"
+          ],
+          "title": "Side",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parent",
+        "eta_span",
+        "hinge_x_over_c",
+        "limit_min_rad",
+        "limit_max_rad",
+        "positive_sign",
+        "s119_name"
+      ],
+      "title": "ControlSurface",
+      "type": "object"
+    },
+    "Correlation": {
+      "additionalProperties": false,
+      "properties": {
+        "coefficient": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "var_id": {
+          "title": "Var Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var_id",
+        "coefficient"
+      ],
+      "title": "Correlation",
+      "type": "object"
+    },
+    "DatasetMeta": {
+      "additionalProperties": false,
+      "description": "The metadata of one dataset (a JSON value: an ADH DAVEfunc, or tables).",
+      "properties": {
+        "analysis_mass_model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MassProperties"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The mass model (mass, CG, inertia) that the source analysis flew. The aero model belongs to this mass model. The mass model of the air vehicle can differ from it after a later change"
+        },
+        "fidelity": {
+          "$ref": "#/$defs/Fidelity"
+        },
+        "form": {
+          "description": "daveml-adh: an ADH DAVEfunc. tables: {name: {columns, units}}. parameters: {name: number}. waypoints: a QGC WPL plan. geofence: polygons, circles and a return point (aeroplan.flightfiles)",
+          "enum": [
+            "daveml-adh",
+            "tables",
+            "parameters",
+            "waypoints",
+            "geofence"
+          ],
+          "title": "Form",
+          "type": "string"
+        },
+        "model_description": {
+          "additionalProperties": true,
+          "description": "ADH ModelDescription: generation_tool, version, generation_date_and_time, author, description",
+          "title": "Model Description",
+          "type": "object"
+        },
+        "mrp": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Position"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Moment reference point of the moments, design frame"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ADH Uncertainty form. None: no uncertainty estimate exists in the source",
+          "title": "Sigma"
+        },
+        "units_system": {
+          "default": "SI",
+          "description": "as-source: a published reference model kept in its own units. Each variable names its units",
+          "enum": [
+            "SI",
+            "as-source"
+          ],
+          "title": "Units System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "form",
+        "model_description",
+        "fidelity"
+      ],
+      "title": "DatasetMeta",
+      "type": "object"
+    },
+    "DatasetRef": {
+      "additionalProperties": false,
+      "description": "A pointer from an ADH item to a dataset: `asset:sha256:<hash>` plus an optional `#/<path>` in the dataset.",
+      "properties": {
+        "ref": {
+          "pattern": "^asset:sha256:[0-9a-f]{64}(#/.*)?$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/DatasetRole"
+        }
+      },
+      "required": [
+        "role",
+        "ref"
+      ],
+      "title": "DatasetRef",
+      "type": "object"
+    },
+    "DatasetRole": {
+      "enum": [
+        "aero",
+        "propulsion",
+        "mass",
+        "control",
+        "flight-record",
+        "parameters",
+        "waypoints",
+        "geofence",
+        "segments",
+        "other"
+      ],
+      "title": "DatasetRole",
+      "type": "string"
+    },
+    "Distribution": {
+      "enum": [
+        "normal",
+        "uniform",
+        "interval"
+      ],
+      "title": "Distribution",
+      "type": "string"
+    },
+    "EscData": {
+      "additionalProperties": false,
+      "description": "The ESC of a propulsion system (contract B /esc).",
+      "properties": {
+        "imax_continuous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protocol"
+        },
+        "pwm_high": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pwm_low": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "EscData",
+      "type": "object"
+    },
+    "Fidelity": {
+      "description": "L0 handbook, L1 AeroSandbox, L2 flow5/VSPAERO, L3 CFD/stand/CAD, L4 flight, REF a published reference model.",
+      "enum": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "REF"
+      ],
+      "title": "Fidelity",
+      "type": "string"
+    },
+    "FlightEvent": {
+      "additionalProperties": false,
+      "description": "One flight: the configuration flown, the as-flown mass and CG, the firmware and parameters, the segments.",
+      "properties": {
+        "aircraft_version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Aircraft Version",
+          "type": "string"
+        },
+        "cg": {
+          "$ref": "#/$defs/Position"
+        },
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "event_id": {
+          "minLength": 1,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "firmware": {
+          "description": "release_id of a 1.2.9 software release",
+          "minLength": 1,
+          "title": "Firmware",
+          "type": "string"
+        },
+        "log": {
+          "description": "The raw ArduPilot DataFlash log (linked)",
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "title": "Log",
+          "type": "string"
+        },
+        "mass": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "package_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The `.muas` package of the configuration flown",
+          "title": "Package Hash"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "pattern": "^asset:sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The parameter dataset",
+          "title": "Parameters"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "title": "Segments",
+          "type": "array"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "date",
+        "aircraft_version",
+        "mass",
+        "cg",
+        "firmware",
+        "log",
+        "source"
+      ],
+      "title": "FlightEvent",
+      "type": "object"
+    },
+    "GroundContact": {
+      "additionalProperties": false,
+      "properties": {
+        "damping_N_per_m_s": {
+          "minimum": 0,
+          "title": "Damping N Per M S",
+          "type": "number"
+        },
+        "name": {
+          "pattern": "^[A-Z0-9_]+$",
+          "title": "Name",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "position": {
+          "$ref": "#/$defs/Position"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "spring_N_per_m": {
+          "exclusiveMinimum": 0,
+          "title": "Spring N Per M",
+          "type": "number"
+        },
+        "type": {
+          "$ref": "#/$defs/ContactKind"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "position",
+        "spring_N_per_m",
+        "damping_N_per_m_s",
+        "source"
+      ],
+      "title": "GroundContact",
+      "type": "object"
+    },
+    "Inertia": {
+      "additionalProperties": false,
+      "properties": {
+        "axes": {
+          "default": "parallel_to_design",
+          "title": "Axes",
+          "type": "string"
+        },
+        "ixx": {
+          "title": "Ixx",
+          "type": "number"
+        },
+        "ixy": {
+          "default": 0.0,
+          "title": "Ixy",
+          "type": "number"
+        },
+        "ixz": {
+          "default": 0.0,
+          "title": "Ixz",
+          "type": "number"
+        },
+        "iyy": {
+          "title": "Iyy",
+          "type": "number"
+        },
+        "iyz": {
+          "default": 0.0,
+          "title": "Iyz",
+          "type": "number"
+        },
+        "izz": {
+          "title": "Izz",
+          "type": "number"
+        },
+        "products_convention": {
+          "default": "+integral(xy dm)",
+          "title": "Products Convention",
+          "type": "string"
+        },
+        "units": {
+          "default": "kg*m^2",
+          "title": "Units",
+          "type": "string"
+        },
+        "unverified_products": {
+          "description": "Product terms (for example ixz) stored as written by the source, sign convention unverified",
+          "items": {
+            "type": "string"
+          },
+          "title": "Unverified Products",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ixx",
+        "iyy",
+        "izz"
+      ],
+      "title": "Inertia",
+      "type": "object"
+    },
+    "InitialConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "attitude_sequence": {
+          "description": "Euler sequence, for example 3-2-1",
+          "pattern": "^[1-3]-[1-3]-[1-3]$",
+          "title": "Attitude Sequence",
+          "type": "string"
+        },
+        "latitude_type": {
+          "$ref": "#/$defs/LatitudeType"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "rate_frame": {
+          "$ref": "#/$defs/RateFrame",
+          "description": "Frame that the velocity and rotation rates are relative to"
+        },
+        "units": {
+          "default": "SI",
+          "title": "Units",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "Named state values in SI. Angles in radians",
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "rate_frame",
+        "latitude_type",
+        "attitude_sequence",
+        "values"
+      ],
+      "title": "InitialConditions",
+      "type": "object"
+    },
+    "LatitudeType": {
+      "enum": [
+        "geodetic",
+        "geocentric"
+      ],
+      "title": "LatitudeType",
+      "type": "string"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "description": "Where a linked asset can be fetched: a path in the AeroPlan repository, or a URL. `member` names the file\ninside a ZIP archive at the URL: a path, where a part that ends in .zip is a ZIP inside the ZIP.",
+      "properties": {
+        "member": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Member"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path relative to the AeroPlan repository root",
+          "title": "Repo"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "title": "Location",
+      "type": "object"
+    },
+    "MassProperties": {
+      "additionalProperties": false,
+      "properties": {
+        "cg": {
+          "$ref": "#/$defs/Position"
+        },
+        "inertia": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Inertia"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mass": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": false,
+          "description": "True when the values are a stand-in, not data",
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Provenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source": {
+          "$ref": "#/$defs/MassSource"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uncertainty"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "mass",
+        "cg",
+        "source"
+      ],
+      "title": "MassProperties",
+      "type": "object"
+    },
+    "MassSource": {
+      "enum": [
+        "estimate",
+        "cad",
+        "weighed"
+      ],
+      "title": "MassSource",
+      "type": "string"
+    },
+    "MotorData": {
+      "additionalProperties": false,
+      "description": "The motor of a propulsion system (contract B /motor). kappa, r_tot and q0 are the constants of the chain that\nmade the contract file: d*V_bus = omega/(kappa*Kv) + r_tot*I, I = i0 + (Q + q0)*Kv.",
+      "properties": {
+        "i0": {
+          "$ref": "#/$defs/Quantity",
+          "description": "No-load current"
+        },
+        "imax_continuous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kappa": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ESC voltage factor of the chain (nd)",
+          "title": "Kappa"
+        },
+        "kv": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Speed constant, given as rpm/V"
+        },
+        "mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "pole_pairs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pole Pairs"
+        },
+        "q0": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Friction torque of the chain (only when the rpm was measured)"
+        },
+        "r": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Winding resistance (maker value)"
+        },
+        "r_tot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Motor, ESC and lead resistance of the chain"
+        },
+        "vmax": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kv",
+        "r",
+        "i0"
+      ],
+      "title": "MotorData",
+      "type": "object"
+    },
+    "Mrp": {
+      "additionalProperties": false,
+      "properties": {
+        "config_id": {
+          "title": "Config Id",
+          "type": "string"
+        },
+        "definition": {
+          "$ref": "#/$defs/MrpDefinition",
+          "default": "nominal_cg"
+        },
+        "mass_properties_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Properties Sha256"
+        },
+        "point": {
+          "$ref": "#/$defs/Position"
+        }
+      },
+      "required": [
+        "config_id",
+        "point"
+      ],
+      "title": "Mrp",
+      "type": "object"
+    },
+    "MrpDefinition": {
+      "enum": [
+        "nominal_cg"
+      ],
+      "title": "MrpDefinition",
+      "type": "string"
+    },
+    "OutputFunction": {
+      "enum": [
+        "aileron",
+        "elevator",
+        "rudder",
+        "throttle",
+        "motor1",
+        "motor2",
+        "motor3",
+        "motor4",
+        "motor5",
+        "motor6",
+        "motor7",
+        "motor8",
+        "motor9",
+        "motor10",
+        "motor11",
+        "motor12"
+      ],
+      "title": "OutputFunction",
+      "type": "string"
+    },
+    "Planform": {
+      "additionalProperties": false,
+      "description": "The parametric shape of a lifting surface. The ADH `geometry.lifting_surface` holds the same shape as splines.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "MAINWING",
+            "SECONDWING",
+            "ELEVATOR",
+            "FIN",
+            "OTHERWING"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "position": {
+          "$ref": "#/$defs/Position",
+          "description": "Root leading edge, design frame"
+        },
+        "rx_deg": {
+          "default": 0.0,
+          "title": "Rx Deg",
+          "type": "number"
+        },
+        "ry_deg": {
+          "default": 0.0,
+          "title": "Ry Deg",
+          "type": "number"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/PlanformSection"
+          },
+          "minItems": 2,
+          "title": "Sections",
+          "type": "array"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "structural_mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mass of the surface structure, when the tool gives it"
+        },
+        "surface_name": {
+          "description": "Name of the surface in its tool, for example 'Main Wing'",
+          "minLength": 1,
+          "title": "Surface Name",
+          "type": "string"
+        },
+        "symmetric": {
+          "default": true,
+          "title": "Symmetric",
+          "type": "boolean"
+        },
+        "two_sided": {
+          "default": true,
+          "title": "Two Sided",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "surface_name",
+        "kind",
+        "position",
+        "sections",
+        "source"
+      ],
+      "title": "Planform",
+      "type": "object"
+    },
+    "PlanformSection": {
+      "additionalProperties": false,
+      "description": "One section of a lifting surface, in the flow5 convention (right half, root first).",
+      "properties": {
+        "chord": {
+          "description": "m",
+          "exclusiveMinimum": 0,
+          "title": "Chord",
+          "type": "number"
+        },
+        "dihedral_deg": {
+          "description": "Dihedral of the panel outboard of this section, deg",
+          "title": "Dihedral Deg",
+          "type": "number"
+        },
+        "foil": {
+          "description": "Name of the foil of this section (lifting_surface.airfoil_sections)",
+          "minLength": 1,
+          "title": "Foil",
+          "type": "string"
+        },
+        "twist_deg": {
+          "description": "Twist about the quarter chord, nose up positive, deg",
+          "title": "Twist Deg",
+          "type": "number"
+        },
+        "x_offset": {
+          "description": "Leading-edge offset from the root leading edge, m, positive AFT (the local frame of the planform is x aft, y right, z up as in flow5; it is not the FRD design frame. The design x of the section leading edge is position.x less x_offset)",
+          "title": "X Offset",
+          "type": "number"
+        },
+        "y": {
+          "description": "Span station, m, from the root",
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "y",
+        "chord",
+        "x_offset",
+        "dihedral_deg",
+        "twist_deg",
+        "foil"
+      ],
+      "title": "PlanformSection",
+      "type": "object"
+    },
+    "PointMass": {
+      "additionalProperties": false,
+      "description": "A concentrated mass of the mass model (for example a battery or a motor).",
+      "properties": {
+        "mass": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "position": {
+          "$ref": "#/$defs/Position"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "tag": {
+          "minLength": 1,
+          "title": "Tag",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag",
+        "mass",
+        "position",
+        "source"
+      ],
+      "title": "PointMass",
+      "type": "object"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "PropRole": {
+      "enum": [
+        "cruise",
+        "lift"
+      ],
+      "title": "PropRole",
+      "type": "string"
+    },
+    "PropellerInstallation": {
+      "additionalProperties": false,
+      "description": "Mount of a propeller or rotor in the design frame (WBS 1.2.3.9).\n\nA multirotor has one installation for each lift rotor (the first one on the WBS node, the others as\nsubcomponents of it). `motor` is the autopilot motor number (ArduPilot MOTn, 1 to 12; a quadplane lift rotor starts at 5) and `system` names the\npropulsion system (`muas.propulsion_system.system_id`) that drives the rotor. The system data and the Ct/Cp\ndataset are stored once, on one item.",
+      "properties": {
+        "diameter": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "hub": {
+          "$ref": "#/$defs/Position"
+        },
+        "motor": {
+          "anyOf": [
+            {
+              "maximum": 12,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Autopilot motor number (ArduPilot MOTn). Needed for a lift rotor",
+          "title": "Motor"
+        },
+        "role": {
+          "$ref": "#/$defs/PropRole"
+        },
+        "spin": {
+          "$ref": "#/$defs/Spin"
+        },
+        "system": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "system_id of the propulsion system",
+          "title": "System"
+        },
+        "thrust_axis": {
+          "description": "Unit vector, design frame",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Thrust Axis",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role",
+        "hub",
+        "thrust_axis",
+        "spin",
+        "diameter"
+      ],
+      "title": "PropellerInstallation",
+      "type": "object"
+    },
+    "PropulsionSystemData": {
+      "additionalProperties": false,
+      "description": "The propulsion system that flies, from a Propalyser contract B file. Its Ct/Cp table and throttle map are a\ndataset (`PropulsionTables`, role propulsion) in `muas.datasets` of the same node.",
+      "properties": {
+        "basis": {
+          "description": "stand, vendor or mixed (contract B)",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "battery": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BatteryData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "blades": {
+          "minimum": 1,
+          "title": "Blades",
+          "type": "integer"
+        },
+        "diameter": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "esc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EscData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ixx": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Propeller moment of inertia about the shaft"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "motor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MotorData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "p_max": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Shaft power at full command, the scale of power_fraction"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "system_id": {
+          "minLength": 1,
+          "title": "System Id",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "system_id",
+        "basis",
+        "p_max",
+        "diameter",
+        "blades",
+        "ixx",
+        "source"
+      ],
+      "title": "PropulsionSystemData",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "config_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Config Id"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the source does not record a date",
+          "title": "Created"
+        },
+        "geometry_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geometry Hash"
+        },
+        "input_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Sha256"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        },
+        "tool_version": {
+          "title": "Tool Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "tool_version",
+        "author"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "QualitativeLevel": {
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "title": "QualitativeLevel",
+      "type": "string"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "RateFrame": {
+      "enum": [
+        "local_NED",
+        "inertial"
+      ],
+      "title": "RateFrame",
+      "type": "string"
+    },
+    "ReferenceData": {
+      "additionalProperties": false,
+      "properties": {
+        "b_ref": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "body_frame": {
+          "const": "FRD",
+          "default": "FRD",
+          "title": "Body Frame",
+          "type": "string"
+        },
+        "c_ref": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "design_frame": {
+          "default": "x_fwd_y_right_z_down_m_wingLE",
+          "enum": [
+            "x_fwd_y_right_z_down_m_wingLE",
+            "x_fwd_y_right_z_down_m_bodyOrigin"
+          ],
+          "title": "Design Frame",
+          "type": "string"
+        },
+        "euler": {
+          "const": "3-2-1/NED",
+          "default": "3-2-1/NED",
+          "title": "Euler",
+          "type": "string"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "multirotor",
+                "quadplane"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Absent: a fixed-wing aircraft (s_ref, b_ref, c_ref are the wing). multirotor: s_ref is the frontal area of the body, b_ref the hub-to-hub span in y, c_ref the hub-to-hub length in x. quadplane: a fixed wing (s_ref, b_ref, c_ref are the wing) with lift rotors on booms (propeller role lift, motor 5 and up) and one cruise propeller. The vehicle kind selects what Aerolink needs (aeroplan.consumers.FLIGHT_ITEMS_BY_KIND)",
+          "title": "Kind"
+        },
+        "mrp": {
+          "$ref": "#/$defs/Mrp"
+        },
+        "nominal_cg": {
+          "$ref": "#/$defs/Position"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placeholder_fields": {
+          "description": "Fields whose values are stand-ins",
+          "items": {
+            "type": "string"
+          },
+          "title": "Placeholder Fields",
+          "type": "array"
+        },
+        "s_ref": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "surface_signs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Surface Signs",
+          "type": "object"
+        }
+      },
+      "required": [
+        "s_ref",
+        "b_ref",
+        "c_ref",
+        "nominal_cg",
+        "mrp"
+      ],
+      "title": "ReferenceData",
+      "type": "object"
+    },
+    "SafetyFactor": {
+      "additionalProperties": false,
+      "description": "[M&S 29] b: a margin or factor of safety, with what it covers.",
+      "properties": {
+        "covers": {
+          "title": "Covers",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "covers"
+      ],
+      "title": "SafetyFactor",
+      "type": "object"
+    },
+    "Segment": {
+      "additionalProperties": false,
+      "description": "A time slice of a flight for one purpose (for example a doublet for system identification).",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "purpose": {
+          "enum": [
+            "system_id",
+            "trim",
+            "performance",
+            "handling",
+            "other"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "t_end_s": {
+          "title": "T End S",
+          "type": "number"
+        },
+        "t_start_s": {
+          "minimum": 0,
+          "title": "T Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "t_start_s",
+        "t_end_s",
+        "purpose"
+      ],
+      "title": "Segment",
+      "type": "object"
+    },
+    "ServoOutput": {
+      "additionalProperties": false,
+      "description": "One output channel of the flight controller.\n\n`sign` relates the PWM to the surface: +1 means a PWM above the trim gives a positive deflection in the\nJSBSim sign (aileron rolls right, elevator trailing edge down, rudder trailing edge left). A throttle and a\nmotor output have no sign. A motor output (`motor1` to `motor12`) drives one lift rotor: `targets` holds the\n`muas.instance` of the rotor whose `propeller.motor` equals the output number. `pwm_min_us` and `pwm_max_us` are\nthe ESC end points.",
+      "properties": {
+        "channel": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Channel",
+          "type": "integer"
+        },
+        "function": {
+          "$ref": "#/$defs/OutputFunction"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "pwm_max_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Max Us"
+        },
+        "pwm_min_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Min Us"
+        },
+        "pwm_trim_us": {
+          "anyOf": [
+            {
+              "maximum": 2500,
+              "minimum": 500,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pwm Trim Us"
+        },
+        "reversed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SERVOn_REVERSED on the aircraft. None when not recorded",
+          "title": "Reversed"
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "+1 or -1. Absent for a throttle",
+          "title": "Sign"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "targets": {
+          "description": "muas.instance of each surface or propeller on this output",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Targets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "channel",
+        "function",
+        "targets",
+        "source"
+      ],
+      "title": "ServoOutput",
+      "type": "object"
+    },
+    "Skin": {
+      "additionalProperties": false,
+      "description": "The outer skin of a part from CAD (for example a Creo shrinkwrap). It is a reference shape for the datum checks\nand the tool views, and the source of the ADH body when `body_fit` is present. The file stays on the user's machine.",
+      "properties": {
+        "body_fit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BodyFit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "format": {
+          "description": "step_faceted: a STEP file of flat faces, with its own length unit. stl: an STL file in `units`",
+          "enum": [
+            "step_faceted",
+            "stl"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "mesh": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "transform": {
+          "$ref": "#/$defs/Transform"
+        },
+        "units": {
+          "default": "m",
+          "description": "Units of an STL file. A STEP file gives its own unit",
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mesh",
+        "format",
+        "transform",
+        "source"
+      ],
+      "title": "Skin",
+      "type": "object"
+    },
+    "SoftwareRelease": {
+      "additionalProperties": false,
+      "description": "A firmware release that flies on the air vehicle.",
+      "properties": {
+        "binary": {
+          "anyOf": [
+            {
+              "pattern": "^asset:sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The firmware file, when registered",
+          "title": "Binary"
+        },
+        "board": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Board"
+        },
+        "firmware": {
+          "description": "For example ArduPlane",
+          "minLength": 1,
+          "title": "Firmware",
+          "type": "string"
+        },
+        "git_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Git Hash"
+        },
+        "release_id": {
+          "minLength": 1,
+          "title": "Release Id",
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "firmware",
+        "version",
+        "source"
+      ],
+      "title": "SoftwareRelease",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "description": "A pointer to a raw file that a spoke read: an asset of the register (1.10.2). The file stays linked.",
+      "properties": {
+        "asset": {
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "title": "Asset",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "role": {
+          "description": "What the file gave, for example 'T7 stability point'",
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "tool": {
+          "description": "The spoke that read the file, for example flow5",
+          "minLength": 1,
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "asset",
+        "role"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    },
+    "Spin": {
+      "description": "The turn direction of a rotor, seen looking ALONG the thrust vector from behind the rotor (the JSBSim sense\nconvention). CW means the angular velocity vector points along `thrust_axis` (right-hand rule): the rotor\nreaction torque on the airframe then points against the thrust axis.\n\nA lift rotor with its thrust up is seen from below. An ArduPilot motor that turns CCW seen from above is\ntherefore `cw` here, and an ArduPilot CW motor is `ccw` here.",
+      "enum": [
+        "cw",
+        "ccw"
+      ],
+      "title": "Spin",
+      "type": "string"
+    },
+    "Transform": {
+      "additionalProperties": false,
+      "description": "Puts a CAD part into the design frame: each design axis is a signed CAD axis, then a shift in metres.",
+      "properties": {
+        "axes": {
+          "items": {
+            "enum": [
+              "x",
+              "-x",
+              "y",
+              "-y",
+              "z",
+              "-z"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Axes",
+          "type": "array"
+        },
+        "origin_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Origin M",
+          "type": "array"
+        }
+      },
+      "required": [
+        "axes"
+      ],
+      "title": "Transform",
+      "type": "object"
+    },
+    "Tube": {
+      "additionalProperties": false,
+      "description": "A round tube between two items (for example the tail boom). The ADH `geometry.body` of the same item holds the\nshape. This record gives the inputs of that shape, its source and its placeholder flag.",
+      "properties": {
+        "from_instance": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The tube starts at the aft end of the body of this item",
+          "title": "From Instance"
+        },
+        "inner_radius": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bore radius of a hollow tube (the wall is radius less inner_radius)"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example a roll-wrapped carbon tube",
+          "title": "Material"
+        },
+        "material_data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TubeMaterial"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The numbers of the material (modulus, density, strength)"
+        },
+        "p0": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "First end point, design frame, m. Used when the tube has no from_instance and to_instance (a lift boom)",
+          "title": "P0"
+        },
+        "p1": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Second end point, design frame, m",
+          "title": "P1"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "radius": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Outer radius"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "to_instance": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The tube ends at the root quarter chord of the planform of this item",
+          "title": "To Instance"
+        }
+      },
+      "required": [
+        "radius",
+        "source"
+      ],
+      "title": "Tube",
+      "type": "object"
+    },
+    "TubeMaterial": {
+      "additionalProperties": false,
+      "description": "The material of a tube: the numbers that the beam formulas of the sizing read. ADH has no material model, so it sits here\n(ADR 0024). `youngs_modulus` is the bending (tension) modulus, `youngs_modulus_compression` the modulus for local buckling.",
+      "properties": {
+        "compressive_strength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "density": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "tensile_strength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "youngs_modulus": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Bending modulus (tension)"
+        },
+        "youngs_modulus_compression": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "youngs_modulus",
+        "density",
+        "source"
+      ],
+      "title": "TubeMaterial",
+      "type": "object"
+    },
+    "Uncertainty": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "[M&S 28]/[M&S 34]: process and rationale",
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "correlations": {
+          "items": {
+            "$ref": "#/$defs/Correlation"
+          },
+          "title": "Correlations",
+          "type": "array"
+        },
+        "covariance_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "File that holds a sysID covariance matrix",
+          "title": "Covariance Ref"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability inside lower..upper (interval only)",
+          "title": "Coverage"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Distribution"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/$defs/SafetyFactor"
+          },
+          "title": "Factors",
+          "type": "array"
+        },
+        "lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lower"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UncertaintyMethod"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "num_sigmas": {
+          "default": 1.0,
+          "description": "Sigmas that `sigma` represents (DAVE-ML numSigmas)",
+          "exclusiveMinimum": 0,
+          "title": "Num Sigmas",
+          "type": "number"
+        },
+        "per_point_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Column in the points file that holds sigma",
+          "title": "Per Point Column"
+        },
+        "qualitative_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualitativeLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/UncertaintyScope"
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dataset-level value, in the units of the quantity",
+          "title": "Sigma"
+        },
+        "status": {
+          "$ref": "#/$defs/UncertaintyStatus"
+        },
+        "upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upper"
+        }
+      },
+      "required": [
+        "status",
+        "scope",
+        "basis"
+      ],
+      "title": "Uncertainty",
+      "type": "object"
+    },
+    "UncertaintyEffect": {
+      "description": "Same values as ADH behavior.UncertaintyEffect (DAVE-ML).",
+      "enum": [
+        "additive",
+        "multiplicative",
+        "percentage",
+        "absolute"
+      ],
+      "title": "UncertaintyEffect",
+      "type": "string"
+    },
+    "UncertaintyMethod": {
+      "enum": [
+        "repeat_scatter",
+        "binning",
+        "grid_study",
+        "tool_spread",
+        "sysid_cov",
+        "measurement_chain",
+        "vendor_spec",
+        "monte_carlo",
+        "engineering"
+      ],
+      "title": "UncertaintyMethod",
+      "type": "string"
+    },
+    "UncertaintyScope": {
+      "description": "[M&S 29] a, b, c.",
+      "enum": [
+        "input",
+        "result",
+        "derived"
+      ],
+      "title": "UncertaintyScope",
+      "type": "string"
+    },
+    "UncertaintyStatus": {
+      "description": "[M&S 33] a, b, c.",
+      "enum": [
+        "quantitative",
+        "qualitative",
+        "unavailable"
+      ],
+      "title": "UncertaintyStatus",
+      "type": "string"
+    },
+    "VisualPart": {
+      "additionalProperties": false,
+      "description": "The 3D shape of a part for a simulator view. The mesh is a raw file. The `.muas` holds its pointer and pose.",
+      "properties": {
+        "generator": {
+          "anyOf": [
+            {
+              "enum": [
+                "planform",
+                "tube",
+                "box",
+                "cylinder",
+                "disc",
+                "body"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom), body: from the ADH items (body: the lofted ADH `geometry.body` of the same item). box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
+          "title": "Generator"
+        },
+        "hinge": {
+          "anyOf": [
+            {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Two points of the hinge axis, design frame, m",
+          "title": "Hinge"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material"
+        },
+        "mesh": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The CAD mesh, when the part comes from CAD"
+        },
+        "part": {
+          "description": "Part name, for example 'aileron_l'",
+          "minLength": 1,
+          "title": "Part",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The numbers of a demo shape, design frame, metres. box: centre [x, y, z], size [lx, ly, lz]. tube: p0, p1, radius_m. cylinder: centre, axis (unit vector), length_m, radius_m. disc: centre, axis, radius_m, thickness_m, alpha (0 to 1: the view draws it semi-transparent)",
+          "title": "Shape"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "transform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Transform"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tube": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For generator tube (boom): radius_m and to_instance (the item whose root quarter chord ends it)",
+          "title": "Tube"
+        },
+        "units": {
+          "default": "m",
+          "description": "Units of the CAD mesh",
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "part",
+        "source"
+      ],
+      "title": "VisualPart",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actuator": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Actuator"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "aero_settings": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AeroSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "assets": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The asset register (1.10.2 DataRepository only)",
+      "title": "Assets"
+    },
+    "autopilot": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Autopilot"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "build": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BuildRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "control_surface": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ControlSurface"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "datasets": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/DatasetRef"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The datasets of this item (aero model, propulsion tables): pointers into the asset register",
+      "title": "Datasets"
+    },
+    "ext_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Ext Version",
+      "type": "string"
+    },
+    "fidelity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Fidelity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "flight_tests": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/FlightEvent"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "1.8.1.4 FlightTests only",
+      "title": "Flight Tests"
+    },
+    "geometry_tool": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The spoke that wrote the geometry of this item last (flow5, OpenVSP). The changed tool file wins",
+      "title": "Geometry Tool"
+    },
+    "ground_contacts": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/GroundContact"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ground Contacts"
+    },
+    "initial_conditions": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InitialConditions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "instance": {
+      "minLength": 1,
+      "title": "Instance",
+      "type": "string"
+    },
+    "mass_properties": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MassProperties"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "planform": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Planform"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "point_masses": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/PointMass"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Point Masses"
+    },
+    "propeller": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PropellerInstallation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "propulsion_system": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PropulsionSystemData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "provenance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Provenance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReferenceData"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "skin": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Skin"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "software_releases": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SoftwareRelease"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "1.2.9 AirVehicleSoftwareRelease only",
+      "title": "Software Releases"
+    },
+    "sources": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sources"
+    },
+    "tube": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Tube"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The inputs, source and placeholder flag of a tube body (geometry.body of the same item)"
+    },
+    "visual": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/VisualPart"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Visual"
+    }
+  },
+  "required": [
+    "ext_version",
+    "instance"
+  ],
+  "title": "MuasNodeExt",
+  "type": "object"
+}

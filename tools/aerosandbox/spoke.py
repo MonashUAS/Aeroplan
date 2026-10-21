@@ -64,6 +64,7 @@ import numpy as np
 from aeroplan import adh_doc, assets, mass_model, multirotor, multirotor_aero, source_tree
 from aeroplan.daveml_adh import from_xml
 from aeroplan.dml_validate import validate_dml
+from aeroplan.frame import flip_array, flip_doc, flip_point, planform_le_x
 from aeroplan.geometry import body_adh, body_frames, planform_reference
 from aeroplan.muas.requirement import Target, target_requirement
 from aeroplan.spokes import Context, set_sources
@@ -365,6 +366,8 @@ def bodies_of(st: Dict[str, Any]) -> List[str]:
 
 
 def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context) -> Dict[str, Any]:
+    """The spec of the fixed-wing jobs. The tree is FRD (x forward, z down). AeroSandbox works in x aft, z up: every position
+    and direction in the spec is flipped here (aeroplan.frame)."""
     air = adh_doc.node(doc, "1.2")["muas"]
     ref = air["reference"]
     mp = air["mass_properties"]
@@ -382,20 +385,21 @@ def spec_from_doc(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context) -> Dict
     if ref_id is None:
         raise ValueError(f"{st['propeller']}: no propulsion dataset (Ct/Cp table)")
     tables = ctx.dataset(ref_id)["prop_ctcp"]["columns"]
-    point = [{"tag": p["tag"], "mass_kg": p["mass"]["value"], "xyz": list(p["position"]["xyz"]),
+    point = [{"tag": p["tag"], "mass_kg": p["mass"]["value"], "xyz": flip_point(p["position"]["xyz"]),
               "placeholder": bool(p.get("placeholder"))} for p in air.get("point_masses") or []]
-    mass = {"mass_kg": mp["mass"]["value"], "cg": list(mp["cg"]["xyz"]), "inertia": mp.get("inertia"),
+    mass = {"mass_kg": mp["mass"]["value"], "cg": flip_point(mp["cg"]["xyz"]),
+            "inertia": flip_doc(mp["inertia"]) if mp.get("inertia") else None,
             "point_masses": point, "placeholder": bool(mp.get("placeholder"))}
     return {
         "name": doc.get("name", "aircraft"),
         "reference": {"s_m2": ref["s_ref"]["value"], "b_m": ref["b_ref"]["value"], "c_m": ref["c_ref"]["value"],
-                      "xyz_ref": list(ref["mrp"]["point"]["xyz"])},
+                      "xyz_ref": flip_point(ref["mrp"]["point"]["xyz"])},
         "surfaces": [component.surface_spec(doc, w) for w in st["wings"]],
-        "fuselages": [{"name": b, "frames": [f.tolist() for f in body_frames(adh_doc.find(doc, b)["geometry"]["body"])]}
+        "fuselages": [{"name": b, "frames": [flip_array(f).tolist() for f in body_frames(adh_doc.find(doc, b)["geometry"]["body"])]}
                       for b in bodies_of(st)],
         "mass": mass,
         "propulsion": {
-            "hub": list(inst["hub"]["xyz"]), "thrust_axis": list(inst["thrust_axis"]),
+            "hub": flip_point(inst["hub"]["xyz"]), "thrust_axis": flip_point(inst["thrust_axis"]),
             "diameter_m": inst["diameter"]["value"], "design": st["proptimiser_design"],
             "p_max_W": psys["p_max"]["value"], "placeholder": bool(psys.get("placeholder")),
             "motor": {"kv_rad_s_V": m["kv"]["value"], "i0_A": m["i0"]["value"], "kappa": m["kappa"],
@@ -493,7 +497,8 @@ def multirotor_spec(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context, drag:
                     ) -> Dict[str, Any]:
     """The spec of the multirotor jobs, from the ADH document and the settings. `drag` {CDx, CDy, CDz} (the result of
     the multirotor_drag job) fills the body drag of the EMST jobs. `propulsion` is None until the document holds a
-    propulsion system and its Ct/Cp dataset (the Propalyser spoke)."""
+    propulsion system and its Ct/Cp dataset (the Propalyser spoke). The tree is FRD: the positions in the spec are flipped to
+    x aft, z up for the model."""
     air = adh_doc.node(doc, "1.2")["muas"]
     ref, mp = air["reference"], air.get("mass_properties")
     if ref.get("kind") != "multirotor":
@@ -505,11 +510,11 @@ def multirotor_spec(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context, drag:
         m = item.get("muas") or {}
         pr = m.get("propeller")
         if pr and pr["role"] == "lift":
-            rotors.append({"motor": pr["motor"], "instance": m["instance"], "hub": list(pr["hub"]["xyz"]),
-                           "thrust_axis": list(pr["thrust_axis"]), "spin": pr["spin"], "diameter_m": pr["diameter"]["value"]})
+            rotors.append({"motor": pr["motor"], "instance": m["instance"], "hub": flip_point(pr["hub"]["xyz"]),
+                           "thrust_axis": flip_point(pr["thrust_axis"]), "spin": pr["spin"], "diameter_m": pr["diameter"]["value"]})
         for v in m.get("visual") or []:
             if v.get("shape") and v["generator"] in ("box", "tube"):
-                shapes[v["part"]] = v["shape"]
+                shapes[v["part"]] = flip_doc(v["shape"])      # centre, p0, p1: the model is x aft, z up
         if m.get("propulsion_system") and psys_item is None:
             psys_item = m
     rotors.sort(key=lambda r: r["motor"])
@@ -520,9 +525,10 @@ def multirotor_spec(doc: Dict[str, Any], st: Dict[str, Any], ctx: Context, drag:
     spec: Dict[str, Any] = {
         "kind": "multirotor", "name": doc.get("name", "aircraft"),
         "reference": {"s_m2": ref["s_ref"]["value"], "b_m": ref["b_ref"]["value"], "c_m": ref["c_ref"]["value"],
-                      "xyz_ref": list(ref["mrp"]["point"]["xyz"])},
+                      "xyz_ref": flip_point(ref["mrp"]["point"]["xyz"])},
         "rotors": rotors, "body": {"box": shapes["body"], "arms": arms},
-        "mass": {"mass_kg": mp["mass"]["value"], "cg": list(mp["cg"]["xyz"]), "inertia": mp.get("inertia"),
+        "mass": {"mass_kg": mp["mass"]["value"], "cg": flip_point(mp["cg"]["xyz"]),
+                 "inertia": flip_doc(mp["inertia"]) if mp.get("inertia") else None,
                  "placeholder": bool(mp.get("placeholder"))},
         "drag_job": {"speed_m_s": cfg["speed_m_s"], "altitude_m": cfg["altitude_m"],
                      "box_edge_sections": cfg.get("box_edge_sections", 5), "combine": cfg.get("combine", "max"),
@@ -666,11 +672,10 @@ ORIGIN = {
     "wing": "kept from the Currawong wing mass (WINGS point masses, weighed)",
     "tail": "kept from the Currawong tail mass (TAIL-S point masses, weighed)",
     "tail_boom": "kept from the Currawong tail boom (TAIL-BOOM point mass, weighed)",
-    "avionics": "kept from the Currawong avionics (AVIONICS-REST point mass)",
-    "avionics_vtol": "component avionics (stand-in for the VTOL autopilot, GPS, receiver, telemetry)",
+    "avionics_flight": "kept from the Currawong avionics (AVIONICS-REST point mass: servos, PDB, BMS, Cube, Herelink, Here4, wires)",
+    "avionics_projects": "component avionics, projects_mass_kg (stand-in for the project equipment)",
     "fuselage": "component fuselage: mass per area times the shell area of the new fuselage (stand-in)",
-    "payload_cargo": "component cargo (aircraft/redback 1.2.17 cargo)",
-    "payload_camera": "component camera (SIYI A8 mini)",
+    "payload_cargo": "component cargo (aircraft/redback 1.2.17 cargo), released at the deployment",
     "landing_gear": "component landing_gear (stand-in for VTOL skids)",
     "cruise_motor": "kept from the Currawong nose motor (X5220), moved with the nose propeller hub",
     "cruise_esc": "kept from the Currawong cruise ESC, moved with the nose propeller hub",
@@ -679,8 +684,8 @@ ORIGIN = {
     "battery": "AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack (component battery), cells and capacity from the sizing",
     "boom": "carbon tube: density times the tube section times the boom length (component boom_material)",
     "boom_clamp": "component boom, clamp_kg (stand-in)",
-    "lift_front": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (Eq. 2) and mount, at the front end of a boom",
-    "lift_rear": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (Eq. 2) and mount, at the rear end of a boom",
+    "lift_front": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the front end of a boom",
+    "lift_rear": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the rear end of a boom",
     "cables": "copper area from the peak current times the run lengths (model.py), with insulation factor (stand-in)",
 }
 
@@ -803,17 +808,17 @@ def _graft(doc: Dict[str, Any], wbs: str, node: Dict[str, Any]) -> None:
     dst.update(node)
 
 
-def _fuselage_frames(mf: ModelFile, x_hub: float, tail_boom_body: Dict[str, Any]) -> List[np.ndarray]:
-    """The frames of the new fuselage: the rule of component.Fuselage.frames, with the hub x of the result."""
+def _fuselage_frames(mf: ModelFile, x_hub: float) -> List[np.ndarray]:
+    """The frames of the new fuselage in the AeroSandbox frame (x aft): the rule of component.Fuselage.frames, with the hub x of
+    the result and the pod tail end `x_tail_m` of the model file."""
     fus = component.Fuselage("fuselage", **{k: component.Param.from_json(v) for k, v in mf.c["fuselage"]["params"].items()})
-    x_joint = float(body_frames(tail_boom_body)[0][0][0])
-    return fus.frames(float(x_hub), x_joint)
+    return fus.frames(float(x_hub), fus.num("x_tail_m"))
 
 
-def _own_inertia(name: str, m: float, names: Dict[str, float], fuselage_length: float):
+def _own_inertia(name: str, m: float, names: Dict[str, float], fuselage_length: float, tail_boom_length: float):
     """The own inertia of the items that model.QuadplaneModel gives one (same rules as QuadplaneModel.design, section "mass list")."""
     if name == "tail_boom":
-        k = 0.92 ** 2 / 12.0
+        k = tail_boom_length ** 2 / 12.0
         return {"ixx": 0.0, "iyy": m * k, "izz": m * k}
     if name == "fuselage":
         k = fuselage_length ** 2 / 12.0
@@ -827,7 +832,8 @@ def _own_inertia(name: str, m: float, names: Dict[str, float], fuselage_length: 
 
 
 def _rotors(rep: Dict[str, Any], st: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Every lift rotor: ArduPilot motor number, hub, thrust axis, spin. H4: motors 5 to 8 in the Quad X order of
+    """Every lift rotor: ArduPilot motor number, hub, thrust axis, spin, in the design frame (FRD). The sizing result is x aft,
+    z up: the numbers are computed in that frame and flipped at the end. H4: motors 5 to 8 in the Quad X order of
     multirotor.QUAD_X. H8: the same four stations, motors 5 to 8 on the upper rotors and 9 to 12 on the lower rotors."""
     n, d = rep["names"], rep["design"]
     z_hub = {it["name"]: it["z"] for it in rep["items"]}
@@ -835,8 +841,8 @@ def _rotors(rep: Dict[str, Any], st: Dict[str, Any]) -> List[Dict[str, Any]]:
     out = []
     for q, (pos, turn) in multirotor.QUAD_X.items():
         sx, sy = multirotor.SIGNS[pos]
-        end = "lift_front" if sx < 0 else "lift_rear"
-        x = n["x_f"] if sx < 0 else n["x_r"]
+        end = "lift_front" if sx > 0 else "lift_rear"        # FRD: the front rotors have x > 0
+        x = n["x_f"] if sx > 0 else n["x_r"]
         # the cant is one tilt about the radial axis (CG to hub), so the tilt force is tangential and gives a yaw
         # moment of T sin(cant) rho. Its sign follows the spin: a cw rotor (seen from above) pushes the airframe
         # nose-left (+z) by its reaction torque, so its tilt force does the same. The tilts cancel in hover.
@@ -849,7 +855,8 @@ def _rotors(rep: Dict[str, Any], st: Dict[str, Any]) -> List[Dict[str, Any]]:
                            "cw" if turn == "ccw" else "ccw"))
         for tag, dz, motor, t in levels:
             out.append({"motor": motor, "position": pos, "level": tag, "turn_ardupilot": t,
-                        "spin": multirotor.spin_from_ardupilot(t), "hub": [x, sy * d["y_b"], z_hub[end] + dz], "axis": axis})
+                        "spin": multirotor.spin_from_ardupilot(t),
+                        "hub": flip_point([x, sy * d["y_b"], z_hub[end] + dz]), "axis": flip_point(axis)})
     return sorted(out, key=lambda r: r["motor"])
 
 
@@ -908,17 +915,18 @@ def _sizing_discipline(rep: Dict[str, Any], case: str, st: Dict[str, Any], tw: f
     out("boom_wall", d["t_boom"], "m")
     out("boom_length", n["L_boom"], "m")
     out("boom_y", d["y_b"], "m")
-    out("boom_clamp_x", n["x_c"], "m")
-    out("boom_dx", d["dx"], "m")
+    out("boom_clamp_x", -n["x_c"], "m")                 # FRD: x forward
+    out("boom_dx", -d["dx"], "m")                        # FRD: forward of the wing root mid-chord
     out("rotor_cant", d["cant"], "rad")
     out("boom_f1", rep["f1_Hz"], "Hz")
+    out("boom_f2", rep["f2_Hz"], "Hz")
     out("hover_1P", rep["f_hover_1P_Hz"], "Hz")
     out("control_roll", rep["control"]["roll"], "rad/s^2")
     out("control_pitch", rep["control"]["pitch"], "rad/s^2")
     out("control_yaw", rep["control"]["yaw"], "rad/s^2")
     out("control_required_roll_pitch", rep["control"]["alpha_req"], "rad/s^2")
-    out("neutral_point_x", rep["airframe"]["neutral_point_m"], "m")
-    out("cg_x", rep["airframe"]["x_cg_m"], "m")
+    out("neutral_point_x", -rep["airframe"]["neutral_point_m"], "m")
+    out("cg_x", -rep["airframe"]["x_cg_m"], "m")
     out("cruise_speed_laps", n["V_lap"], "m/s")
     out("cruise_speed_survey", n["V_map"], "m/s")
     out("stall_speed", n["Vs"], "m/s")
@@ -986,13 +994,15 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     changes.append(f"copied from {st['base']}: wing_main, ailerons, empennage (htail, fin, elevator, rudder, tail_boom)")
 
     # ---- the new fuselage
-    tail_body = adh_doc.find(doc, "tail_boom")["geometry"]["body"]
-    frames = _fuselage_frames(mf, rep["airframe"]["x_nose_hub_m"], tail_body)
-    Lf = float(frames[-1][0, 0] - frames[0][0, 0])
+    tail_fr = body_frames(adh_doc.find(doc, "tail_boom")["geometry"]["body"])
+    Lt = float(tail_fr[0][0, 0] - tail_fr[-1][0, 0])                        # tail boom length (x falls to the aft end, FRD)
+    asb_frames = _fuselage_frames(mf, rep["airframe"]["x_nose_hub_m"])    # AeroSandbox frame (x aft)
+    frames = [flip_array(f) for f in asb_frames]                           # design frame (FRD)
+    Lf = float(asb_frames[-1][0, 0] - asb_frames[0][0, 0])
     fus = adh_doc.node(doc, "1.2.2.2", create=True)
     for k in [k for k in fus if k not in ("wbs_no", "name")]:
         del fus[k]
-    fus["description"] = "Rosella fuselage: a superellipse body from the nose to the tail boom joint (new, sized for the battery bay)"
+    fus["description"] = "Rosella fuselage: a superellipse body from the nose to the pod tail end (new, sized for the battery bay)"
     fus["geometry"] = {"body": body_adh(frames)}
     fm = adh_doc.muas(fus, "fuselage")
     fm["fidelity"] = "L1"
@@ -1012,7 +1022,7 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     mat = st["material"]["design_choice"]
     for side, nm in ((-1, "left"), (1, "right")):
         y = side * d["y_b"]
-        p0, p1 = [n["x_c"] - half, y, z_b], [n["x_c"] + half, y, z_b]
+        p0, p1 = flip_point([n["x_c"] - half, y, z_b]), flip_point([n["x_c"] + half, y, z_b])    # forward end first (FRD)
         item = {"name": f"Lift boom {nm}",
                 "description": f"Lift boom, {nm} side: a carbon tube clamped to the wing, a rotor at each end"}
         m = adh_doc.muas(item, f"boom_{nm}")
@@ -1035,7 +1045,7 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     cruise = _clean_copy(base_cruise)
     cm = cruise["muas"]
     hub = list(base_cruise["muas"]["propeller"]["hub"]["xyz"])
-    hub[0] = rep["airframe"]["x_nose_hub_m"]
+    hub[0] = -rep["airframe"]["x_nose_hub_m"]                              # FRD: x forward
     cm["propeller"]["hub"] = _pos(hub)
     cm["fidelity"] = "L1"
     ps = copy.deepcopy(base_cruise["muas"]["propulsion_system"])
@@ -1138,11 +1148,11 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     pms, items = [], []
     for it in rep["items"]:
         counts[it["name"]] = counts.get(it["name"], 0) + 1
-        xyz = [it["x"], it["y"], it["z"]]
+        xyz = flip_point([it["x"], it["y"], it["z"]])                          # the sizing result is x aft, z up
         pms.append({"tag": f"{it['name']}_{counts[it['name']]}", "mass": _q(it["mass_kg"], "kg"), "position": _pos(xyz),
                     "placeholder": True, "source": f"{case} sizing, item {it['name']}: {ORIGIN[it['name']]}"})
         row = {"mass_kg": it["mass_kg"], "xyz": xyz}
-        own = _own_inertia(it["name"], it["mass_kg"], n, Lf)
+        own = _own_inertia(it["name"], it["mass_kg"], n, Lf, Lt)
         if own:
             row["inertia_own"] = own
         items.append(row)
@@ -1162,7 +1172,8 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
                   "other item is a point mass.",
                   f"The sizing result gives Ixx {rin['ixx']:.4f}, Iyy {rin['iyy']:.4f}, Izz {rin['izz']:.4f} kg m^2. Its Ixx is about "
                   "y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
-                  f"The sizing CG x is {rep['airframe']['x_cg_m']:.6f} m (neutral point less the static margin target)."]}
+                  f"The sizing CG x is {-rep['airframe']['x_cg_m']:.6f} m (FRD: the static margin target ahead of the neutral "
+                  "point)."]}
     base_ref = adh_doc.node(base.doc, "1.2")["muas"]["reference"]
     cg_pt = _pos(cg)
     am["reference"] = {
@@ -1174,8 +1185,8 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
         "placeholder_fields": ["nominal_cg", "mrp"],
         "notes": [f"Quadplane. S, b and c: the Currawong wing (copied from aircraft/{st['base']}). The design frame has the wing "
                   "root leading edge at x = 0.",
-                  "MRP = the sized CG of the mass model. x = neutral point (vortex lattice) less the static margin target times "
-                  "c_ref. It is a sizing value (placeholder)."]}
+                  "MRP = the sized CG of the mass model. It lies ahead of the neutral point (vortex lattice) by the static margin "
+                  "target times c_ref. It is a sizing value (placeholder)."]}
     am["initial_conditions"] = {"rate_frame": "local_NED", "latitude_type": "geodetic", "attitude_sequence": "3-2-1", "units": "SI",
                                 "values": {"speed_mps": float(n["V_lap"]), "altitude_m": 0.0}, "placeholder": True}
     t_full = 0.5 * len(rotors) * (rep["rotors"]["MAX_f"]["T_N"] + rep["rotors"]["MAX_r"]["T_N"])
@@ -1364,8 +1375,10 @@ def _write_neutral_point(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any], 
     x (ADR 0023: it must be 0), a hash of the tree files and the date. The SpecSheet spoke reads this file for the battery trim.
     Run generate again after a change of the wing, tail or c_ref."""
     res = run({"job": "neutral_point", "spec": spec})["neutral_point"]
+    # the job runs in the AeroSandbox frame (x aft): the file holds the design frame (FRD, x forward)
+    res = {**res, "x_np_m": -res["x_np_m"], "x_ref_m": -res["x_ref_m"], "frame": "design (FRD: x forward)"}
     wing = adh_doc.find(doc, st["wings"][0])["muas"]["planform"]
-    wing_le_x = float(wing["position"]["xyz"][0] + wing["sections"][0]["x_offset"])
+    wing_le_x = float(planform_le_x(wing["position"]["xyz"][0], wing["sections"][0]["x_offset"]))
     path = ctx.work / "neutral_point.json"
     path.write_text(json.dumps({"aircraft": ctx.aircraft, **res, "wing_root_le_x_m": wing_le_x,
                                 "tree_sha256": _tree_hash(ctx.root / "aircraft" / ctx.aircraft), "date": date.today().isoformat()},

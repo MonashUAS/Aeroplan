@@ -2,7 +2,7 @@
 import sys as _sys
 from pathlib import Path as _Path
 
-MUAS_SCHEMA_VERSION = "0.4.0"
+MUAS_SCHEMA_VERSION = "0.5.0"
 
 
 def _ensure_adh() -> None:

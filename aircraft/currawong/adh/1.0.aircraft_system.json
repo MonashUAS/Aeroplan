@@ -3,21 +3,16 @@
   "name": "Currawong",
   "description": "Currawong aircraft system",
   "muas": {
-    "ext_version": "0.4.0",
+    "ext_version": "0.5.0",
     "instance": "aircraft_system",
     "build": {
-      "aeroplan_commit": "db7df70a9df64579927150906b4dcde84b04d363",
+      "aeroplan_commit": "74267dad1913effa5e3f22abfd4f49c58389f5a2",
       "aeroplan_dirty": true,
-      "built": "2026-10-18",
+      "built": "2026-10-21",
       "author": "Liam M.",
-      "version": "0.2.19",
+      "version": "0.2.20",
       "spokes": {
-        "AeroSandbox": "1 changes",
-        "flow5": "6 changes",
-        "SpecSheet": "8 changes",
-        "Propalyser": "1 changes",
-        "CREO": "10 changes",
-        "OpenVSP": "0 changes"
+        "CREO": "11 changes"
       },
       "placeholder_items": [
         "aircraft_system.air_vehicle.muas.mass_properties",
@@ -83,7 +78,6 @@
         "aircraft_system.air_vehicle.airframe.empennage.muas.point_masses[10]",
         "aircraft_system.air_vehicle.airframe.empennage.muas.point_masses[11]",
         "aircraft_system.air_vehicle.airframe.empennage.muas.point_masses[12]",
-        "aircraft_system.air_vehicle.airframe.empennage.subcomponents[0].muas.tube",
         "aircraft_system.air_vehicle.airframe.empennage.stabilizer.subcomponents[0].subcomponents[0].muas.actuator",
         "aircraft_system.air_vehicle.airframe.empennage.stabilizer.subcomponents[1].subcomponents[0].muas.actuator",
         "aircraft_system.air_vehicle.propulsion.muas.mass_properties",

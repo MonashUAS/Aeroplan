@@ -27,7 +27,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from component import G0, Level, level, parse_levels, work_dir
+from component import G0, Level, Tube, level, parse_levels, work_dir
 from model import DESIGN_VARS
 from result import OK_STATUS, Result, Snapshot, margin, passes
 
@@ -279,6 +279,10 @@ class Problem:
         rep["P_battery_W"] = {k: g(v) for k, v in out["P"].items()} | {"MAX": g(out["P_max"])}
         rep["I_battery_max_A"], rep["V_bus_max_V"] = g(out["I_b_max"]), g(out["V_bus"])
         rep["f1_Hz"], rep["f_hover_1P_Hz"] = g(out["f1"]), max(g(f) for f in out["freq_hover"])
+        bm = {k: g(v) for k, v in out["boom_modal"].items()}          # f2: a check after the solve (Tube.modes_hz)
+        rep["f1_exact_Hz"], rep["f2_Hz"] = Tube.modes_hz(bm["E"], bm["I"], bm["a"], bm["m_tip"], bm["m_arm"], bm["J_tip"])
+        rep["f2_no_J_Hz"] = Tube.modes_hz(bm["E"], bm["I"], bm["a"], bm["m_tip"], bm["m_arm"], 0.0)[1]
+        rep["boom_J_tip_kg_m2"] = bm["J_tip"]
         rep["structure"] = [{k: g(v) for k, v in d.items()} for d in out["struct"]]
         rep["rotors"] = {n: {"omega_rad_s": g(r["omega"]), "rpm": g(r["omega"]) * 60 / (2 * math.pi), "Q_Nm": g(r["Q"]),
                              "T_N": g(r["T"]), "P_shaft_W": g(r["P_shaft"]), "I_A": g(r["I"]), "Pe_W": g(r["Pe"])}
