@@ -674,7 +674,7 @@ ORIGIN = {
     "tail_boom": "kept from the Currawong tail boom (TAIL-BOOM point mass, weighed)",
     "avionics_flight": "kept from the Currawong avionics (AVIONICS-REST point mass: servos, PDB, BMS, Cube, Herelink, Here4, wires)",
     "avionics_projects": "component avionics, projects_mass_kg (stand-in for the project equipment)",
-    "fuselage": "component fuselage: mass per area times the shell area of the new fuselage (stand-in)",
+    "fuselage": "shell area of the new fuselage times the Currawong mass per area (FUSELAGE-REST, weighed, over the area of the same body rule at the Currawong length)",
     "payload_cargo": "component cargo (aircraft/redback 1.2.17 cargo), released at the deployment",
     "landing_gear": "component landing_gear (stand-in for VTOL skids)",
     "cruise_motor": "kept from the Currawong nose motor (X5220), moved with the nose propeller hub",

@@ -12,6 +12,8 @@ Level functions (the second half of this file) take a component and a `Level` an
   rotor_model(rotor, level, state)   momentum theory, a fitted CT/CP table, or the Proptimiser BEMT in the full space
   airframe_model(airframe, level)    the Currawong airframe with its neutral point (vortex lattice) and polar (AeroBuildup)
   motor_model(motor, level)          the mass, resistance and idle current of the motor, fitted on data/motor_survey.csv
+  esc_model(esc, cells_s)            the ESC mass, fitted on data/esc_survey.csv
+  ocv_model(battery)                 the cell OCV against the state of charge, fitted on data/ocv_lipo.csv
 `Level` also lists the constraint groups that are on. The ladder (optimise.py) runs the levels L0 to L4 in turn.
 
 This file imports numpy at the top and aerosandbox, casadi, proptimiser and aeroplan inside the functions that need them.
@@ -314,9 +316,11 @@ class ESC(Component):
 
 class Battery(Component):
     """
-    Params: cells_s, cap_Ah (free), x_m (free: x of the pack centre), cell_nominal_V, cell_end_V, cell_resistance_mohm,
-    c_rate_max, usable_fraction, eq4_p1, eq4_p2 (AIAA 2016-0581 Eq. 4), cal_cells_s, cal_capacity_Ah, cal_mass_kg
-    (the calibration pack), optional mass_kg of a bought pack.
+    Params: cells_s, cap_Ah (free), x_m (free: x of the pack centre), cell_nominal_V (the label voltage: nominal energy and
+    volume), ocv (the CSV of data/, cell OCV against the state of charge), cell_resistance_mohm, c_rate_max, usable_fraction
+    (the share of the charge the mission may use), eq4_p1, eq4_p2 (AIAA 2016-0581 Eq. 4), cal_cells_s, cal_capacity_Ah,
+    cal_mass_kg (the calibration pack), optional mass_kg of a bought pack.
+    The pack voltage is V = S OCV(SOC) - R_b I, the circuit of Aerolink (Xing et al. 2014, Eq. 5, with no offset).
     """
     KIND = "battery"
 
@@ -339,7 +343,8 @@ class Fuselage(Component):
     """
     The new fuselage: a superellipse body from the nose to the pod tail end. Params: stations, width_m, height_m,
     superellipse_n, z_centre_m, nose_behind_hub_m, x_tail_m (the pod tail end, x aft of the wing root leading edge),
-    mass_kg_per_m2, bay_x_m ([lo, hi] of the battery centre), battery_Wh_per_L.
+    bay_x_m ([lo, hi] of the battery centre), battery_Wh_per_L. The mass per shell area comes from the base airframe
+    (AirframeModel.fuselage_kg_per_m2).
     """
     KIND = "fuselage"
 
@@ -534,6 +539,52 @@ class ESCModel:
     def summary(self) -> Dict[str, Any]:
         return {"rows": self.n, "mass": list(map(float, self.fit)), "mass_rms_log": self.rms,
                 "i_range_A": (float(self.i_A.min()), float(self.i_A.max()))}
+
+
+class OCVModel:
+    """
+    The open-circuit voltage of one cell against the state of charge s (0 to 1), from data/ocv_lipo.csv (the Aerolink
+    table, see data/ocv_lipo_SOURCE.md). A polynomial of degree `deg` fitted by least squares on the columns soc_pct and
+    ocv_mean_v: the solver needs a smooth curve. F is its integral, so the charge from s1 to s0 gives the energy
+    S cap (F(s0) - F(s1)) at the OCV (V Ah = Wh).
+    """
+
+    def __init__(self, path: Path, deg: int = 6):
+        rows = list(csv.DictReader(Path(path).open(encoding="utf-8")))
+        self.s = np.array([float(r["soc_pct"]) / 100.0 for r in rows])
+        self.v = np.array([float(r["ocv_mean_v"]) for r in rows])
+        if len(self.s) < deg + 2:
+            raise ValueError(f"{path}: {len(self.s)} rows, the OCV fit of degree {deg} needs {deg + 2} or more")
+        self.coef = np.polyfit(self.s, self.v, deg)
+        self.coef_F = np.polyint(self.coef)
+        self.rms = float(np.sqrt(np.mean((np.polyval(self.coef, self.s) - self.v) ** 2)))
+        grid = np.linspace(self.s.min(), self.s.max(), 401)
+        if np.any(np.polyval(np.polyder(self.coef), grid) <= 0.0):
+            raise ValueError(f"{path}: the OCV fit of degree {deg} is not monotonic on the table range")
+
+    @staticmethod
+    def _poly(c, s):
+        out = 0.0 * s + c[0]
+        for k in c[1:]:
+            out = out * s + k
+        return out
+
+    def ocv(self, s):
+        """Cell OCV (V) at the state of charge s. A number or an expression."""
+        return self._poly(self.coef, s)
+
+    def F(self, s):
+        """The integral of the OCV from 0 to s (V)."""
+        return self._poly(self.coef_F, s)
+
+    def summary(self) -> Dict[str, Any]:
+        return {"rows": len(self.s), "soc_range": (float(self.s.min()), float(self.s.max())), "rms_V": self.rms}
+
+
+def ocv_model(battery: Battery) -> OCVModel:
+    """The OCV model of a Battery component (param `ocv`, the CSV)."""
+    path = Path(battery["ocv"])
+    return OCVModel(path if path.is_absolute() else HERE / path)
 
 
 def esc_model(esc: ESC, cells_s: int) -> ESCModel:
@@ -971,6 +1022,13 @@ class AirframeModel:
         self.tail_boom_frames = [flip_array(f).tolist() for f in body_frames(adh_doc.find(doc, "tail_boom")["geometry"]["body"])]
         self.tail_boom_z = float(np.array(self.tail_boom_frames[0])[:, 2].mean())   # axis height of the boom (lift booms are level with it)
         self.tail_boom_length = float(self.tail_boom_frames[-1][0][0] - self.tail_boom_frames[0][0][0])
+        # Fuselage mass per shell area: the base fuselage mass (FUSELAGE-REST, weighed) over the area of the Fuselage rule
+        # from the base nose to the base tail end. A new fuselage of the base length has the base mass.
+        base_fus = [flip_array(f) for f in body_frames(adh_doc.find(doc, "fuselage")["geometry"]["body"])]
+        x_nose, x_end = float(base_fus[0][0][0]), float(base_fus[-1][0][0])
+        self.m_fuselage_base = pm["FUSELAGE-REST"]["mass"]["value"]
+        self.fuselage_kg_per_m2 = self.m_fuselage_base / fuselage.area_m2(
+            fuselage.frames(x_nose - fuselage.num("nose_behind_hub_m"), x_end))
         prop = adh_doc.find(doc, "prop_cruise")["muas"]
         self.cruise_hub_base = flip_point(prop["propeller"]["hub"]["xyz"])
         ps = prop["propulsion_system"]

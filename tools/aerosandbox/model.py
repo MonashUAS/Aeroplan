@@ -31,8 +31,8 @@ import numpy as np
 
 from component import (A0, CU_RES, CU_RHO, G0, HERE, RHO0, ROOT, Airframe, Battery, Cables, Component, Control, CruiseRotor,
                        ESC, Fuselage, Material, Motor, PointMass, Rotor, Spec, Tube, airframe_model, build_airplane,
-                       electric_chain, esc_model, level, motor_model, rotor_model, work_dir)
-from mission import FlightCondition, Mission
+                       electric_chain, esc_model, level, motor_model, ocv_model, rotor_model, work_dir)
+from mission import FlightCondition, Mission, pack_current
 
 FORMAT = "aeroplan-asb-model/1"
 SETTINGS = HERE / "settings"
@@ -166,7 +166,12 @@ class QuadplaneModel(AircraftModel):
         mat, fz, ctl = c["boom_material"], c["fuselage"], c["control"]
         d = SimpleNamespace(air=air, opti=o)
         d.S, d.N, d.n_per = int(bat["cells_s"]), self.N, self.n_per
-        d.V_cell, d.V_end = bat.num("cell_nominal_V"), bat.num("cell_end_V")
+        d.V_cell = bat.num("cell_nominal_V")
+        d.ocv = ocv_model(bat)
+        d.soc_min = 1.0 - bat.num("usable_fraction")                 # the lowest SOC of the mission
+        if d.soc_min < d.ocv.s.min():
+            raise ValueError(f"battery.usable_fraction takes the SOC to {d.soc_min:.2f}, under the OCV table ({d.ocv.s.min():.2f})")
+        d.V0_min = d.S * float(d.ocv.ocv(d.soc_min))                   # pack OCV at the lowest SOC: the MAX and cruise duty checks
         R_ref = rot.num("reference_radius_m")
         mm = motor_model(mot, ctx.level)
         d.motor_fit = mm
@@ -226,7 +231,7 @@ class QuadplaneModel(AircraftModel):
         d.R_b = d.S * (bat.num("cell_resistance_mohm") / 1000.0) * 4.5 / d.cap
 
         # ---- mass list (name, mass, x, y, z, own inertia ixx, iyy, izz)
-        d.m_fuse = air.fuselage_area() * fz.num("mass_kg_per_m2")
+        d.m_fuse = air.fuselage_area() * air.fuselage_kg_per_m2
         d.m_lift_unit = d.m_motor + d.m_prop + d.m_esc + d.m_mount
         items: List[Tuple] = []
 
@@ -337,14 +342,13 @@ class QuadplaneModel(AircraftModel):
         Kv = cp["kv_rad_s_V"]
         I = cp["i0_A"] + r_out["Q"] * Kv
         Vm = w / (cp["kappa"] * Kv) + cp["r_tot_ohm"] * I
-        Pe = Vm * I + c["avionics"].num("power_W")
-        Ib = Pe / (d.S * d.V_cell)
-        Pb = Pe + d.R_b * Ib ** 2
-        duty = Vm / (d.S * d.V_cell - d.R_b * Ib)
+        Pe = Vm * I + c["avionics"].num("power_W")                   # at the pack terminals
+        Ib = pack_current(Pe, d.V0_min, d.R_b)
+        duty = Vm / (d.V0_min - d.R_b * Ib)                          # at the lowest SOC of the mission
         ctx.limit("cruise_duty_" + name, duty, hi=el_esc.num("duty_max"), group="elec")
         ctx.limit("cruise_current_" + name, I, hi=cp["imax_A"], scale=10.0, group="elec")
         ctx.limit("cruise_tip_mach_" + name, w * 0.5 * cp["diameter_m"], hi=0.85 * A0, scale=100.0, group="tw")
-        return {"V": V, "drag_N": D_, "omega": w, "P": Pb, "eta_total": r_out["T"] * V / Pb, "CL": anp.sqrt(CL2),
+        return {"V": V, "drag_N": D_, "omega": w, "P": Pe, "eta_total": r_out["T"] * V / Pe, "CL": anp.sqrt(CL2),
                 "I": I, "thrust": r_out["T"], "Q": r_out["Q"]}
 
     # -- all of the mission in one problem
@@ -365,16 +369,15 @@ class QuadplaneModel(AircraftModel):
             self.add_to(ctx, conds[nm])
         states = d.states
 
-        def battery_power(rts, Vc):
-            Pe = 2.0 * n_per * sum(rt["Pe"] for rt in rts) * d.k_int + c["avionics"].num("power_W")
-            Ib = Pe / (S * Vc)
-            return Pe + d.R_b * Ib ** 2, Ib
+        def bus_power(rts):                                          # at the pack terminals
+            return 2.0 * n_per * sum(rt["Pe"] for rt in rts) * d.k_int + c["avionics"].num("power_W")
 
-        P = {k: battery_power(states[k], d.V_cell)[0] for k in ("H_TO", "C_TO", "H_L")}
-        P_max, I_b_max = battery_power(states["MAX"], d.V_end)
+        P = {k: bus_power(states[k]) for k in ("H_TO", "C_TO", "H_L")}
+        P_max = bus_power(states["MAX"])
 
-        # ---- MAX: motor torque, current, duty, C-rate
-        V_bus = S * d.V_end - d.R_b * I_b_max
+        # ---- MAX at the lowest SOC of the mission: motor torque, current, duty, C-rate
+        I_b_max = pack_current(P_max, d.V0_min, d.R_b)
+        V_bus = d.V0_min - d.R_b * I_b_max
         for rt, nm in zip(states["MAX"], ("front", "rear")):
             ctx.limit("motor_torque_" + nm, rt["Q"], hi=d.q_cap, scale=2.0, group="elec")
             ctx.limit("motor_current_" + nm, rt["I"], hi=d.I_pk, scale=50.0, group="elec")
@@ -402,13 +405,16 @@ class QuadplaneModel(AircraftModel):
         d.n2_map = (1.0 - sv["turn_frac"]) + sv["turn_frac"] * sv["n_turn"] ** 2
         mapc = self.add_to(ctx, conds["F_MAP"])
 
-        # ---- energy (J)
+        # ---- energy (J): the pack through the mission, V = S OCV(SOC) - R_b I. The limit on the energy at the OCV is the limit
+        # SOC end >= soc_min (both are S cap (F(1) - F(SOC)), and F rises with the SOC).
         segs = mis.segments(d.V_lap, d.V_map, ca.num("map_turn_radius_m"), d.M * G0, lap["eta_total"])
         power = dict(P, F_LAP=lap["P"], F_MAP=mapc["P"])
-        seg_J, t = mis.energy(power, segs)
+        pack = mis.discharge(power, segs, S, d.cap, d.R_b, d.ocv)
+        seg_J, t = pack["J"], pack["t"]
         E_total = sum(seg_J.values()) / 3600.0
         E_nom = S * d.V_cell * d.cap
-        ctx.limit("energy_Wh", E_total, hi=bat.num("usable_fraction") * E_nom, scale=100.0, group="energy")
+        E_usable = S * d.cap * (d.ocv.F(1.0) - d.ocv.F(d.soc_min))
+        ctx.limit("energy_Wh", E_total, hi=E_usable, scale=100.0, group="energy")
 
         # ---- structure: each boom end is a cantilever of length a from the clamp
         m_tip = n_per * d.m_lift_unit
@@ -487,7 +493,8 @@ class QuadplaneModel(AircraftModel):
                      R_w_f=d.R_w[0], R_w_r=d.R_w[1])
         return {"R": d.R, "names": names, "E_total": E_total, "E_nom": E_nom, "seg_J": seg_J, "t": t,
                 "inertia": (d.Ixx, d.Iyy, d.Izz), "ctl": ctl_out, "lap": lap, "map": mapc, "cda": d.cda,
-                "P": P, "P_max": P_max, "I_b_max": I_b_max, "V_bus": V_bus, "f1": f1, "freq_hover": freq_hover,
+                "P": P, "P_max": P_max, "I_b_max": I_b_max, "V_bus": V_bus, "pack": pack, "V0_min": d.V0_min, "soc_min": d.soc_min,
+                "f1": f1, "freq_hover": freq_hover,
                 "boom_modal": boom_modal, "struct": struct, "rotors": d.rotors, "items": d.items, "objective": E_total}
 
     # -- the numbers of the model that are not expressions

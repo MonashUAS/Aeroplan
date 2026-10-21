@@ -76,6 +76,22 @@ def write_esc_survey(path, k=2.5, e=0.9):
     return rows
 
 
+OCV_A, OCV_B = 3.4, 0.8                                # the synthetic cell OCV: 3.4 + 0.8 s (V)
+
+
+def ocv_F(s):
+    """The integral of the synthetic OCV from 0 to s."""
+    return OCV_A * s + 0.5 * OCV_B * s ** 2
+
+
+def write_ocv(path):
+    """An OCV table on the Aerolink layout (soc_pct, ocv_mean_v) that follows the synthetic line exactly."""
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["soc_pct", "temperature_c", "ocv_mean_v"])
+        w.writerows([[p, 25, OCV_A + OCV_B * p / 100.0] for p in range(10, 101, 10)])
+
+
 def survey_laws(kv, q):
     m = 300.0 * (q / 3.0) ** 0.8
     rm = 0.12 * (kv / 150.0) ** 1.5 * (m / 300.0) ** -1.0
@@ -100,7 +116,7 @@ def synthetic_components(survey: Path, layout_cells=12, esc_survey: Path = None)
         "fuselage": c.Fuselage("fuselage", stations=P(21, "nd", s), width_m=P(0.24, "m", s), height_m=P(0.18, "m", s),
                                superellipse_n=P(2.5, "nd", s), z_centre_m=P(0.02, "m", s), nose_behind_hub_m=P(0.07, "m", s),
                                x_tail_m=P(0.561, "m", s),
-                               mass_kg_per_m2=P(1.0, "kg/m2", s), bay_x_m=P([-0.45, 0.40], "m", s), battery_Wh_per_L=P(330.0, "Wh/L", s)),
+                               bay_x_m=P([-0.45, 0.40], "m", s), battery_Wh_per_L=P(330.0, "Wh/L", s)),
         "boom_material": c.Material("test_tube", E_Pa=P(60e9, "Pa", s), E_c_Pa=P(50e9, "Pa", s), density_kg_m3=P(1500.0, "kg/m3", s),
                                     tensile_strength_Pa=P(370e6, "Pa", s), compressive_strength_Pa=P(350e6, "Pa", s),
                                     G_Pa=P(4e9, "Pa", s), buckling_knockdown=P(0.5, "nd", s)),
@@ -126,7 +142,7 @@ def synthetic_components(survey: Path, layout_cells=12, esc_survey: Path = None)
                      mass_kg=P(None), current_A=P(None)),
         "battery": c.Battery("battery", cells_s=P(layout_cells, "nd", s), cap_Ah=P(14.0, "A*h", s, free=True, lo=2.0, hi=60.0, scale=14.0),
                              x_m=P(0.0, "m", s, free=True, lo=-0.45, hi=0.4, scale=0.1), cell_nominal_V=P(3.7, "V", s),
-                             cell_end_V=P(3.5, "V", s), cell_resistance_mohm=P(5.0, "mohm", s), c_rate_max=P(25.0, "1/h", s),
+                             ocv=P(str(survey.parent / "ocv.csv"), "", s), cell_resistance_mohm=P(5.0, "mohm", s), c_rate_max=P(25.0, "1/h", s),
                              usable_fraction=P(0.8, "nd", s), eq4_p1=P(0.026373, "g/mAh", s), eq4_p2=P(2.0499e-05, "g/mAh", s),
                              cal_cells_s=P(6, "nd", s), cal_capacity_Ah=P(4.5, "A*h", s), cal_mass_kg=P(0.631, "kg", s), mass_kg=P(None)),
         "cables": c.Cables("cables", current_density_A_m2=P(10e6, "A/m2", s), insulation_factor=P(1.4, "nd", s), run_extra_m=P(0.15, "m", s)),
@@ -163,6 +179,7 @@ def stub_airframe(c, fus):
     a.tail_boom_frames = [[[0.561, 0.0, 0.0]]]
     a.tail_boom_z, a.htail_le_x = -0.0255, 1.40
     a.tail_boom_length = 0.92
+    a.m_fuselage_base, a.fuselage_kg_per_m2 = 0.6, 1.0
     a.fus = fus
     return a
 
@@ -174,6 +191,7 @@ def small_model(layout="H4", cells=12, tmp: Path = None):
     survey = tmp / "survey.csv"
     write_survey(survey)
     write_esc_survey(tmp / "esc_survey.csv")
+    write_ocv(tmp / "ocv.csv")
     comps = synthetic_components(survey, cells)
     model = m.QuadplaneModel("test", comps, layout=layout)
     model.af = stub_airframe(c, comps["fuselage"])
@@ -314,6 +332,42 @@ def check_mission_segments_and_energy():
     assert rel(J["transitions"], 400.0 * 30.0) and tt == t
 
 
+@check
+def check_ocv_fit_and_the_pack_discharge():
+    c, mi, m, o, r = tool()
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "ocv.csv"
+        write_ocv(p)
+        ocv = c.OCVModel(p)
+    assert ocv.rms < 1e-9 and rel(float(ocv.ocv(0.55)), OCV_A + OCV_B * 0.55, 1e-9) and rel(float(ocv.F(0.7)), ocv_F(0.7), 1e-9)
+    real = c.OCVModel(TOOL / "data" / "ocv_lipo.csv")                               # the committed table (Aerolink copy)
+    assert real.rms < 0.005 and 3.5 < float(real.ocv(0.2)) < float(real.ocv(1.0)) < 4.25
+    # the pack current: (V_oc - R I) I = P, and I = P / V_oc with no resistance
+    I = float(mi.pack_current(2000.0, 45.0, 0.05))
+    assert rel((45.0 - 0.05 * I) * I, 2000.0, 1e-12) and rel(float(mi.pack_current(2000.0, 45.0, 0.0)), 2000.0 / 45.0, 1e-12)
+    mis = synthetic_components(Path("x"))["mission"]
+    segs = mis.segments(20.0, 15.0, 40.0, 100.0, 0.5)
+    power = {"C_TO": 5000.0, "H_TO": 4000.0, "F_LAP": 600.0, "F_MAP": 500.0, "H_L": 3800.0}
+    S, cap = 12, 14.0
+    for R_b in (0.0, 0.02):
+        pk = mis.discharge(power, segs, S, cap, R_b, ocv)
+        E = sum(pk["J"].values())
+        s_end = pk["soc"]["reserve"]
+        assert rel(E, 3600.0 * S * cap * (ocv_F(1.0) - ocv_F(s_end)), 1e-9)      # the segment energies add up exactly
+        bus = sum(power[s.condition] * s.time_s + s.extra_J for s in segs)
+        if R_b == 0.0:                                                          # no loss: the energy is the bus energy
+            assert rel(E, bus, 5e-4)                                            # the step error of N_SUB = 4 is 1e-4
+        else:                                                                   # the R_b I^2 loss on top
+            loss = E - bus
+            I_r = pk["I"]["reserve"]
+            assert loss > 0 and rel(pk["V"]["reserve"], S * float(ocv.ocv(s_end)) - R_b * I_r, 1e-12)
+            I_0 = pk["I"]["landing"]                                            # the reserve starts where the landing (H_L) ends
+            loss_r = pk["J"]["reserve"] - 3800.0 * 300.0                        # the current rises as the OCV falls
+            assert I_0 < I_r and 0.99 * R_b * I_0 ** 2 * 300.0 < loss_r < 1.01 * R_b * I_r ** 2 * 300.0
+    fine = mis.discharge(power, segs, S, cap, 0.02, ocv, n_sub=50)              # N_SUB steps against 50 steps
+    assert abs(fine["soc"]["reserve"] - s_end) < 5e-4
+
+
 # ----------------------------------------------------------------------------------------------- a small L0 sizing problem
 @check
 def check_l0_solve_and_the_hand_formulas():
@@ -378,10 +432,23 @@ def check_l0_solve_and_the_hand_formulas():
     t_ = rep["time_s"]
     assert abs(t_["vtol_takeoff_climb"] - 30.0 / 2.5) < 1e-12 and abs(t_["transitions"] - 30.0) < 1e-12
     assert rel(t_["transit_laps_rtl"], (656.0 + 3370.0 * 2 + 660.0) / n["V_lap"], 1e-12)
-    P, e = rep["P_battery_W"], rep["energy_Wh"]
-    assert rel(e["reserve"], P["H_L"] * 300.0 / 3600.0, 1e-9) and rel(e["landing"], P["H_L"] * 20.0 / 3600.0, 1e-9)
+    # ---- the pack: V = 12 OCV(SOC) - R_b I through the segments (synthetic OCV 3.4 + 0.8 s)
+    P, e, b, cap = rep["P_bus_W"], rep["energy_Wh"], rep["battery"], d["cap_Ah"]
+    soc = b["soc_end"]
     assert rel(sum(e.values()), rep["energy_total_Wh"], 1e-9)
-    assert rep["energy_total_Wh"] <= 0.8 * rep["energy_nominal_Wh"] * (1 + 1e-4) and rel(rep["energy_nominal_Wh"], 12 * 3.7 * d["cap_Ah"], 1e-9)
+    assert rel(rep["energy_total_Wh"], 12 * cap * (ocv_F(1.0) - ocv_F(soc["reserve"])), 1e-9)
+    assert rel(e["reserve"], 12 * cap * (ocv_F(soc["landing"]) - ocv_F(soc["reserve"])), 1e-9)
+    I_0, I_r = b["I_end_A"]["landing"], b["I_end_A"]["reserve"]                                 # the bus energy plus the loss
+    loss = e["reserve"] * 3600.0 - P["H_L"] * 300.0
+    assert 0.99 * n["R_b"] * I_0 ** 2 * 300.0 < loss < 1.01 * n["R_b"] * I_r ** 2 * 300.0
+    assert rel(b["V_end_V"]["reserve"], 12 * (OCV_A + OCV_B * soc["reserve"]) - n["R_b"] * I_r, 1e-9)
+    assert soc["reserve"] >= 0.2 - 1e-4 and rel(b["usable_Wh"], 12 * cap * (ocv_F(1.0) - ocv_F(0.2)), 1e-9)
+    assert rel(rep["energy_nominal_Wh"], 12 * 3.7 * cap, 1e-9)
+    # MAX at the lowest SOC (0.2): V_bus = 12 OCV(0.2) - R_b I, and the pack gives P_max at its terminals
+    V0 = 12 * (OCV_A + OCV_B * 0.2)
+    I_m = rep["I_battery_max_A"]
+    assert rel(b["V_oc_min_V"], V0, 1e-9) and rel(rep["V_bus_max_V"], V0 - n["R_b"] * I_m, 1e-9)
+    assert rel(rep["V_bus_max_V"] * I_m, P["MAX"], 1e-9)
     assert n["V_lap"] >= 1.3 * n["Vs"] * (1 - 1e-4)
     # the compact result keeps what the spoke reads
     cp = res.compact()
@@ -427,11 +494,12 @@ def check_weight_chart_stacks_every_item():
     # the lift items split into motors, ESCs, props and mounts: 4 rotors of 0.1 + 0.05 + 0.03 + 0.02 kg
     split = R()
     split.names = {"m_motor": 0.1, "m_esc": 0.05, "m_prop": 0.03, "m_mount": 0.02}
-    split.mass_by_item = lambda: {"lift_front": 0.4, "lift_rear": 0.4, "avionics_flight": 0.6}
+    split.mass_by_item = lambda: {"lift_front": 0.4, "lift_rear": 0.4, "avionics_flight": 0.6, "boom": 0.3, "boom_clamp": 0.05}
     parts = plot._lift_parts(split, split.mass_by_item())
-    assert set(parts) == {"lift_motor", "lift_esc", "lift_prop", "lift_mount", "avionics_flight"} and rel(parts["lift_motor"], 0.4)
+    assert set(parts) == {"lift_motor", "lift_esc", "lift_prop", "lift_mount", "avionics_flight", "boom", "boom_clamp"} and rel(parts["lift_motor"], 0.4)
     groups = dict(plot._grouped(parts, plot.WEIGHT_GROUPS))
     assert len(groups["VTOL propulsion"]) == 4 and groups["Flight avionics"] == [("avionics_flight", 0.6)]
+    assert {"boom", "boom_clamp"} <= {k for k, _ in groups["Airframe"]} and not {"boom", "boom_clamp"} & {k for k, _ in groups["VTOL propulsion"]}
 
 
 @check
@@ -574,7 +642,8 @@ if pytest is not None:
     for _name in ("check_param_json_roundtrip_free_fix_and_placeholders", "check_material_with_E_keeps_the_compression_ratio",
                   "check_bershadsky_mass_equations", "check_motor_fit_recovers_exact_power_laws", "check_motor_fit_on_the_committed_survey",
                   "check_esc_fit_recovers_the_power_law_and_skips_other_cells", "check_energy_chart_stacks_every_segment",
-                  "check_levels_and_the_rotor_model_kind", "check_mission_segments_and_energy", "check_l0_solve_and_the_hand_formulas",
+                  "check_levels_and_the_rotor_model_kind", "check_mission_segments_and_energy", "check_ocv_fit_and_the_pack_discharge",
+                  "check_l0_solve_and_the_hand_formulas",
                   "check_resonance_side_above_flips_the_limit", "check_boom_mode_roots_and_frequencies", "check_weight_chart_stacks_every_item",
                   "check_h8_has_eight_rotors_and_the_coaxial_factor",
                   "check_fixed_params_are_parameters_and_free_ones_are_variables",

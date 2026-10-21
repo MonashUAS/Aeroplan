@@ -276,8 +276,12 @@ class Problem:
         rep["control"] = {k: g(v) for k, v in out["ctl"].items()}
         rep["cruise"] = {"lap": {k: g(v) for k, v in out["lap"].items()}, "map": {k: g(v) for k, v in out["map"].items()}}
         rep["cda_m2"] = {k: g(v) for k, v in out["cda"].items()}
-        rep["P_battery_W"] = {k: g(v) for k, v in out["P"].items()} | {"MAX": g(out["P_max"])}
+        rep["P_bus_W"] = {k: g(v) for k, v in out["P"].items()} | {"MAX": g(out["P_max"])}     # at the pack terminals
         rep["I_battery_max_A"], rep["V_bus_max_V"] = g(out["I_b_max"]), g(out["V_bus"])
+        pk = out["pack"]
+        rep["battery"] = {"soc_end": {k: g(v) for k, v in pk["soc"].items()}, "V_end_V": {k: g(v) for k, v in pk["V"].items()},
+                          "I_end_A": {k: g(v) for k, v in pk["I"].items()}, "soc_min": out["soc_min"], "V_oc_min_V": out["V0_min"],
+                          "usable_Wh": g(self.cons["energy_Wh"][2]), "ocv_fit": m.d.ocv.summary()}
         rep["f1_Hz"], rep["f_hover_1P_Hz"] = g(out["f1"]), max(g(f) for f in out["freq_hover"])
         bm = {k: g(v) for k, v in out["boom_modal"].items()}          # f2: a check after the solve (Tube.modes_hz)
         rep["f1_exact_Hz"], rep["f2_Hz"] = Tube.modes_hz(bm["E"], bm["I"], bm["a"], bm["m_tip"], bm["m_arm"], bm["J_tip"])

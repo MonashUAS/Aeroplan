@@ -22,6 +22,7 @@ red for a violated limit.
 from __future__ import annotations
 
 import math
+import textwrap
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -79,11 +80,11 @@ def three_view(model, design: Dict[str, float], size=(8.0, 8.0)):
 
 # ==================================================================================================== charts of a Result
 # Item name -> system, for the stacked weight chart. An item that is not listed goes to "Other". The lift_* parts come from the
-# split of lift_front and lift_rear (see _lift_parts). An older result with no m_mount keeps the two items.
+# split of lift_front and lift_rear (see _lift_parts). An older result with no m_mount keeps the two items. The lift booms
+# and their clamps are structure, so they are in "Airframe" (the spoke writes them under the airframe node 1.2.2).
 WEIGHT_GROUPS = (
-    ("Airframe", ("wing", "tail", "tail_boom", "fuselage", "landing_gear")),
-    ("VTOL propulsion", ("lift_motor", "lift_esc", "lift_prop", "lift_mount", "lift_front", "lift_rear", "boom", "boom_clamp",
-                         "cables")),
+    ("Airframe", ("wing", "tail", "tail_boom", "fuselage", "landing_gear", "boom", "boom_clamp")),
+    ("VTOL propulsion", ("lift_motor", "lift_esc", "lift_prop", "lift_mount", "lift_front", "lift_rear", "cables")),
     ("Cruise propulsion", ("cruise_motor", "cruise_esc", "cruise_prop", "cruise_rest")),
     ("Battery", ("battery",)),
     ("Flight avionics", ("avionics_flight",)),
@@ -134,8 +135,8 @@ def _stack(ax, rows, unit: str, fmt: str = "{:.2f}"):
         ax.plot([0.25, 0.3, 0.33], [mid, y, y], color=MUTED, lw=0.7)
         ax.text(0.35, y + 0.012 * total, f"{g}  {fmt.format(m)} {unit} ({100 * m / total:.0f} %)", va="center", ha="left",
                 color=INK, fontsize=9)
-        ax.text(0.35, y - 0.016 * total, ", ".join(f"{k.replace('_', ' ')} {fmt.format(v)}" for k, v in items), va="center",
-                ha="left", color=MUTED, fontsize=7.5)
+        detail = ", ".join(f"{k.replace('_', ' ')} {fmt.format(v)}" for k, v in items)
+        ax.text(0.35, y - 0.004 * total, textwrap.fill(detail, 62), va="top", ha="left", color=MUTED, fontsize=7.5)   # wrap in the axes
     ax.set_xlim(-0.35, 1.75)
     ax.set_xticks([])
     ax.grid(axis="x", visible=False)
@@ -173,7 +174,7 @@ def weight_chart(result, size=(7.0, 5.4), groups=WEIGHT_GROUPS):
 
 def energy_chart(result, size=(7.0, 4.6), groups=ENERGY_GROUPS):
     """One stacked bar of the mission energy (Wh), by segment (ENERGY_GROUPS), with the usable and the nominal battery energy
-    as lines."""
+    as lines. Usable: the energy at the OCV from a full charge to the lowest SOC (the limit energy_Wh). Nominal: S V_cell cap."""
     import matplotlib.pyplot as plt
     style()
     fig, ax = plt.subplots(figsize=size)

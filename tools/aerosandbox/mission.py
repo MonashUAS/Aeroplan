@@ -6,8 +6,11 @@ The mission of a quadplane: the flight conditions the model evaluates, and the s
     Mission           a component (params: heights, rates, distances, survey, hover times, payload). It gives the
                       conditions and, with the powers of the model, the energy of each segment
 
-The model (model.py) evaluates each condition once. The mission turns the powers into a time-weighted energy, the
-objective of the optimiser. The segment rules are those of Redback flight 00000171 with 10 endurance laps in place of 1.
+    pack_current      the current of a pack (V = V_oc - R_b I) at a terminal power
+
+The model (model.py) evaluates each condition once. Mission.discharge takes the pack through the segments in flight order
+(state of charge, voltage sag) and gives the energy of each segment, the objective of the optimiser. The segment rules are
+those of Redback flight 00000171 with 10 endurance laps in place of 1.
 """
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from component import Component
 
 G0 = 9.80665
+N_SUB = 4                       # midpoint steps per segment in Mission.discharge. Project choice: 0.02 % of the energy against 50 steps
 
 
 @dataclass(frozen=True)
@@ -101,3 +105,43 @@ class Mission(Component):
         seg_J = {s.name: power_W[s.condition] * s.time_s + s.extra_J for s in segments}
         t = {s.name: s.time_s for s in segments}
         return seg_J, t
+
+    @staticmethod
+    def discharge(bus_W: Dict[str, Any], segments: List[Segment], S: int, cap_Ah: Any, R_b: Any, ocv: Any,
+                  n_sub: int = N_SUB) -> Dict[str, Dict[str, Any]]:
+        """
+        The pack through the segments in flight order, from a full charge (SOC 1). bus_W: the power at the pack terminals of
+        each condition (W). A segment draws its power plus extra_J / time_s. The pack is V = S OCV(SOC) - R_b I (see
+        pack_current). Each segment has n_sub steps of the midpoint rule on dSOC/dt = -I / (3600 cap). The energy of a
+        segment is the charge it takes at the OCV: S cap (F(SOC start) - F(SOC end)), so the energies add up to
+        S cap (F(1) - F(SOC end)) and include the R_b I^2 loss.
+        Returns {"J", "t", "soc", "V", "I"}: for each segment the energy (J), the time (s), and at its end the SOC, the
+        terminal voltage (V) and the current (A).
+        """
+        out: Dict[str, Dict[str, Any]] = {k: {} for k in ("J", "t", "soc", "V", "I")}
+        Q = 3600.0 * cap_Ah
+
+        def current(P, s):
+            return pack_current(P, S * ocv.ocv(s), R_b)
+
+        s = 1.0
+        for seg in segments:
+            P = bus_W[seg.condition] + seg.extra_J / seg.time_s
+            dt, s0 = seg.time_s / n_sub, s
+            for _ in range(n_sub):
+                s_mid = s - 0.5 * dt * current(P, s) / Q
+                s = s - dt * current(P, s_mid) / Q
+            I_end = current(P, s)
+            out["J"][seg.name] = 3600.0 * S * cap_Ah * (ocv.F(s0) - ocv.F(s))
+            out["t"][seg.name], out["soc"][seg.name] = seg.time_s, s
+            out["V"][seg.name], out["I"][seg.name] = S * ocv.ocv(s) - R_b * I_end, I_end
+        return out
+
+
+def pack_current(P_W: Any, V_oc: Any, R_b: Any) -> Any:
+    """The current (A) of a pack with the open-circuit voltage V_oc and the resistance R_b that gives the power P_W at its
+    terminals: P = (V_oc - R_b I) I, the low root. The guard keeps the root real when the pack cannot give P (the solver
+    can step there)."""
+    import aerosandbox.numpy as anp
+    disc = anp.fmax(V_oc ** 2 - 4.0 * R_b * P_W, 0.01 * V_oc ** 2)
+    return 2.0 * P_W / (V_oc + anp.sqrt(disc))

@@ -118,7 +118,7 @@ class Result:
         d = self.data
         keep = ("config", "cells_s", "converged", "ok", "error", "status_word", "level", "level_reached", "design", "R_m", "D_m", "names",
                 "c_ref_m", "boom_z_m", "rotor_z_m", "spacing_m", "boom_material", "pitch_m", "pitch_note", "energy_Wh", "energy_total_Wh",
-                "energy_nominal_Wh", "time_s", "inertia_kg_m2", "control", "cruise", "cda_m2", "P_battery_W", "I_battery_max_A",
+                "energy_nominal_Wh", "time_s", "inertia_kg_m2", "control", "cruise", "cda_m2", "P_bus_W", "battery", "I_battery_max_A",
                 "V_bus_max_V", "f1_Hz", "f1_exact_Hz", "f2_Hz", "f2_no_J_Hz", "boom_J_tip_kg_m2", "f_hover_1P_Hz", "structure", "rotors", "items", "airframe", "placeholders")
         out = {k: d[k] for k in keep if k in d}
         out["case"] = f"{d['config']}_{d['cells_s']}S"
