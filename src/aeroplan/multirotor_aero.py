@@ -17,7 +17,7 @@ Variables (body axes FRD: x forward, y right, z down; the velocities are those o
 Each force opposes the velocity along its axis. The rotor thrust, its torque and the rotor inflow are NOT in this
 model (the propulsion dataset has them). There are no moments: the body is a point at the MRP (the CG) for the drag.
 The model has no coupling between the axes and no angle of attack: it is the simplest model that lets a simulator
-fly a quadcopter. The coefficients come from `tools/aerosandbox/asb_worker.py` job multirotor_drag.
+fly a quadcopter. The coefficients come from `tools/aerosandbox/model.py` job multirotor_drag.
 """
 from __future__ import annotations
 

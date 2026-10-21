@@ -100,7 +100,8 @@ def test_tool_independence():
     pattern = re.compile(r"^\s*(import|from)\s+(aerolink|propalyser|proptimiser)", re.I | re.M)
     spokes = [ROOT / "tools" / name for name in ("prototype", "aerosandbox", "flow5", "propalyser", "creo", "openvsp", "daveml", "ardupilot", "aerolink")]
     # These scripts run in tools/aerosandbox/.venv, not in AeroPlan: they may import proptimiser
-    workers = {ROOT / "tools" / "aerosandbox" / name for name in ("asb_worker.py", "rosella.py")}
+    workers = {ROOT / "tools" / "aerosandbox" / name for name in ("model.py", "component.py", "mission.py", "optimise.py", "result.py",
+                                                                    "plot.py", "window.py")}
     for py in [*SRC.rglob("*.py"), *(f for d in spokes for f in d.glob("*.py"))]:
         text = py.read_text(encoding="utf-8")
         assert not (re.compile(r"^\s*(import|from)\s+(aerolink|propalyser)", re.I | re.M) if py in workers else pattern).search(text), py

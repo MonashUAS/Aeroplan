@@ -152,6 +152,29 @@ class Skin(MuasModel):
     body_fit: Optional[BodyFit] = None
 
 
+class TubeMaterial(MuasModel):
+    """The material of a tube: the numbers that the beam formulas of the sizing read. ADH has no material model, so it sits here
+    (ADR 0024). `youngs_modulus` is the bending (tension) modulus, `youngs_modulus_compression` the modulus for local buckling."""
+
+    name: str = Field(min_length=1)
+    youngs_modulus: Quantity = Field(description="Bending modulus (tension)")
+    youngs_modulus_compression: Optional[Quantity] = None
+    density: Quantity
+    tensile_strength: Optional[Quantity] = None
+    compressive_strength: Optional[Quantity] = None
+    source: str = Field(min_length=1)
+    placeholder: bool = False
+
+    @model_validator(mode="after")
+    def _dimensions(self):
+        for f in ("youngs_modulus", "youngs_modulus_compression", "tensile_strength", "compressive_strength"):
+            q = getattr(self, f)
+            if q is not None:
+                q.require("pressure", f)
+        self.density.require("density", "density")
+        return self
+
+
 class Tube(MuasModel):
     """A round tube between two items (for example the tail boom). The ADH `geometry.body` of the same item holds the
     shape. This record gives the inputs of that shape, its source and its placeholder flag."""
@@ -164,6 +187,7 @@ class Tube(MuasModel):
     inner_radius: Optional[Quantity] = Field(None, description="Bore radius of a hollow tube (the wall is radius less "
                                              "inner_radius)")
     material: Optional[str] = Field(None, min_length=1, description="For example a roll-wrapped carbon tube")
+    material_data: Optional[TubeMaterial] = Field(None, description="The numbers of the material (modulus, density, strength)")
     p0: Optional[List[float]] = Field(None, min_length=3, max_length=3, description="First end point, design frame, m. "
                                       "Used when the tube has no from_instance and to_instance (a lift boom)")
     p1: Optional[List[float]] = Field(None, min_length=3, max_length=3, description="Second end point, design frame, m")

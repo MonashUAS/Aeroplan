@@ -6,16 +6,16 @@
     "instance": "data_repository",
     "assets": [
       {
-        "id": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
+        "id": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
         "kind": "file",
-        "name": "AeroSandbox.best.json",
-        "role": "Rosella sizing result H4_10S (rosella.py)",
+        "name": "AeroSandbox.rosella.json",
+        "role": "Rosella model file and sizing result H4_12S",
         "tool": "AeroSandbox",
         "media_type": "application/json",
-        "size": 36706,
+        "size": 51461,
         "locations": [
           {
-            "repo": "work/aerosandbox/rosella/sizing/best.json"
+            "repo": "tools/aerosandbox/settings/rosella.json"
           }
         ],
         "derived_from": []
@@ -34,7 +34,7 @@
           }
         ],
         "derived_from": [],
-        "built_against": "rosella@0.1.4",
+        "built_against": "rosella@0.1.6",
         "dataset": {
           "form": "tables",
           "model_description": {
@@ -66,13 +66,13 @@
           }
         ],
         "derived_from": [
-          "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff"
+          "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f"
         ],
-        "built_against": "rosella@0.1.4",
+        "built_against": "rosella@0.1.6",
         "dataset": {
           "form": "tables",
           "model_description": {
-            "generation_tool": "Proptimiser BEMT (NeuralFoil sections) via tools/aerosandbox/rosella.py",
+            "generation_tool": "Proptimiser BEMT (NeuralFoil sections) via tools/aerosandbox/model.py (QuadplaneModel)",
             "model_name": "MAD_FLUXER_22x6_6 scaled",
             "description": "CT and CP samples of the lift blade at the scales and shaft speeds of the sizing table (hover and 2.5 m/s climb)"
           },

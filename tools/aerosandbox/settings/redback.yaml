@@ -1,6 +1,6 @@
 # AeroSandbox spoke settings for the Redback (tool settings, not aircraft data).
 # kind: multirotor. The spoke seeds the aircraft from the `multirotor` block (no athena_outputs.txt) and runs the
-# multirotor jobs of tools/aerosandbox/asb_worker.py (multirotor_drag, emst_segments, emst_endurance, emst_sensitivity).
+# multirotor jobs of tools/aerosandbox/model.py (multirotor_drag, emst_segments, emst_endurance, emst_sensitivity).
 # Every number that has no measurement is a stand-in: it sits in a block whose `source` says so.
 kind: multirotor
 

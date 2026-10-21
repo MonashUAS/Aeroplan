@@ -155,7 +155,7 @@ cx.add_patch(FancyArrowPatch((8.2, 7.1), (8.2, 9.4), arrowstyle="-|>", mutation_
 cx.text(8.45, 9.25, f"T_max = {res['structure'][0]['F_N']:.0f} N", fontsize=9, color=C_ROT, va="top")
 cx.add_patch(FancyArrowPatch((0.7, 5.5), (8.2, 5.5), arrowstyle="<->", mutation_scale=8, lw=0.9, color=C_DIM))
 cx.text(4.45, 5.2, f"a = {mm(a)}", ha="center", va="top", fontsize=9, color=C_BOOM)
-cx.text(0.2, 4.3, f"f1 = {res['f1_Hz']:.1f} Hz   (hover 1P {res['f_hover_1P_Hz']:.1f} Hz, needs f1 >= 1.2 x 1P) - active", fontsize=8.5, va="top")
+cx.text(0.2, 4.3, f"f1 = {res['f1_Hz']:.1f} Hz   (hover 1P {res['f_hover_1P_Hz']:.1f} Hz, f1 stays below 0.8 x hover 1P)", fontsize=8.5, va="top")
 rows = [("von Mises stress at T_max", c["boom_stress_Pa_front_T"]["value"] / 1e6, 359, "MPa", c["boom_stress_Pa_front_T"]["margin"]),
         ("local buckling at T_max", c["boom_buckling_Pa_front_T"]["value"] / 1e6, n["sigma_cr"] / 1e6, "MPa", c["boom_buckling_Pa_front_T"]["margin"]),
         ("tip slope at T_max", c["boom_tip_slope_deg_front_T"]["value"], 1.0, "deg", c["boom_tip_slope_deg_front_T"]["margin"]),

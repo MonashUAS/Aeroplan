@@ -15,89 +15,89 @@
       "system_id": "rosella_lift",
       "basis": "sizing estimate",
       "p_max": {
-        "value": 1179.0648390670751,
+        "value": 1080.8566378786209,
         "units": "kg * m ** 2 / s ** 3"
       },
       "diameter": {
-        "value": 0.6604000065810992,
+        "value": 0.6604000039595322,
         "units": "m"
       },
       "blades": 2,
       "ixx": {
-        "value": 0.0024814239580826483,
+        "value": 0.0024814239167596395,
         "units": "kg * m ** 2"
       },
       "model": "Rosella lift rotor: MAD_FLUXER_22x6_6 scaled to 0.6604 m (Proptimiser scale 1.1818)",
       "motor": {
         "model": "sized motor (not a maker part)",
         "kv": {
-          "value": 17.99613012401773,
+          "value": 14.305246540238077,
           "units": "A * rad * s ** 2 / kg / m ** 2"
         },
         "r": {
-          "value": 0.05726376717220439,
+          "value": 0.09091712461943376,
           "units": "kg * m ** 2 / A ** 2 / s ** 3"
         },
         "i0": {
-          "value": 1.2158986647283596,
+          "value": 0.9674250979348632,
           "units": "A"
         },
         "mass": {
-          "value": 0.3406075455706907,
+          "value": 0.30138425716218487,
           "units": "kg"
         },
         "imax_continuous": {
-          "value": 45.85506374607054,
+          "value": 34.428512183486156,
           "units": "A"
         }
       },
       "esc": {
         "model": "sized ESC (not a maker part)",
         "imax_continuous": {
-          "value": 55.02607649528465,
+          "value": 41.314214620183385,
           "units": "A"
         },
         "vmax": {
-          "value": 42.0,
+          "value": 50.400000000000006,
           "units": "kg * m ** 2 / A / s ** 3"
         }
       },
       "battery": {
         "model": "sized pack (not a maker part)",
-        "cells_s": 10,
+        "cells_s": 12,
         "cells_p": 1,
         "capacity": {
-          "value": 41006.467866410116,
+          "value": 31811.42276753635,
           "units": "A * s"
         },
         "v_nominal": {
-          "value": 37.0,
+          "value": 44.400000000000006,
           "units": "kg * m ** 2 / A / s ** 3"
         },
         "mass": {
-          "value": 2.661907468992292,
+          "value": 2.4779886113745144,
           "units": "kg"
         }
       },
       "warnings": [
-        "Estimate from the H4_10S sizing. Motor, ESC and battery are sized values, not maker parts.",
+        "Estimate from the H4_12S sizing. Motor, ESC and battery are sized values, not maker parts.",
         "Propeller inertia: a rod of the propeller mass and length D (stand-in).",
         "Blade count 2: from the Proptimiser design MAD_FLUXER_22x6_6.",
-        "Each lift rotor tilts about its radial axis (CG to hub) by the cant. The tilt sign follows the spin, so the tilts cancel in hover. rosella.py gives the cant size only.",
+        "Each lift rotor tilts about its radial axis (CG to hub) by the cant. The tilt sign follows the spin, so the tilts cancel in hover. the sizing gives the cant size only.",
         "H4: motors 5 to 8 follow the ArduPilot Quad X order (front right, rear left, front left, rear right)."
       ],
       "source": {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-        "role": "Rosella sizing result H4_10S (rosella.py)"
+        "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+        "role": "Rosella model file and sizing result H4_12S"
       },
       "placeholder": true
     },
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-        "role": "Rosella sizing result H4_10S (rosella.py)"
+        "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+        "role": "Rosella model file and sizing result H4_12S"
       }
     ]
   }

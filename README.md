@@ -29,5 +29,5 @@ the source tree.
 | `work/` | Raw tool files, `work/<tool>/<aircraft>/` (git ignores it) |
 | `dist/` | Packages (git ignores it) |
 
-Start here: [First day](docs/tutorials/first-day.md). All documents: [docs/](docs/README.md). Rules and code map for
+Start here: [First day](docs/tutorials/first-day.md). All documents: [docs/](docs/README.md). Reports and notebooks of each aircraft: [By aircraft](docs/README.md#by-aircraft). Rosella sizing study: [rosella_sizing.ipynb](tools/aerosandbox/notebooks/rosella_sizing.ipynb). Rules and code map for
 contributors: [CLAUDE.md](CLAUDE.md). Decisions: [docs/decisions](docs/decisions/README.md).

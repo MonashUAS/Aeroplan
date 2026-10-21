@@ -21,6 +21,7 @@ DIMENSIONS = {
     "force": "[mass] * [length] / [time] ** 2",
     "speed": "[length] / [time]",
     "density": "[mass] / [length] ** 3",
+    "pressure": "[mass] / [length] / [time] ** 2",
     "frequency": "1 / [time]",
     "current": "[current]",
     "voltage": "[mass] * [length] ** 2 / [time] ** 3 / [current]",

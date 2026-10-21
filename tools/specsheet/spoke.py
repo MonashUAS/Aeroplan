@@ -277,7 +277,7 @@ def trim_inputs(doc: Dict[str, Any], st: Dict[str, Any], root: Path) -> Optional
     path = root / bt["neutral_point"]
     if not path.is_file():
         raise ValueError(f"battery_trim: the neutral point file {bt['neutral_point']} is missing. Run "
-                         "tools/aerosandbox/neutral_point.py for the aircraft first")
+                         "`python -m aeroplan generate AeroSandbox <aircraft>` first")
     npd = json.loads(path.read_text(encoding="utf-8"))
     air = adh_doc.node(doc, "1.2")
     band = {}

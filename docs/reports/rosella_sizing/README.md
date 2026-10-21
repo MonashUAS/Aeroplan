@@ -2,6 +2,8 @@
 
 Date: 2026-10-18. Script: `tools/aerosandbox/rosella.py`. Settings: `tools/aerosandbox/settings/rosella.yaml`. Decision: [ADR 22](../../decisions/0022-quadplane-path.md). Operating steps: [Size a quadplane](../../howto/size-a-quadplane.md).
 
+**Note of 2026-10-21.** [ADR 24](../../decisions/0024-aircraft-models-in-code.md) replaced the script, the YAML settings file and the manual file. The same equations now run in `QuadplaneModel` (`tools/aerosandbox/model.py`). The study is the notebook `tools/aerosandbox/notebooks/rosella_sizing.ipynb`. The stiffness rule f1 >= 1.2 x 1P of this report was replaced by a hover band (f1 below hover 1P less 20 %). The file names below are those of the date of the report.
+
 The numbers in section 6 come from the run of 2026-10-18 (log `work/aerosandbox/rosella/optimise_cant.log`, results in `work/aerosandbox/rosella/sizing/`). They are estimates. Many inputs are placeholders (section 7).
 
 ## 1. Summary
@@ -469,8 +471,8 @@ The settings hold about 40 placeholders. These ones are on an active constraint 
 1. **Fix the model gaps first (about 1 day).** Put `k_int` and the thrust share into the H8 motor limits. Check f1 against the full 1P band from H_L to MAX, and against 2P. Add a hot-day density (40 C). Add a continuous current check for the motor and the ESC over the longest hover segment. Solve the L4 drift.
 2. **Fix the voltage (about 2 hours).** Prefer an S count that common packs give: 12S (2 x 6S) or 10S (2 x 5S). Run the ladder for the chosen S to L4.
 3. **Make the candidate list (about 1 day).** Use the optimum as a target, not as a part: for H4 12S, Kv near 140 rpm/V, peak torque 2.4 N m, peak current 36 A, about 310 g. The survey holds parts near this point, for example T-Motor MN605-S KV170 and MAD MAD8108 170KV. Find 26 in (or the largest available) carbon props with maker thrust and power data. Select ESCs rated at 1.2 x I_pk continuous, and packs that give the capacity as whole parallel strings.
-4. **Check each set (about 30 min each).** Type each set into the notebook manual window. Leave the booms free. Run `rosella.py evaluate NAME --level L4`. Keep the sets that pass every constraint. Rank them by energy.
-5. **Replace the blade model (about 2 days).** Use the maker CT and CP data of the chosen prop, or build a Proptimiser design from its measured chord and twist (see `jung2021.py` for the check method). Run the check again.
+4. **Check each set (about 30 min each).** Type each set into the notebook manual window. Leave the booms free. Run `evaluate` of `optimise.py` at level L4 (`rosella.py evaluate NAME --level L4` before 2026-10-21). Keep the sets that pass every constraint. Rank them by energy.
+5. **Replace the blade model (about 2 days).** Use the maker CT and CP data of the chosen prop, or build a Proptimiser design from its measured chord and twist (see `jung_compare` in `component.py` for the check method). Run the check again.
 6. **Bench test one set (about 1 week, with delivery).** Measure thrust, torque, current and temperature on a thrust stand. Update R_m, I_0 and the prop data in the settings. Get the tube data sheet. Weigh the clamp, mount, gear and fuselage. Replace each placeholder with a sourced value.
 7. **Hand the mass model back.** When the SpecSheet exists, it takes the mass model back (ADR 12). The AeroSandbox spoke then writes `aircraft/rosella/` from the chosen manual block (`build_from`).
 

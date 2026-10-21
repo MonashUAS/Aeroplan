@@ -1,14 +1,15 @@
 """The multirotor path: hubs from a CAD arm, the seed, the CSV mass model, the Propalyser rotors, the EMST maths, the body-drag
 DAVE-ML, the demo shapes, the consumer check by vehicle kind and the datum rows. Every number here is synthetic.
 
-The EMST functions use numpy only, so these tests import `tools/aerosandbox/asb_worker.py` as a plain module. The tests that run the
-worker in the AeroSandbox Python skip without it (`python -m aeroplan setup AeroSandbox`).
+The EMST maths is `MultirotorModel` of `tools/aerosandbox/model.py`. It uses numpy only, so these tests import it as a plain module. The
+tests that run the jobs in the AeroSandbox Python skip without it (`python -m aeroplan setup AeroSandbox`).
 """
 import copy
 import csv
 import importlib.util
 import json
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -28,12 +29,58 @@ from sources import make_propalyser_h5
 
 ROOT = Path(__file__).resolve().parents[1]
 asb_spoke = load("AeroSandbox")
-runner, asb_spec = asb_spoke.runner, asb_spoke.asb_spec
+runner = asb_spec = asb_spoke
 needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
 
-_s = importlib.util.spec_from_file_location("asb_worker_under_test", runner.WORKER)
-worker = importlib.util.module_from_spec(_s)
-_s.loader.exec_module(worker)
+sys.path.insert(0, str(ROOT / "tools" / "aerosandbox"))
+import model as asb_model  # noqa: E402
+
+
+class _Worker:
+    """The EMST functions by their old names, on top of `MultirotorModel` (the flat model dict `m` is its `m`)."""
+    G0 = asb_model.G0
+    isa_density = staticmethod(asb_model.isa_density)
+    rotor_coeffs = staticmethod(asb_model.MultirotorModel.rotor_coeffs)
+
+    @staticmethod
+    def _mr(m):
+        return asb_model.MultirotorModel("test", m)
+
+    def emst_model(self, spec, rho):
+        return asb_model.MultirotorModel.from_spec("test", spec, rho).m
+
+    def emst_hover(self, m):
+        return self._mr(m).hover()
+
+    def emst_climb(self, m, rate):
+        return self._mr(m).climb(rate)
+
+    def emst_forward(self, m, speed):
+        return self._mr(m).forward(speed)
+
+    def emst_full_throttle(self, m):
+        return self._mr(m).full_throttle()
+
+    def emst_scan(self, m, v_max, step):
+        return self._mr(m).scan(v_max, step)
+
+    def emst_sensitivity(self, m, cells_s, step):
+        return self._mr(m).sensitivity(cells_s, step)
+
+    def body_force(self, u, v, w, n_sum, m):
+        return self._mr(m).body_force(u, v, w, n_sum)
+
+    def solve_speed(self, thrust_N, v_ax, m):
+        return self._mr(m).solve_speed(thrust_N, v_ax, m)
+
+    def throttle_command(self, p, m):
+        return self._mr(m).throttle_command(p)
+
+    def live_segment(self, name, climb, thrust_total, fns, m):
+        return self._mr(m)._live_segment(name, climb, thrust_total, fns)
+
+
+worker = _Worker()
 
 # --------------------------------------------------------------------------------------------------- test settings
 MR = {

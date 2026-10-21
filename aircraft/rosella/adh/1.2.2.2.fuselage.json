@@ -2291,15 +2291,15 @@
         "generator": "body",
         "units": "m",
         "material": "body",
-        "source": "body lofted from the ADH body cross sections (superellipse rule of rosella.py, settings fuselage). Width and height are stand-ins (0.24 x 0.18 m).",
+        "source": "body lofted from the ADH body cross sections (superellipse rule of component.Fuselage). Width and height are stand-ins (0.24 x 0.18 m).",
         "placeholder": true
       }
     ],
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-        "role": "Rosella sizing result H4_10S (rosella.py)"
+        "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+        "role": "Rosella model file and sizing result H4_12S"
       }
     ]
   }

@@ -17,7 +17,6 @@ One short file for each decision (Nygard format). A new decision gets the next n
 | [0011](0011-openvsp-in-its-own-python.md) | 2026-10-10 | OpenVSP runs in its own Python |
 | [0012](0012-specsheet-owns-the-mass-model.md) | 2026-10-15 | The Master Specification Sheet owns the mass model |
 | [0013](0013-mrp-stays-the-t7-cog.md) | 2026-10-15 | The MRP stays the CoG of the flow5 T7 analysis |
-| [0014](0014-notebooks-read-only.md) | 2026-10-15 | Notebooks run in the AeroSandbox Python and never write the source tree |
 | [0015](0015-wing-root-leading-edge-at-x-zero.md) | 2026-10-15 | The wing root leading edge sits at x = 0.000 |
 | [0016](0016-fuselage-body-fit-from-the-skin.md) | 2026-10-15 | The fuselage body is a fit of the Creo skin |
 | [0017](0017-flight-files-as-datasets.md) | 2026-10-16 | Flight files are datasets of the autopilot node |
@@ -27,3 +26,4 @@ One short file for each decision (Nygard format). A new decision gets the next n
 | [0021](0021-merge-ardupilot-and-missionplanner.md) | 2026-10-17 | One ArduPilot spoke for flight events and flight files |
 | [0022](0022-quadplane-path.md) | 2026-10-17 | Quadplane path |
 | [0023](0023-design-frame-origin-at-the-wing-le.md) | 2026-10-17 | The design frame starts at the root leading edge of the main wing |
+| [0024](0024-aircraft-models-in-code.md) | 2026-10-21 | Aircraft models are made in code, saved in one JSON file, and shown in evaluated notebooks |

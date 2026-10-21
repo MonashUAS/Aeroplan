@@ -2457,6 +2457,18 @@
           "description": "For example a roll-wrapped carbon tube",
           "title": "Material"
         },
+        "material_data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TubeMaterial"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The numbers of the material (modulus, density, strength)"
+        },
         "p0": {
           "anyOf": [
             {
@@ -2527,6 +2539,75 @@
         "source"
       ],
       "title": "Tube",
+      "type": "object"
+    },
+    "TubeMaterial": {
+      "additionalProperties": false,
+      "description": "The material of a tube: the numbers that the beam formulas of the sizing read. ADH has no material model, so it sits here\n(ADR 0024). `youngs_modulus` is the bending (tension) modulus, `youngs_modulus_compression` the modulus for local buckling.",
+      "properties": {
+        "compressive_strength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "density": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "placeholder": {
+          "default": false,
+          "title": "Placeholder",
+          "type": "boolean"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "tensile_strength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "youngs_modulus": {
+          "$ref": "#/$defs/Quantity",
+          "description": "Bending modulus (tension)"
+        },
+        "youngs_modulus_compression": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "youngs_modulus",
+        "density",
+        "source"
+      ],
+      "title": "TubeMaterial",
       "type": "object"
     },
     "Uncertainty": {

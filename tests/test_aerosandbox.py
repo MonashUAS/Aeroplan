@@ -14,7 +14,7 @@ from aeroplan.spokes import load
 from test_openvsp import HTAIL, make_doc
 
 asb_spoke = load("AeroSandbox")
-runner, asb_spec = asb_spoke.runner, asb_spoke.asb_spec
+runner = asb_spec = asb_spoke
 needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
 
 
@@ -104,7 +104,7 @@ def test_the_spec_keeps_the_si_values_and_the_placeholder_flags():
     assert spec["propulsion"]["battery"]["capacity_As"] == pytest.approx(18000.0)
     assert spec["propulsion"]["motor"]["kv_rad_s_V"] == KV_RAD            # the document holds SI: rad/s per volt
     assert spec["propulsion"]["motor"]["r_tot_ohm"] == 0.14
-    text = " ".join(asb_spec.placeholders(spec))
+    text = " ".join(asb_spec.spec_placeholders(spec))
     assert "mass model" in text and "point mass A" in text and "cruise speed" in text
 
 
@@ -180,27 +180,15 @@ def test_cruise_trim_balances_forces_moment_and_the_chain(tmp_path):
 NOTEBOOKS = sorted((runner.HERE / "notebooks").glob("*.ipynb"))
 
 
-def test_the_notebooks_are_committed_without_outputs():
-    """A notebook in git holds code only: outputs are big and change on every run."""
+def test_the_notebooks_are_committed_with_outputs_and_stay_small():
+    """A notebook in git holds its outputs, so GitHub shows the study (ADR 0024). A big output (a widget state, a figure) makes the
+    repository grow on every run: each notebook stays below 5 MB. The deprecated notebooks are old files, not checked."""
     import json
 
     assert NOTEBOOKS, "tools/aerosandbox/notebooks has no notebook"
     for nb in NOTEBOOKS:
-        cells = json.loads(nb.read_text(encoding="utf-8"))["cells"]
-        for i, c in enumerate(cells):
-            if c["cell_type"] == "code":
-                assert not c.get("outputs") and c.get("execution_count") is None, f"{nb.name} cell {i} has output"
-
-
-@needs_asb
-def test_lab_loads_the_committed_aircraft():
-    """lab.load in the AeroSandbox Python: the airplane, the flow5 model and the mass configurations of Currawong."""
-    import subprocess
-
-    code = ("import sys; sys.path.insert(0, %r); import lab; L = lab.load('currawong'); "
-            "r = lab.rollup(L.masses); print(round(r['mass_kg'], 3), len(L.airplane.wings), len(L.configs), "
-            "L.flow5_eval(0.0)['CL'] > 0)" % str(runner.HERE))
-    p = subprocess.run([str(runner.python()), "-I", "-c", code], capture_output=True, text=True, cwd=runner.HERE)
-    assert p.returncode == 0, p.stderr[-1500:]
-    mass, wings, configs, flow5 = p.stdout.split()
-    assert float(mass) > 1.0 and int(wings) == 3 and int(configs) >= 1 and flow5 == "True"
+        assert nb.stat().st_size < 5_000_000, f"{nb.name} is {nb.stat().st_size / 1e6:.1f} MB: strip the widget state"
+        d = json.loads(nb.read_text(encoding="utf-8"))
+        code = [c for c in d["cells"] if c["cell_type"] == "code"]
+        assert any(c.get("outputs") for c in code), f"{nb.name} has no outputs: run it and save it"
+        assert "widgets" not in d.get("metadata", {}), f"{nb.name} holds a widget state"

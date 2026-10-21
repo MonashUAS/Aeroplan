@@ -73,8 +73,8 @@
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-            "role": "Rosella sizing result H4_10S (rosella.py)",
+            "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+            "role": "Rosella model file and sizing result H4_12S",
             "note": "copy of aircraft/currawong htail"
           }
         ]
@@ -3237,8 +3237,8 @@
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-            "role": "Rosella sizing result H4_10S (rosella.py)",
+            "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+            "role": "Rosella model file and sizing result H4_12S",
             "note": "copy of aircraft/currawong fin"
           }
         ]

@@ -20,16 +20,16 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47758133914654866,
-                -0.47020000353265917,
+                -0.47834516199094756,
+                -0.4702000482328912,
                 -0.025471137578900176
               ],
               "p1": [
-                0.7635179371843084,
-                -0.47020000353265917,
+                0.7635179430614027,
+                -0.4702000482328912,
                 -0.025471137578900176
               ],
-              "radius_m": 0.02822477733676942
+              "radius_m": 0.0175
             },
             "material": "boom",
             "source": "Boom of the sizing result (outer radius, length).",
@@ -38,32 +38,57 @@
         ],
         "tube": {
           "radius": {
-            "value": 0.02822477733676942,
+            "value": 0.0175,
             "units": "m"
           },
           "inner_radius": {
-            "value": 0.027224777346450433,
+            "value": 0.0165,
             "units": "m"
           },
-          "material": "roll-wrapped carbon tube",
+          "material": "bought-tube carbon tube",
+          "material_data": {
+            "name": "bought_tube",
+            "youngs_modulus": {
+              "value": 80000000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "youngs_modulus_compression": {
+              "value": 69537480063.79585,
+              "units": "kg / m / s ** 2"
+            },
+            "density": {
+              "value": 1522.0,
+              "units": "kg / m ** 3"
+            },
+            "tensile_strength": {
+              "value": 372000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "compressive_strength": {
+              "value": 359000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "placeholder": true
+          },
           "p0": [
-            -0.47758133914654866,
-            -0.47020000353265917,
+            -0.47834516199094756,
+            -0.4702000482328912,
             -0.025471137578900176
           ],
           "p1": [
-            0.7635179371843084,
-            -0.47020000353265917,
+            0.7635179430614027,
+            -0.4702000482328912,
             -0.025471137578900176
           ],
-          "source": "H4_10S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
-          "placeholder": true
+          "source": "H4_12S sizing, boom component of tools/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm. Wall: user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
+          "placeholder": false
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-            "role": "Rosella sizing result H4_10S (rosella.py)"
+            "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+            "role": "Rosella model file and sizing result H4_12S"
           }
         ]
       }
@@ -82,16 +107,16 @@
             "units": "m",
             "shape": {
               "p0": [
-                -0.47758133914654866,
-                0.47020000353265917,
+                -0.47834516199094756,
+                0.4702000482328912,
                 -0.025471137578900176
               ],
               "p1": [
-                0.7635179371843084,
-                0.47020000353265917,
+                0.7635179430614027,
+                0.4702000482328912,
                 -0.025471137578900176
               ],
-              "radius_m": 0.02822477733676942
+              "radius_m": 0.0175
             },
             "material": "boom",
             "source": "Boom of the sizing result (outer radius, length).",
@@ -100,32 +125,57 @@
         ],
         "tube": {
           "radius": {
-            "value": 0.02822477733676942,
+            "value": 0.0175,
             "units": "m"
           },
           "inner_radius": {
-            "value": 0.027224777346450433,
+            "value": 0.0165,
             "units": "m"
           },
-          "material": "roll-wrapped carbon tube",
+          "material": "bought-tube carbon tube",
+          "material_data": {
+            "name": "bought_tube",
+            "youngs_modulus": {
+              "value": 80000000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "youngs_modulus_compression": {
+              "value": 69537480063.79585,
+              "units": "kg / m / s ** 2"
+            },
+            "density": {
+              "value": 1522.0,
+              "units": "kg / m ** 3"
+            },
+            "tensile_strength": {
+              "value": 372000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "compressive_strength": {
+              "value": 359000000.0,
+              "units": "kg / m / s ** 2"
+            },
+            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "placeholder": true
+          },
           "p0": [
-            -0.47758133914654866,
-            0.47020000353265917,
+            -0.47834516199094756,
+            0.4702000482328912,
             -0.025471137578900176
           ],
           "p1": [
-            0.7635179371843084,
-            0.47020000353265917,
+            0.7635179430614027,
+            0.4702000482328912,
             -0.025471137578900176
           ],
-          "source": "H4_10S sizing: outer radius, wall and length are design variables of rosella.py (material block of tools/aerosandbox/settings/rosella.yaml)",
-          "placeholder": true
+          "source": "H4_12S sizing, boom component of tools/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm. Wall: user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
+          "placeholder": false
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:6218c8343e2a35bfbe3d6f27152cf437c7885021eafaeddc5ca7469851b628ff",
-            "role": "Rosella sizing result H4_10S (rosella.py)"
+            "asset": "asset:sha256:29e397dd6c0a43145ff8b138129bae45ee130a13563274d50cc2ce7a119bf39f",
+            "role": "Rosella model file and sizing result H4_12S"
           }
         ]
       }

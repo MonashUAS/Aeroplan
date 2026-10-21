@@ -1,0 +1,1982 @@
+{
+ "format": "aeroplan-asb-model/1",
+ "aircraft": "rosella",
+ "model": "quadplane",
+ "config": {
+  "layout": "H4"
+ },
+ "components": {
+  "limits": {
+   "kind": "spec",
+   "name": "limits",
+   "params": {
+    "mtow_kg": {
+     "value": 15.0,
+     "units": "kg",
+     "source": "user requirement 2026-10-17"
+    },
+    "thrust_to_weight": {
+     "value": 2.5,
+     "units": "nd",
+     "source": "user requirement 2026-10-17 (hover thrust at full throttle over MTOW)"
+    },
+    "load_factor": {
+     "value": 3.0,
+     "units": "nd",
+     "source": "user requirement 2026-10-17 (3 g boom strength)"
+    },
+    "safety_factor": {
+     "value": 1.5,
+     "units": "nd",
+     "source": "stand-in: the usual factor for ultimate load on a composite part",
+     "placeholder": true
+    }
+   }
+  },
+  "mission": {
+   "kind": "mission",
+   "name": "mission",
+   "params": {
+    "climb_height_m": {
+     "value": 93.0,
+     "units": "m",
+     "source": "Redback flight 00000171 (2026-09-15), work/ardupilot/redback/00000171.BIN"
+    },
+    "climb_rate_m_s": {
+     "value": 2.6,
+     "units": "m/s",
+     "source": "same flight"
+    },
+    "transit_m": {
+     "value": 656.0,
+     "units": "m",
+     "source": "same flight"
+    },
+    "lap_length_m": {
+     "value": 3370.0,
+     "units": "m",
+     "source": "same flight, 10 endurance laps in place of 1"
+    },
+    "lap_count": {
+     "value": 10,
+     "units": "nd",
+     "source": "same flight, 10 endurance laps in place of 1"
+    },
+    "rtl_m": {
+     "value": 660.0,
+     "units": "m",
+     "source": "same flight"
+    },
+    "survey_lines": {
+     "value": 6,
+     "units": "nd",
+     "source": "same flight"
+    },
+    "survey_line_length_m": {
+     "value": 259.0,
+     "units": "m",
+     "source": "same flight"
+    },
+    "survey_turn_bank_deg": {
+     "value": 30.0,
+     "units": "deg",
+     "source": "same flight"
+    },
+    "deployment_hover_s": {
+     "value": 60.0,
+     "units": "s",
+     "source": "Mk4 sheet for the deployment hover"
+    },
+    "reserve_hover_s": {
+     "value": 300.0,
+     "units": "s",
+     "source": "user requirement 2026-10-17 (5 min reserve hover battery)"
+    },
+    "vtol_climb_m": {
+     "value": 30.0,
+     "units": "m",
+     "source": "vertical take-off climb height"
+    },
+    "vtol_climb_rate_m_s": {
+     "value": 2.5,
+     "units": "m/s",
+     "source": "vertical climb rate"
+    },
+    "vtol_descent_rate_m_s": {
+     "value": 1.5,
+     "units": "m/s",
+     "source": "vertical descent rate"
+    },
+    "transition_s": {
+     "value": 15.0,
+     "units": "s",
+     "source": "transition time, each way"
+    }
+   }
+  },
+  "airframe": {
+   "kind": "airframe",
+   "name": "airframe",
+   "params": {
+    "base": {
+     "value": "currawong",
+     "source": "wing, htail, fin and tail boom come from aircraft/currawong"
+    },
+    "static_margin_target": {
+     "value": 0.1,
+     "units": "nd",
+     "source": "user decision 2026-10-17: CG = NP - SM x MAC; 10 % MAC is the design choice",
+     "placeholder": true
+    },
+    "cg_nose_prop_m": {
+     "value": 0.8,
+     "units": "m",
+     "source": "user measurement 2026-10-17: CG about 0.800 m behind the nose propeller hub (estimate; the CG is a design output)"
+    }
+   }
+  },
+  "fuselage": {
+   "kind": "fuselage",
+   "name": "fuselage",
+   "params": {
+    "stations": {
+     "value": 21,
+     "units": "nd",
+     "source": "frames of the body"
+    },
+    "width_m": {
+     "value": 0.24,
+     "units": "m",
+     "source": "stand-in: the Currawong V1 maximum width (aircraft/currawong fuselage frames); size the bay for the real battery",
+     "placeholder": true
+    },
+    "height_m": {
+     "value": 0.18,
+     "units": "m",
+     "source": "stand-in: the Currawong V1 maximum height",
+     "placeholder": true
+    },
+    "superellipse_n": {
+     "value": 2.5,
+     "units": "nd",
+     "source": "section shape exponent"
+    },
+    "z_centre_m": {
+     "value": 0.02,
+     "units": "m",
+     "source": "axis height of the body"
+    },
+    "nose_behind_hub_m": {
+     "value": 0.07,
+     "units": "m",
+     "source": "Currawong V1 is 0.07 m behind the nose propeller hub at the nose"
+    },
+    "mass_kg_per_m2": {
+     "value": 1.0,
+     "units": "kg/m2",
+     "source": "stand-in: carbon/glass shell area density with bulkheads",
+     "placeholder": true
+    },
+    "bay_x_m": {
+     "value": [
+      -0.45,
+      0.4
+     ],
+     "units": "m",
+     "source": "stand-in: the battery centre can sit between these x (Currawong bay)",
+     "placeholder": true
+    },
+    "battery_Wh_per_L": {
+     "value": 330.0,
+     "units": "Wh/L",
+     "source": "stand-in: LiPo pack energy density for the bay check",
+     "placeholder": true
+    }
+   }
+  },
+  "boom_material": {
+   "kind": "material",
+   "name": "bought_tube",
+   "params": {
+    "E_Pa": {
+     "value": 80000000000.0,
+     "units": "Pa",
+     "source": "user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data"
+    },
+    "E_c_Pa": {
+     "value": 69537480063.79585,
+     "units": "Pa",
+     "source": "same page: 7.9 Msi compression"
+    },
+    "density_kg_m3": {
+     "value": 1522.0,
+     "units": "kg/m3",
+     "source": "page gives 0.055 with no unit; read as lb/in3 (not confirmed)",
+     "placeholder": true
+    },
+    "tensile_strength_Pa": {
+     "value": 372000000.0,
+     "units": "Pa",
+     "source": "same page: 54 ksi"
+    },
+    "compressive_strength_Pa": {
+     "value": 359000000.0,
+     "units": "Pa",
+     "source": "same page: 52 ksi"
+    },
+    "G_Pa": {
+     "value": 4500000000.0,
+     "units": "Pa",
+     "source": "stand-in: typical 2x2 twill tube shear modulus; no maker figure found",
+     "placeholder": true
+    },
+    "buckling_knockdown": {
+     "value": 0.5,
+     "units": "nd",
+     "source": "stand-in. NASA SP-8007 gives gamma = 1 - 0.901 (1 - exp(-phi)), phi = sqrt(R/t) / 29.8 (axial) and 0.731 in place of 0.901 for bending; the formula is from a search snippet, check it before use",
+     "placeholder": true
+    }
+   }
+  },
+  "boom": {
+   "kind": "tube",
+   "name": "boom",
+   "params": {
+    "r_o": {
+     "value": 0.0175,
+     "units": "m",
+     "source": "user 2026-10-21: the bought lift boom tube, outer radius 17.5 mm",
+     "lo": 0.008,
+     "hi": 0.045,
+     "scale": 0.01
+    },
+    "t": {
+     "value": 0.001,
+     "units": "m",
+     "source": "user 2026-10-21: the bought lift boom tube, wall 1.0 mm",
+     "lo": 0.001,
+     "hi": 0.005,
+     "scale": 0.001
+    },
+    "y": {
+     "value": 0.65,
+     "units": "m",
+     "source": "start value",
+     "free": true,
+     "lo": 0.35,
+     "hi": 1.0,
+     "scale": 0.65
+    },
+    "dx": {
+     "value": 0.0,
+     "units": "m",
+     "source": "boom clamp shift from the wing root mid-chord (stand-in until the spar x is in the tree)",
+     "placeholder": true,
+     "free": true,
+     "lo": -0.35,
+     "hi": 0.35,
+     "scale": 0.1
+    },
+    "a": {
+     "value": 0.5,
+     "units": "m",
+     "source": "start value",
+     "free": true,
+     "lo": 0.25,
+     "hi": 1.0,
+     "scale": 0.5
+    },
+    "overhang_m": {
+     "value": 0.06,
+     "units": "m",
+     "source": "stand-in: boom length beyond each hub",
+     "placeholder": true
+    },
+    "mount_offset_m": {
+     "value": 0.02,
+     "units": "m",
+     "source": "stand-in: thrust line offset from the boom axis (torsion arm)",
+     "placeholder": true
+    },
+    "clamp_kg": {
+     "value": 0.06,
+     "units": "kg",
+     "source": "stand-in: clamp at the wing, measure the part",
+     "placeholder": true
+    },
+    "min_wall_m": {
+     "value": 0.001,
+     "units": "m",
+     "source": "user decision 2026-10-17: 1.0 mm minimum wall"
+    },
+    "r_over_t_max": {
+     "value": 60.0,
+     "units": "nd",
+     "source": "stand-in: limit of the thin-wall tube formulas",
+     "placeholder": true
+    },
+    "tip_slope_max_deg": {
+     "value": 1.0,
+     "units": "deg",
+     "source": "stand-in: boom tip slope at T_max",
+     "placeholder": true
+    },
+    "resonance_margin": {
+     "value": 0.2,
+     "units": "nd",
+     "source": "stand-in: f1 stays outside 1P hover +/- 20 %. The principle (no coincidence of airframe and rotor frequency) is ISO 5109:2023. The margin is not from that text (not read)",
+     "placeholder": true
+    },
+    "resonance_side": {
+     "value": "below",
+     "source": "user decision 2026-10-21: the boom must not be resonant at or near the hover rpm. below: f1 under the band, so hover to full throttle is above the mode. Burela and Sujit 2026 (arXiv 2607.22768, V.C) use the stricter f1 >= 1.5 x blade passing at peak rpm"
+    },
+    "material": {
+     "value": "boom_material"
+    }
+   }
+  },
+  "rotor": {
+   "kind": "rotor",
+   "name": "rotor",
+   "params": {
+    "design": {
+     "value": "MAD_FLUXER_22x6_6",
+     "source": "Proptimiser design, Fit C of the MAD FLUXER 22x6.6 (Redback)"
+    },
+    "design_aircraft": {
+     "value": "redback",
+     "source": "work folder that holds the design file and the state file"
+    },
+    "reference_radius_m": {
+     "value": 0.2794,
+     "units": "m",
+     "source": "R_tip of the design file (D 559 mm). The scale s = R / 0.2794 gives other radii"
+    },
+    "scale": {
+     "value": 1.0,
+     "units": "nd",
+     "source": "R / reference radius. Bounds: 406 mm to 660 mm diameter (16 in to 26 in). User decision 2026-10-17: 762 mm gained only 5.5 % energy for a 36 % extrapolation of the FLUXER blade",
+     "free": true,
+     "lo": 0.7272727272727273,
+     "hi": 1.1818181818181819,
+     "scale": 1.0
+    },
+    "cant": {
+     "value": 0.05,
+     "units": "rad",
+     "source": "tilt of each rotor about its radial axis; range 0 to 10 deg",
+     "free": true,
+     "lo": 0.0,
+     "hi": 0.17453292519943295,
+     "scale": 0.1
+    },
+    "blade_diameter_m": {
+     "value": 0.5588,
+     "units": "m",
+     "source": "MAD FLUXER 22x6.6: 22 in, converted to SI"
+    },
+    "blade_pitch_m": {
+     "value": 0.16764,
+     "units": "m",
+     "source": "MAD FLUXER 22x6.6: 6.6 in, converted to SI. P/D is the pitch of an order sheet when the parts list gives none"
+    },
+    "mass_kg": {
+     "value": null
+    },
+    "pitch_m": {
+     "value": null
+    },
+    "prop_g_a_in2": {
+     "value": 0.1207,
+     "units": "g/in2",
+     "source": "AIAA 2016-0581 Eq. 5, carbon (m = p1 (2R)^2 + p2 (2R) + p3; the text gives no p3, so p3 = 0; 2R in inch, from the figure axis)"
+    },
+    "prop_g_b_in": {
+     "value": -0.5122,
+     "units": "g/in",
+     "source": "same equation, p2"
+    },
+    "tip_clearance_m": {
+     "value": 0.02,
+     "units": "m",
+     "source": "stand-in: gap between prop discs and the nearest structure",
+     "placeholder": true
+    },
+    "tip_mach_max": {
+     "value": 0.65,
+     "units": "nd",
+     "source": "stand-in: tip Mach limit of the NeuralFoil sections",
+     "placeholder": true
+    },
+    "coaxial_spacing_over_D": {
+     "value": 0.25,
+     "units": "nd",
+     "source": "Brazinskas et al. 2016: the 22 % loss holds for z/D > 0.25, so the pair is spaced at 0.25 D"
+    },
+    "table_omega_rad_s": {
+     "value": [
+      250.0,
+      388.0,
+      525.0,
+      663.0,
+      800.0
+     ],
+     "units": "rad/s",
+     "source": "numeric BEMT samples over the shaft speed range of the Opti variable"
+    },
+    "table_scale": {
+     "value": [
+      0.8,
+      1.0,
+      1.18
+     ],
+     "units": "nd",
+     "source": "geometric scale samples, inside the radius bounds"
+    },
+    "table_v_x_m_s": {
+     "value": [
+      0.0,
+      2.5
+     ],
+     "units": "m/s",
+     "source": "hover and the 2.5 m/s vertical climb of the mission"
+    },
+    "table_poly_degree": {
+     "value": 3,
+     "units": "nd",
+     "source": "stand-in: lowest degree with a fit error under 1 % of CT; see the printed RMS",
+     "placeholder": true
+    },
+    "momentum_omega_rad_s": {
+     "value": 435.0,
+     "units": "rad/s",
+     "source": "hover shaft speed of the base blade at about 37 N thrust (15 kg on 4 rotors); sets FM and the hover CT"
+    },
+    "momentum_scale": {
+     "value": 1.0,
+     "units": "nd",
+     "source": "scale of the momentum constants"
+    }
+   }
+  },
+  "cruise_rotor": {
+   "kind": "cruise_rotor",
+   "name": "cruise_rotor",
+   "params": {
+    "design": {
+     "value": "Currawong_V1",
+     "source": "aircraft/currawong propeller installation 1.2.3.9 (motor X5220)"
+    },
+    "design_aircraft": {
+     "value": "currawong",
+     "source": "work folder that holds the design file and the state file"
+    },
+    "table_omega_rad_s": {
+     "value": [
+      400.0,
+      500.0,
+      650.0,
+      800.0
+     ],
+     "units": "rad/s",
+     "source": "shaft speed range of the Opti variable of the cruise propeller"
+    },
+    "table_J": {
+     "value": [
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+     ],
+     "units": "nd",
+     "source": "advance ratio samples"
+    },
+    "table_fit_J_max": {
+     "value": 0.6,
+     "units": "nd",
+     "source": "the Currawong V1 blade gives CT below zero for J above 0.6; the fit covers the thrust range only"
+    },
+    "table_poly_degree": {
+     "value": 4,
+     "units": "nd",
+     "source": "stand-in: lowest degree with a fit error under 1 % of CT",
+     "placeholder": true
+    }
+   }
+  },
+  "motor": {
+   "kind": "motor",
+   "name": "motor",
+   "params": {
+    "kv": {
+     "value": 150.0,
+     "units": "rpm/V",
+     "source": "start value",
+     "free": true,
+     "lo": 60.0,
+     "hi": 450.0,
+     "scale": 150.0
+    },
+    "q_cap": {
+     "value": 3.0,
+     "units": "N*m",
+     "source": "torque the motor holds for the 180 s peak current, (Imax - I0)/Kv of the survey",
+     "free": true,
+     "lo": 0.5,
+     "hi": 9.0,
+     "scale": 3.0
+    },
+    "survey": {
+     "value": "data/motor_survey.csv",
+     "source": "sourced motor table (tools/aerosandbox/data)"
+    },
+    "kv_min": {
+     "value": 60.0,
+     "units": "rpm/V",
+     "source": "rows of the survey used by the fit"
+    },
+    "kv_max": {
+     "value": 450.0,
+     "units": "rpm/V",
+     "source": "rows of the survey used by the fit"
+    },
+    "mass_min_g": {
+     "value": 150.0,
+     "units": "g",
+     "source": "rows of the survey used by the fit"
+    },
+    "mass_max_g": {
+     "value": 1600.0,
+     "units": "g",
+     "source": "rows of the survey used by the fit"
+    },
+    "mass_kg": {
+     "value": null
+    },
+    "rm_ohm": {
+     "value": null
+    },
+    "i0_A": {
+     "value": null
+    },
+    "mount_kg": {
+     "value": 0.045,
+     "units": "kg",
+     "source": "stand-in: Redback motor mount mass, check against aircraft/redback",
+     "placeholder": true
+    }
+   }
+  },
+  "esc": {
+   "kind": "esc",
+   "name": "esc",
+   "params": {
+    "g_per_A": {
+     "value": 0.8421,
+     "units": "g/A",
+     "source": "AIAA 2016-0581 Eq. 2"
+    },
+    "peak_factor": {
+     "value": 1.2,
+     "units": "nd",
+     "source": "stand-in: ESC rated at 1.2 times the peak motor current",
+     "placeholder": true
+    },
+    "re_ohm": {
+     "value": 0.02,
+     "units": "ohm",
+     "source": "stand-in: ESC resistance, inside the 9 to 45 mOhm range of AIAA 2016-0581 section II.B",
+     "placeholder": true
+    },
+    "duty_max": {
+     "value": 0.95,
+     "units": "nd",
+     "source": "stand-in: ESC duty limit with a margin for the control",
+     "placeholder": true
+    },
+    "mass_kg": {
+     "value": null
+    },
+    "current_A": {
+     "value": null
+    }
+   }
+  },
+  "battery": {
+   "kind": "battery",
+   "name": "battery",
+   "params": {
+    "cells_s": {
+     "value": 12,
+     "units": "nd",
+     "source": "team decision: H4 12S is the most efficient"
+    },
+    "cap_Ah": {
+     "value": 14.0,
+     "units": "A*h",
+     "source": "start value",
+     "free": true,
+     "lo": 2.0,
+     "hi": 60.0,
+     "scale": 14.0
+    },
+    "x_m": {
+     "value": 0.0,
+     "units": "m",
+     "source": "x of the pack centre; between the bay limits (stand-in: Currawong bay)",
+     "placeholder": true,
+     "free": true,
+     "lo": -0.45,
+     "hi": 0.4,
+     "scale": 0.1
+    },
+    "cell_nominal_V": {
+     "value": 3.7,
+     "units": "V",
+     "source": "LiPo, Gens ace listing: 22.2 V for 6S"
+    },
+    "cell_end_V": {
+     "value": 3.5,
+     "units": "V",
+     "source": "stand-in: cell voltage at the end of the reserve, under no load",
+     "placeholder": true
+    },
+    "cell_resistance_mohm": {
+     "value": 5.0,
+     "units": "mohm",
+     "source": "stand-in: makers say 'low IR' only. Measure the packs or read the maker sheet",
+     "placeholder": true
+    },
+    "c_rate_max": {
+     "value": 25.0,
+     "units": "1/h",
+     "source": "Gens ace / Tattu 4500 mAh 25C pack, maximum continuous"
+    },
+    "usable_fraction": {
+     "value": 0.8,
+     "units": "nd",
+     "source": "stand-in: usable depth of discharge of a LiPo pack",
+     "placeholder": true
+    },
+    "eq4_p1": {
+     "value": 0.026373,
+     "units": "g/(mAh)",
+     "source": "AIAA 2016-0581 Eq. 4: m = (p1 s + p2) C, g, C in mAh"
+    },
+    "eq4_p2": {
+     "value": 2.0499e-05,
+     "units": "g/(mAh)",
+     "source": "AIAA 2016-0581 Eq. 4"
+    },
+    "cal_cells_s": {
+     "value": 6,
+     "units": "nd",
+     "source": "calibration pack: Gens ace / Tattu 4500 mAh 22.2 V 25C 6S1P"
+    },
+    "cal_capacity_Ah": {
+     "value": 4.5,
+     "units": "A*h",
+     "source": "calibration pack capacity"
+    },
+    "cal_mass_kg": {
+     "value": 0.631,
+     "units": "kg",
+     "source": "Propalyser component for the NXE 6S 4500 pack (631 g, 99.9 Wh). The Gens ace listing says 610 g"
+    },
+    "mass_kg": {
+     "value": null
+    }
+   }
+  },
+  "cables": {
+   "kind": "cables",
+   "name": "cables",
+   "params": {
+    "current_density_A_m2": {
+     "value": 10000000.0,
+     "units": "A/m2",
+     "source": "stand-in: 10 A/mm2 for short silicone leads in free air; ampacity table not found",
+     "placeholder": true
+    },
+    "insulation_factor": {
+     "value": 1.4,
+     "units": "nd",
+     "source": "stand-in: mass of insulation as a fraction on the copper mass",
+     "placeholder": true
+    },
+    "run_extra_m": {
+     "value": 0.15,
+     "units": "m",
+     "source": "stand-in: extra lead length for routing at each end of the run",
+     "placeholder": true
+    }
+   }
+  },
+  "avionics": {
+   "kind": "point_mass",
+   "name": "avionics",
+   "params": {
+    "mass_kg": {
+     "value": 0.35,
+     "units": "kg",
+     "source": "stand-in: autopilot, GPS, receiver, telemetry",
+     "placeholder": true
+    },
+    "power_W": {
+     "value": 25.0,
+     "units": "W",
+     "source": "stand-in: autopilot, GPS, receiver, telemetry, camera, servos",
+     "placeholder": true
+    }
+   }
+  },
+  "landing_gear": {
+   "kind": "point_mass",
+   "name": "landing_gear",
+   "params": {
+    "mass_kg": {
+     "value": 0.6,
+     "units": "kg",
+     "source": "stand-in: VTOL skids; the Currawong gear is 1.32 kg",
+     "placeholder": true
+    },
+    "x_m": {
+     "value": 0.16,
+     "units": "m",
+     "source": "Currawong gear x"
+    },
+    "z_m": {
+     "value": -0.1,
+     "units": "m",
+     "source": "gear height"
+    }
+   }
+  },
+  "cargo": {
+   "kind": "point_mass",
+   "name": "cargo",
+   "params": {
+    "mass_kg": {
+     "value": 0.572,
+     "units": "kg",
+     "source": "aircraft/redback 1.2.17 cargo"
+    },
+    "x_from_cg": {
+     "value": 0.0,
+     "units": "m",
+     "source": "cargo sits at the CG"
+    }
+   }
+  },
+  "camera": {
+   "kind": "point_mass",
+   "name": "camera",
+   "params": {
+    "mass_kg": {
+     "value": 0.11,
+     "units": "kg",
+     "source": "SIYI A8 mini"
+    },
+    "x_m": {
+     "value": -0.45,
+     "units": "m",
+     "source": "camera x"
+    },
+    "z_m": {
+     "value": -0.05,
+     "units": "m",
+     "source": "camera z"
+    }
+   }
+  },
+  "cruise_aero": {
+   "kind": "spec",
+   "name": "cruise_aero",
+   "params": {
+    "boom_cf": {
+     "value": 0.0045,
+     "units": "nd",
+     "source": "stand-in: skin friction of a smooth tube at Re about 1e6 (flat plate, turbulent)",
+     "placeholder": true
+    },
+    "boom_form_factor": {
+     "value": 1.2,
+     "units": "nd",
+     "source": "stand-in: Hoerner form factor of a cylinder along the flow",
+     "placeholder": true
+    },
+    "nacelle_cda_m2": {
+     "value": 0.001,
+     "units": "m2",
+     "source": "stand-in: drag area of one motor and mount in the flow",
+     "placeholder": true
+    },
+    "stopped_prop_cda_per_r2": {
+     "value": 0.01,
+     "units": "nd",
+     "source": "stand-in: drag area of a stopped prop aligned with the flow, per m2 of R squared",
+     "placeholder": true
+    },
+    "cl_max_usable_factor": {
+     "value": 0.85,
+     "units": "nd",
+     "source": "stand-in: factor on the AeroBuildup CL at 12 deg",
+     "placeholder": true
+    },
+    "stall_margin": {
+     "value": 1.3,
+     "units": "nd",
+     "source": "1.3 Vs (user plan)"
+    },
+    "map_turn_radius_m": {
+     "value": 40.0,
+     "units": "m",
+     "source": "stand-in: 30 deg bank turns at 15 m/s",
+     "placeholder": true
+    }
+   }
+  },
+  "control": {
+   "kind": "control",
+   "name": "control",
+   "params": {
+    "bandwidth_rad_s": {
+     "value": 2.0,
+     "units": "rad/s",
+     "source": "ADS-33E-PRF, 'all other MTEs and divided attention', Level 1 (Ivler et al., Toward a UAS Handling Qualities Specification, Methodology)"
+    },
+    "bandwidth_length_m": {
+     "value": 11.9,
+     "units": "m",
+     "source": "derived: 1.8 ft x 21.7 = 39 ft (Ivler et al., Table 2 and Eq. 1)"
+    },
+    "amplitude_rad": {
+     "value": 0.1745,
+     "units": "rad",
+     "source": "stand-in: 10 deg, the heading tolerance of the Ivler MTE tables. Not a figure for roll or pitch",
+     "placeholder": true
+    },
+    "margin": {
+     "value": 1.2,
+     "units": "nd",
+     "source": "stand-in: factor on the required angular acceleration",
+     "placeholder": true
+    },
+    "yaw_rad_s2": {
+     "value": 1.5,
+     "units": "rad/s2",
+     "source": "user decision 2026-10-17 after a sweep of 0.5 to 3.0 (cost 2 Wh above 1.0, cant 5.6 deg). No yaw figure in Ivler et al.",
+     "placeholder": true
+    },
+    "idle_thrust_fraction": {
+     "value": 0.15,
+     "units": "nd",
+     "source": "stand-in: lowest rotor thrust in flight as a fraction of the hover thrust",
+     "placeholder": true
+    },
+    "k_int": {
+     "value": 1.28,
+     "units": "nd",
+     "source": "derived: 1 / (1 - 0.22), the power factor at equal thrust (Brazinskas et al. 2016, abstract: 22 % loss for torque-balanced coaxial at z/D > 0.25). Leishman and Syal case 4b gives 1.26"
+    }
+   }
+  }
+ },
+ "result": {
+  "config": "H4",
+  "cells_s": 12,
+  "converged": true,
+  "ok": true,
+  "error": "",
+  "status_word": "ok",
+  "level": "L4",
+  "design": {
+   "t_boom": 0.001,
+   "r_boom": 0.0175,
+   "y_b": 0.4702000482328912,
+   "dx": -0.05268559620096357,
+   "a": 0.5609315525261752,
+   "scale": 1.181818188903959,
+   "kv": 136.60504194162743,
+   "q_cap": 2.3390779585174206,
+   "cant": 0.06870847339875287,
+   "cap_Ah": 8.836506324315653,
+   "x_batt": -0.21096732305549334
+  },
+  "R_m": 0.3302000019797661,
+  "D_m": 0.6604000039595322,
+  "names": {
+   "M": 13.198648511944679,
+   "m_motor": 0.30138425716218487,
+   "m_prop": 0.0682760008985644,
+   "m_esc": 0.03479070013165642,
+   "m_wire": 0.43765852452972265,
+   "m_batt": 2.4779886113745144,
+   "m_boom": 0.40378219307422547,
+   "rm": 0.09091712461943376,
+   "i0": 0.9674250979348632,
+   "I_pk": 34.428512183486156,
+   "R_b": 0.030555062158110352,
+   "Th": 32.43516233082716,
+   "Qh": 0.935153152572137,
+   "W": 129.43452642966227,
+   "share_f": 0.5030645149323802,
+   "x_f": -0.4183451619909476,
+   "x_r": 0.7035179430614028,
+   "x_c": 0.14258639053522756,
+   "L_boom": 1.2418631050523503,
+   "V_lap": 16.87986302272474,
+   "V_map": 17.217467371355234,
+   "Vs": 12.589981673017673,
+   "m_fuse": 0.6424153501965915,
+   "A_cu": 3.4428512183486154e-06,
+   "R": 0.3302000019797661,
+   "D": 0.6604000039595322,
+   "kv_rad": 14.305246540238077,
+   "r_i": 0.0165,
+   "sigma_cr": 1237358101.1351907,
+   "L_run_f": 0.9132899905514855,
+   "L_run_r": 1.620211125860825,
+   "R_w_f": 0.009146558151101198,
+   "R_w_r": 0.016226341504956807,
+   "E_Wh": 313.87270420811257
+  },
+  "c_ref_m": 0.33,
+  "boom_z_m": -0.025471137578900176,
+  "rotor_z_m": -0.005471137578900175,
+  "spacing_m": null,
+  "boom_material": {
+   "E_Pa": 80000000000.0,
+   "E_c_Pa": 69537480063.79585,
+   "rho_kg_m3": 1522.0
+  },
+  "pitch_m": 0.1981200011878597,
+  "pitch_note": "no pitch given: P/D of the base blade (MAD_FLUXER_22x6_6), scaled",
+  "energy_Wh": {
+   "vtol_takeoff_climb": 5.2956503905896675,
+   "transitions": 11.149537911865883,
+   "fw_climb": 6.167929866427364,
+   "transit_laps_rtl": 149.20425089445868,
+   "survey": 9.578308166468439,
+   "deploy_hover": 20.917425312363566,
+   "landing": 6.972475104121187,
+   "reserve": 104.58712656181781
+  },
+  "energy_total_Wh": 313.87270420811257,
+  "energy_nominal_Wh": 392.34088079961504,
+  "time_s": {
+   "vtol_takeoff_climb": 12.0,
+   "transitions": 30.0,
+   "fw_climb": 24.23076923076923,
+   "transit_laps_rtl": 2074.4244164102065,
+   "survey": 126.75026376694,
+   "deploy_hover": 60.0,
+   "landing": 20.0,
+   "reserve": 300.0
+  },
+  "inertia_kg_m2": {
+   "ixx": 2.9373707877097277,
+   "iyy": 3.851997096329135,
+   "izz": 6.7594651512577
+  },
+  "control": {
+   "alpha_req": 6.808943367086357,
+   "w_bw": 5.7023191745897375,
+   "L_hub": 1.4638747104552883,
+   "roll": 17.653015019795507,
+   "pitch": 16.059015291581197,
+   "yaw": 1.500000140479941
+  },
+  "cruise": {
+   "lap": {
+    "V": 16.87986302272474,
+    "drag_N": 7.852005648281956,
+    "omega": 485.35881780697343,
+    "P": 258.9322122179628,
+    "eta_total": 0.5118744349412064,
+    "CL": 0.689149145777339,
+    "I": 10.857595406634893,
+    "thrust": 7.852005649495583,
+    "Q": 0.38447184351109365
+   },
+   "map": {
+    "V": 17.217467371355234,
+    "drag_N": 8.215386811259002,
+    "omega": 494.6899255511151,
+    "P": 272.0460563513259,
+    "eta_total": 0.5199419399607866,
+    "CL": 0.6934450816456706,
+    "I": 11.234270221173984,
+    "thrust": 8.215386807313932,
+    "Q": 0.4008217504216717
+   }
+  },
+  "cda_m2": {
+   "boom": 0.0014747397868715424,
+   "nacelles": 0.004,
+   "stopped_props": 0.004361281652297502
+  },
+  "P_battery_W": {
+   "H_TO": 1337.9445494239058,
+   "C_TO": 1588.6951171769,
+   "H_L": 1255.0455187418138,
+   "MAX": 5448.044553955543
+  },
+  "I_battery_max_A": 119.35213697417228,
+  "V_bus_max_V": 38.35318803605087,
+  "f1_Hz": 33.6123934164021,
+  "f_hover_1P_Hz": 47.14205273736417,
+  "structure": [
+   {
+    "F_N": 81.58489573205948,
+    "sigma_Pa": 79142139.35650404,
+    "von_mises_Pa": 79178557.46452883,
+    "slope_deg": 0.5950589486412043
+   },
+   {
+    "F_N": 13.222824717472665,
+    "sigma_Pa": 14439897.217187488,
+    "von_mises_Pa": 14445140.594230987,
+    "slope_deg": 0.09644383441130361
+   },
+   {
+    "F_N": 80.59091615083868,
+    "sigma_Pa": 78193463.50164995,
+    "von_mises_Pa": 78229430.76668487,
+    "slope_deg": 0.5878091208481456
+   },
+   {
+    "F_N": 13.222824717472665,
+    "sigma_Pa": 14426560.530223267,
+    "von_mises_Pa": 14431808.752764042,
+    "slope_deg": 0.09644383441130361
+   }
+  ],
+  "rotors": {
+   "H_TO_f": {
+    "omega_rad_s": 296.20225310969175,
+    "rpm": 2828.5231642418503,
+    "Q_Nm": 0.9408062101624685,
+    "T_N": 32.63395829325445,
+    "P_shaft_W": 278.66891918971334,
+    "I_A": 14.425889880896012,
+    "Pe_W": 323.6862843699042
+   },
+   "H_TO_r": {
+    "omega_rad_s": 294.4368071401755,
+    "rpm": 2811.66439707324,
+    "Q_Nm": 0.9295000949818055,
+    "T_N": 32.2363664605392,
+    "P_shaft_W": 273.6790402029327,
+    "I_A": 14.2641531158243,
+    "Pe_W": 319.4603850329063
+   },
+   "C_TO_f": {
+    "omega_rad_s": 312.81660101068053,
+    "rpm": 2987.1784999232996,
+    "Q_Nm": 1.0597737844559632,
+    "T_N": 32.63395829140618,
+    "P_shaft_W": 331.51483309374,
+    "I_A": 16.127750361458542,
+    "Pe_W": 383.8988569686392
+   },
+   "C_TO_r": {
+    "omega_rad_s": 311.0641219123316,
+    "rpm": 2970.4435572532516,
+    "Q_Nm": 1.0476788336835694,
+    "T_N": 32.23636645910127,
+    "P_shaft_W": 325.8952964459152,
+    "I_A": 15.954729108767408,
+    "Pe_W": 379.29652009810565
+   },
+   "H_L_f": {
+    "omega_rad_s": 289.8562214526716,
+    "rpm": 2767.9230258079056,
+    "Q_Nm": 0.9004718041272761,
+    "T_N": 31.219675298339236,
+    "P_shaft_W": 261.0073546690025,
+    "I_A": 13.848896258508518,
+    "Pe_W": 303.6367914099249
+   },
+   "H_L_r": {
+    "omega_rad_s": 288.11987131032856,
+    "rpm": 2751.342103322373,
+    "Q_Nm": 0.8895863041959395,
+    "T_N": 30.839314209574134,
+    "P_shaft_W": 256.3074914843649,
+    "I_A": 13.693176498277003,
+    "Pe_W": 299.6320502472499
+   },
+   "MAX_f": {
+    "omega_rad_s": 462.0866281722598,
+    "rpm": 4412.602260616908,
+    "Q_Nm": 2.3390779390302803,
+    "T_N": 81.58489573205948,
+    "P_shaft_W": 1080.8566378786209,
+    "I_A": 34.428511692594995,
+    "Pe_W": 1254.4204803316657
+   },
+   "MAX_r": {
+    "omega_rad_s": 459.34611992319566,
+    "rpm": 4386.432334551548,
+    "Q_Nm": 2.310401658961168,
+    "T_N": 80.59091615083868,
+    "P_shaft_W": 1061.2740375079268,
+    "I_A": 34.018290436349425,
+    "Pe_W": 1239.4743961259524
+   }
+  },
+  "items": [
+   {
+    "name": "wing",
+    "mass_kg": 0.2817104404950413,
+    "x": 0.1641407076655567,
+    "y": 0.13750332045837782,
+    "z": -0.0012423079529582416
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.2658197555322014,
+    "x": 0.1535318406760365,
+    "y": 0.4125099613751334,
+    "z": 0.009875588521229706
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.24998077936813398,
+    "x": 0.14292297368651638,
+    "y": 0.6875166022918892,
+    "z": 0.020993484995417658
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.2332550319250213,
+    "x": 0.13168751678594598,
+    "y": 0.9625202123533719,
+    "z": 0.03200959115262634
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.21749026346763667,
+    "x": 0.12109452348673069,
+    "y": 1.2375141680322757,
+    "z": 0.042706002660618095
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.20174372921196534,
+    "x": 0.11049045210730174,
+    "y": 1.5125060290475028,
+    "z": 0.05333532788015943
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.2817104404950413,
+    "x": 0.1641407076655567,
+    "y": -0.13750332045837782,
+    "z": -0.0012423079529582416
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.2658197555322014,
+    "x": 0.1535318406760365,
+    "y": -0.4125099613751334,
+    "z": 0.009875588521229706
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.24998077936813398,
+    "x": 0.14292297368651638,
+    "y": -0.6875166022918892,
+    "z": 0.020993484995417658
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.2332550319250213,
+    "x": 0.13168751678594598,
+    "y": -0.9625202123533719,
+    "z": 0.03200959115262634
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.21749026346763667,
+    "x": 0.12109452348673069,
+    "y": -1.2375141680322757,
+    "z": 0.042706002660618095
+   },
+   {
+    "name": "wing",
+    "mass_kg": 0.20174372921196534,
+    "x": 0.11049045210730174,
+    "y": -1.5125060290475028,
+    "z": 0.05333532788015943
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.10055981223664391,
+    "x": 1.5400134975318478,
+    "y": 0.03108380519945251,
+    "z": -0.044370977425871955
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09722263092996836,
+    "x": 1.5441860840425619,
+    "y": 0.09325141559835753,
+    "z": -0.04418150138115377
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09388544962329268,
+    "x": 1.548358670553276,
+    "y": 0.15541902599726254,
+    "z": -0.043992025336435606
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09054826831661712,
+    "x": 1.5525312570639902,
+    "y": 0.21758663639616757,
+    "z": -0.043802549291717424
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.08721108700994146,
+    "x": 1.5567038435747043,
+    "y": 0.27975424679507255,
+    "z": -0.04361307324699925
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.08383775188353645,
+    "x": 1.5608510965767843,
+    "y": 0.34191951536530224,
+    "z": -0.04342474759017656
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.10055981223664391,
+    "x": 1.5400134975318478,
+    "y": -0.03108380519945251,
+    "z": -0.044370977425871955
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09722263092996836,
+    "x": 1.5441860840425619,
+    "y": -0.09325141559835753,
+    "z": -0.04418150138115377
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09388544962329268,
+    "x": 1.548358670553276,
+    "y": -0.15541902599726254,
+    "z": -0.043992025336435606
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.09054826831661712,
+    "x": 1.5525312570639902,
+    "y": -0.21758663639616757,
+    "z": -0.043802549291717424
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.08721108700994146,
+    "x": 1.5567038435747043,
+    "y": -0.27975424679507255,
+    "z": -0.04361307324699925
+   },
+   {
+    "name": "tail",
+    "mass_kg": 0.08383775188353645,
+    "x": 1.5608510965767843,
+    "y": -0.34191951536530224,
+    "z": -0.04342474759017656
+   },
+   {
+    "name": "tail_boom",
+    "mass_kg": 0.20347,
+    "x": 0.792321,
+    "y": 0.0,
+    "z": 0.0
+   },
+   {
+    "name": "avionics",
+    "mass_kg": 0.609,
+    "x": 0.044369561718928564,
+    "y": 0.0,
+    "z": 0.0
+   },
+   {
+    "name": "avionics_vtol",
+    "mass_kg": 0.35,
+    "x": 0.13914842429770818,
+    "y": 0.0,
+    "z": 0.0
+   },
+   {
+    "name": "fuselage",
+    "mass_kg": 0.6424153501965915,
+    "x": -0.014794897958627928,
+    "y": 0.0,
+    "z": 0.02
+   },
+   {
+    "name": "payload_cargo",
+    "mass_kg": 0.572,
+    "x": 0.13914842429770818,
+    "y": 0.0,
+    "z": 0.0
+   },
+   {
+    "name": "payload_camera",
+    "mass_kg": 0.11,
+    "x": -0.45,
+    "y": 0.0,
+    "z": -0.05
+   },
+   {
+    "name": "landing_gear",
+    "mass_kg": 0.6,
+    "x": 0.16,
+    "y": 0.0,
+    "z": -0.1
+   },
+   {
+    "name": "cruise_motor",
+    "mass_kg": 0.436,
+    "x": -0.6225235757022919,
+    "y": 0.0,
+    "z": -0.035
+   },
+   {
+    "name": "cruise_esc",
+    "mass_kg": 0.208,
+    "x": -0.5152907757022919,
+    "y": 0.0,
+    "z": -0.035
+   },
+   {
+    "name": "cruise_prop",
+    "mass_kg": 0.045,
+    "x": -0.6482735757022919,
+    "y": 0.0,
+    "z": -0.035
+   },
+   {
+    "name": "cruise_rest",
+    "mass_kg": 0.179,
+    "x": -0.5542295355915808,
+    "y": 0.0,
+    "z": -0.035
+   },
+   {
+    "name": "battery",
+    "mass_kg": 2.4779886113745144,
+    "x": -0.21096732305549334,
+    "y": 0.0,
+    "z": 0.0
+   },
+   {
+    "name": "boom",
+    "mass_kg": 0.20189109653711274,
+    "x": 0.14258639053522756,
+    "y": -0.4702000482328912,
+    "z": -0.025471137578900176
+   },
+   {
+    "name": "boom_clamp",
+    "mass_kg": 0.06,
+    "x": 0.14258639053522756,
+    "y": -0.4702000482328912,
+    "z": -0.025471137578900176
+   },
+   {
+    "name": "lift_front",
+    "mass_kg": 0.44945095819240566,
+    "x": -0.4183451619909476,
+    "y": -0.4702000482328912,
+    "z": -0.005471137578900175
+   },
+   {
+    "name": "lift_rear",
+    "mass_kg": 0.44945095819240566,
+    "x": 0.7035179430614028,
+    "y": -0.4702000482328912,
+    "z": -0.005471137578900175
+   },
+   {
+    "name": "boom",
+    "mass_kg": 0.20189109653711274,
+    "x": 0.14258639053522756,
+    "y": 0.4702000482328912,
+    "z": -0.025471137578900176
+   },
+   {
+    "name": "boom_clamp",
+    "mass_kg": 0.06,
+    "x": 0.14258639053522756,
+    "y": 0.4702000482328912,
+    "z": -0.025471137578900176
+   },
+   {
+    "name": "lift_front",
+    "mass_kg": 0.44945095819240566,
+    "x": -0.4183451619909476,
+    "y": 0.4702000482328912,
+    "z": -0.005471137578900175
+   },
+   {
+    "name": "lift_rear",
+    "mass_kg": 0.44945095819240566,
+    "x": 0.7035179430614028,
+    "y": 0.4702000482328912,
+    "z": -0.005471137578900175
+   },
+   {
+    "name": "cables",
+    "mass_kg": 0.43765852452972265,
+    "x": 0.14258639053522756,
+    "y": 0.0,
+    "z": -0.012735568789450088
+   }
+  ],
+  "airframe": {
+   "c_ref_m": 0.33,
+   "htail_le_x_m": 1.422,
+   "neutral_point_m": 0.17214842429770819,
+   "x_cg_m": 0.13914842429770818,
+   "x_nose_hub_m": -0.6608515757022919,
+   "polar": {
+    "cd0": 0.013780899012968256,
+    "k": 0.039766157933393574,
+    "cl_max": 1.4574106432128429
+   }
+  },
+  "placeholders": [
+   "limits.safety_factor",
+   "airframe.static_margin_target",
+   "fuselage.width_m",
+   "fuselage.height_m",
+   "fuselage.mass_kg_per_m2",
+   "fuselage.bay_x_m",
+   "fuselage.battery_Wh_per_L",
+   "bought_tube.density_kg_m3",
+   "bought_tube.G_Pa",
+   "bought_tube.buckling_knockdown",
+   "boom.dx",
+   "boom.overhang_m",
+   "boom.mount_offset_m",
+   "boom.clamp_kg",
+   "boom.r_over_t_max",
+   "boom.tip_slope_max_deg",
+   "boom.resonance_margin",
+   "rotor.tip_clearance_m",
+   "rotor.tip_mach_max",
+   "rotor.table_poly_degree",
+   "cruise_rotor.table_poly_degree",
+   "motor.mount_kg",
+   "esc.peak_factor",
+   "esc.re_ohm",
+   "esc.duty_max",
+   "battery.x_m",
+   "battery.cell_end_V",
+   "battery.cell_resistance_mohm",
+   "battery.usable_fraction",
+   "cables.current_density_A_m2",
+   "cables.insulation_factor",
+   "cables.run_extra_m",
+   "avionics.mass_kg",
+   "avionics.power_W",
+   "landing_gear.mass_kg",
+   "cruise_aero.boom_cf",
+   "cruise_aero.boom_form_factor",
+   "cruise_aero.nacelle_cda_m2",
+   "cruise_aero.stopped_prop_cda_per_r2",
+   "cruise_aero.cl_max_usable_factor",
+   "cruise_aero.map_turn_radius_m",
+   "control.amplitude_rad",
+   "control.margin",
+   "control.yaw_rad_s2",
+   "control.idle_thrust_fraction"
+  ],
+  "case": "H4_12S",
+  "constraints": {
+   "mtow_kg": {
+    "value": 13.198648511944679,
+    "hi": 15.0,
+    "group": "mass",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.12009009920368806,
+    "cost_Wh_per_unit": 2.7326786040457515e-07
+   },
+   "cg_x_m": {
+    "value": 0.13914842437732441,
+    "lo": 0.13914842429770818,
+    "hi": 0.13914842429770818,
+    "group": "cg",
+    "enabled": true,
+    "equality": true,
+    "margin": -5.721676740288009e-10
+   },
+   "tip_mach_H_TO_f": {
+    "value": 97.8059845632314,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5578291346403337,
+    "cost_Wh_per_unit": 3.9975293232586555e-09
+   },
+   "tip_mach_H_TO_r": {
+    "value": 97.22303430060197,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5604645932294945,
+    "cost_Wh_per_unit": 3.950540381656905e-09
+   },
+   "tip_mach_C_TO_f": {
+    "value": 103.29204227303042,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5330272281334099,
+    "cost_Wh_per_unit": 4.184153638908884e-09
+   },
+   "tip_mach_C_TO_r": {
+    "value": 102.7133736712861,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5356433297710794,
+    "cost_Wh_per_unit": 4.133073813430966e-09
+   },
+   "tip_mach_H_L_f": {
+    "value": 95.71052489751969,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5673024937384675,
+    "cost_Wh_per_unit": 3.930335236666624e-09
+   },
+   "tip_mach_H_L_r": {
+    "value": 95.13718207708045,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5698945180628837,
+    "cost_Wh_per_unit": 3.885641638471738e-09
+   },
+   "tip_mach_MAX_f": {
+    "value": 152.58100553730364,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.31019686006779706,
+    "cost_Wh_per_unit": 7.235802414807806e-09
+   },
+   "tip_mach_MAX_r": {
+    "value": 151.6760897080371,
+    "hi": 221.19500000000002,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.3142878920950425,
+    "cost_Wh_per_unit": 7.001907065175538e-09
+   },
+   "motor_torque_front": {
+    "value": 2.3390779390302803,
+    "hi": 2.3390779585174206,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 8.331120506211052e-09,
+    "cost_Wh_per_unit": 12.403402154871271
+   },
+   "motor_current_front": {
+    "value": 34.428511692594995,
+    "hi": 34.428512183486156,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 1.4258274014084956e-08,
+    "cost_Wh_per_unit": 0.5640017916980189
+   },
+   "duty_front": {
+    "value": 0.9499995885635677,
+    "hi": 0.95,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 4.330909813233282e-07,
+    "cost_Wh_per_unit": 2.5488761007334193
+   },
+   "motor_torque_rear": {
+    "value": 2.310401658961168,
+    "hi": 2.3390779585174206,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.012259659602978147,
+    "cost_Wh_per_unit": 1.732687096054257e-05
+   },
+   "motor_current_rear": {
+    "value": 34.018290436349425,
+    "hi": 34.428512183486156,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.011915174984921261,
+    "cost_Wh_per_unit": 1.0856755504351793e-06
+   },
+   "duty_rear": {
+    "value": 0.9500000006470151,
+    "hi": 0.95,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": -6.810685349023515e-10,
+    "cost_Wh_per_unit": 47.12102175816948
+   },
+   "c_rate_max": {
+    "value": 13.506710977589387,
+    "hi": 25.0,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.45973156089642453,
+    "cost_Wh_per_unit": 4.271615889790568e-08
+   },
+   "stall_margin_lap": {
+    "value": 16.87986302272474,
+    "lo": 16.366976174922975,
+    "group": "energy",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.031336689338351785,
+    "cost_Wh_per_unit": 9.596014294672074e-07
+   },
+   "cruise_duty_lap": {
+    "value": 0.4850592347097124,
+    "hi": 0.95,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.48941133188451325,
+    "cost_Wh_per_unit": 1.0570859404129085e-06
+   },
+   "cruise_current_lap": {
+    "value": 10.857595406634893,
+    "hi": 72.4,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.8500332126155402,
+    "cost_Wh_per_unit": 7.985391693039642e-09
+   },
+   "cruise_tip_mach_lap": {
+    "value": 123.28113972297126,
+    "hi": 289.255,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.5737977226911505,
+    "cost_Wh_per_unit": 2.9611511155322377e-09
+   },
+   "stall_margin_map": {
+    "value": 17.217467371355234,
+    "lo": 16.366976174922975,
+    "group": "energy",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.051963856203038755,
+    "cost_Wh_per_unit": 6.117813488452266e-07
+   },
+   "cruise_duty_map": {
+    "value": 0.49507747729133245,
+    "hi": 0.95,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.47886581337754475,
+    "cost_Wh_per_unit": 1.0788255624621083e-06
+   },
+   "cruise_current_map": {
+    "value": 11.234270221173984,
+    "hi": 72.4,
+    "group": "elec",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.8448305218069891,
+    "cost_Wh_per_unit": 8.033115470964735e-09
+   },
+   "cruise_tip_mach_map": {
+    "value": 125.65124108998323,
+    "hi": 289.255,
+    "group": "tw",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.565603909733684,
+    "cost_Wh_per_unit": 3.0009734761520633e-09
+   },
+   "energy_Wh": {
+    "value": 313.87270420811257,
+    "hi": 313.8727046396921,
+    "group": "energy",
+    "enabled": true,
+    "equality": false,
+    "margin": 1.3750144620779836e-09,
+    "cost_Wh_per_unit": 0.2669799247801465
+   },
+   "boom_stress_Pa_front_T": {
+    "value": 79178557.46452883,
+    "hi": 359000000.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.7794469151405883,
+    "cost_Wh_per_unit": 1.7563000585432866e-15
+   },
+   "boom_buckling_Pa_front_T": {
+    "value": 79142139.35650404,
+    "hi": 1237358101.1351907,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9360394219879463,
+    "cost_Wh_per_unit": 4.2414706460665377e-16
+   },
+   "boom_tip_slope_deg_front_T": {
+    "value": 0.5950589486412043,
+    "hi": 1.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.40494105135879566,
+    "cost_Wh_per_unit": 1.197835488590582e-06
+   },
+   "boom_stress_Pa_front_g": {
+    "value": 14445140.594230987,
+    "hi": 359000000.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9597628395703871,
+    "cost_Wh_per_unit": 1.4260320213758088e-15
+   },
+   "boom_buckling_Pa_front_g": {
+    "value": 14439897.217187488,
+    "hi": 1237358101.1351907,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9883300580454925,
+    "cost_Wh_per_unit": 4.05551088913235e-16
+   },
+   "boom_tip_slope_deg_front_g": {
+    "value": 0.09644383441130361,
+    "hi": 1.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9035561655886963,
+    "cost_Wh_per_unit": 5.430870526097612e-07
+   },
+   "boom_stress_Pa_rear_T": {
+    "value": 78229430.76668487,
+    "hi": 359000000.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.7820907220983708,
+    "cost_Wh_per_unit": 1.7415293673699372e-15
+   },
+   "boom_buckling_Pa_rear_T": {
+    "value": 78193463.50164995,
+    "hi": 1237358101.1351907,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9368061166529619,
+    "cost_Wh_per_unit": 4.2332201750292335e-16
+   },
+   "boom_tip_slope_deg_rear_T": {
+    "value": 0.5878091208481456,
+    "hi": 1.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.4121908791518544,
+    "cost_Wh_per_unit": 1.146979447892871e-06
+   },
+   "boom_stress_Pa_rear_g": {
+    "value": 14431808.752764042,
+    "hi": 359000000.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9597999756190416,
+    "cost_Wh_per_unit": 1.425944778739974e-15
+   },
+   "boom_buckling_Pa_rear_g": {
+    "value": 14426560.530223267,
+    "hi": 1237358101.1351907,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9883408364021797,
+    "cost_Wh_per_unit": 4.0179897886483195e-16
+   },
+   "boom_tip_slope_deg_rear_g": {
+    "value": 0.09644383441130361,
+    "hi": 1.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9035561655886963,
+    "cost_Wh_per_unit": 5.430870526097665e-07
+   },
+   "boom_r_over_t": {
+    "value": 17.5,
+    "hi": 60.0,
+    "group": "structure",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.7083333333333334,
+    "cost_Wh_per_unit": 0.0
+   },
+   "boom_f1_over_1P_hover_front": {
+    "value": 33.6123934164021,
+    "hi": 37.71364218989134,
+    "group": "stiffness",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.10874708819792872,
+    "cost_Wh_per_unit": 1.2713534500724447e-07
+   },
+   "boom_f1_over_1P_hover_rear": {
+    "value": 33.6123934164021,
+    "hi": 37.4888586276432,
+    "group": "stiffness",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.10340312703952806,
+    "cost_Wh_per_unit": 1.47755670001037e-07
+   },
+   "boom_f1_over_1P_landing_front": {
+    "value": 33.6123934164021,
+    "hi": 36.905640344105414,
+    "group": "stiffness",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.0892342443322302,
+    "cost_Wh_per_unit": 1.6082853336106057e-07
+   },
+   "boom_f1_over_1P_landing_rear": {
+    "value": 33.6123934164021,
+    "hi": 36.684561377631645,
+    "group": "stiffness",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.08374552797850258,
+    "cost_Wh_per_unit": 1.9403628910763395e-07
+   },
+   "clear_fuselage_m": {
+    "value": 0.02000004625312507,
+    "lo": 0.02,
+    "group": "clear",
+    "enabled": true,
+    "equality": false,
+    "margin": 2.3126562534794837e-06,
+    "cost_Wh_per_unit": 10.571783774567477
+   },
+   "clear_front_to_wing_LE_m": {
+    "value": 0.08827055804641665,
+    "lo": 0.02,
+    "group": "clear",
+    "enabled": true,
+    "equality": false,
+    "margin": 3.413527902320832,
+    "cost_Wh_per_unit": 8.396243394647777e-06
+   },
+   "clear_rear_to_wing_TE_m": {
+    "value": 0.020000010545805857,
+    "lo": 0.02,
+    "group": "clear",
+    "enabled": true,
+    "equality": false,
+    "margin": 5.272902928524226e-07,
+    "cost_Wh_per_unit": 45.63558484594449
+   },
+   "clear_rear_to_htail_m": {
+    "value": 0.38828205495883106,
+    "lo": 0.02,
+    "group": "clear",
+    "enabled": true,
+    "equality": false,
+    "margin": 18.414102747941552,
+    "cost_Wh_per_unit": 1.3339808801097716e-06
+   },
+   "clear_prop_to_prop_m": {
+    "value": 0.4614631010928182,
+    "lo": 0.02,
+    "group": "clear",
+    "enabled": true,
+    "equality": false,
+    "margin": 22.073155054640907,
+    "cost_Wh_per_unit": 1.139288726932285e-06
+   },
+   "control_roll_rad_s2": {
+    "value": 17.653015019795507,
+    "lo": 6.808943367086357,
+    "group": "control",
+    "enabled": true,
+    "equality": false,
+    "margin": 1.5926218016628153,
+    "cost_Wh_per_unit": 4.5503777382784056e-08
+   },
+   "control_pitch_rad_s2": {
+    "value": 16.059015291581197,
+    "lo": 6.808943367086357,
+    "group": "control",
+    "enabled": true,
+    "equality": false,
+    "margin": 1.3585179705280874,
+    "cost_Wh_per_unit": 5.4208838260255294e-08
+   },
+   "control_yaw_rad_s2": {
+    "value": 1.500000140479941,
+    "lo": 1.5,
+    "group": "control",
+    "enabled": true,
+    "equality": false,
+    "margin": 9.365329400878863e-08,
+    "cost_Wh_per_unit": 2.0190598703313283
+   },
+   "bay_volume_L": {
+    "value": 1.1889117599988335,
+    "hi": 14.688,
+    "group": "mass",
+    "enabled": true,
+    "equality": false,
+    "margin": 0.9190555718955044,
+    "cost_Wh_per_unit": 3.6402426799153345e-08
+   }
+  }
+ }
+}

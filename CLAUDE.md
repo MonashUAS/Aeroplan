@@ -67,9 +67,11 @@ flight events and the flight files (ADR 0021). The Aerolink note `docs/multiroto
 | `multirotor_aero.py` | The multirotor body-drag DAVE-ML (forces only) |
 | `mass_model.py` | Point masses to mass, CG and inertia (parallel axis). Strip distribution of a mass over a planform |
 
-Tool scripts outside the package: `tools/aerosandbox/rosella.py` (Rosella quadplane sizing, ADR 0022, runs in the AeroSandbox Python),
-`tools/aerosandbox/notebooks/04_rosella_sizing.ipynb` (results and the manual parts window) and
-`tools/aerosandbox/data/motor_survey.csv` (sourced motor table for the mass fits).
+AeroSandbox model files outside the package (ADR 0024, they run in the AeroSandbox Python): `tools/aerosandbox/component.py` (components,
+level functions), `model.py` (`QuadplaneModel`, `FixedWingModel`, `MultirotorModel`, the spoke jobs), `mission.py`, `optimise.py`
+(solver driver, fidelity ladder), `result.py`, `plot.py` and `window.py`. One model file for each aircraft:
+`tools/aerosandbox/settings/<aircraft>.json`. The Rosella sizing is `tools/aerosandbox/notebooks/rosella_sizing.ipynb`, committed with
+its outputs. `tools/aerosandbox/data/motor_survey.csv` is the sourced motor table for the mass fits.
 
 ## Commands
 
