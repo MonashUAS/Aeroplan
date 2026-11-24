@@ -1,0 +1,218 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "additionalProperties": false,
+      "description": "A pointer to a raw file that a spoke read: an asset of the register (1.10.2). The file stays linked.",
+      "properties": {
+        "asset": {
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "title": "Asset",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "role": {
+          "description": "What the file gave, for example 'T7 stability point'",
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "tool": {
+          "description": "The spoke that read the file, for example flow5",
+          "minLength": 1,
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "asset",
+        "role"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    },
+    "Transform": {
+      "additionalProperties": false,
+      "description": "Puts a CAD part into the design frame: each design axis is a signed CAD axis, then a shift in metres.",
+      "properties": {
+        "axes": {
+          "items": {
+            "enum": [
+              "x",
+              "-x",
+              "y",
+              "-y",
+              "z",
+              "-z"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Axes",
+          "type": "array"
+        },
+        "origin_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Origin M",
+          "type": "array"
+        }
+      },
+      "required": [
+        "axes"
+      ],
+      "title": "Transform",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The 3D shape of a part for a simulator view. The mesh is a raw file. The `.muas` holds its pointer and pose.",
+  "properties": {
+    "generator": {
+      "anyOf": [
+        {
+          "enum": [
+            "planform",
+            "tube",
+            "box",
+            "cylinder",
+            "disc",
+            "body"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "How a tool makes the mesh when no CAD mesh exists. planform, tube (boom), body: from the ADH items (body: the lofted ADH `geometry.body` of the same item). box, tube, cylinder, disc with `shape`: demo shapes from numbers (no CAD)",
+      "title": "Generator"
+    },
+    "hinge": {
+      "anyOf": [
+        {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Two points of the hinge axis, design frame, m",
+      "title": "Hinge"
+    },
+    "material": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Material"
+    },
+    "mesh": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The CAD mesh, when the part comes from CAD"
+    },
+    "part": {
+      "description": "Part name, for example 'aileron_l'",
+      "minLength": 1,
+      "title": "Part",
+      "type": "string"
+    },
+    "placeholder": {
+      "default": false,
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "shape": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The numbers of a demo shape, design frame, metres. box: centre [x, y, z], size [lx, ly, lz]. tube: p0, p1, radius_m. cylinder: centre, axis (unit vector), length_m, radius_m. disc: centre, axis, radius_m, thickness_m, alpha (0 to 1: the view draws it semi-transparent)",
+      "title": "Shape"
+    },
+    "source": {
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "transform": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Transform"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "tube": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "For generator tube (boom): radius_m and to_instance (the item whose root quarter chord ends it)",
+      "title": "Tube"
+    },
+    "units": {
+      "default": "m",
+      "description": "Units of the CAD mesh",
+      "title": "Units",
+      "type": "string"
+    }
+  },
+  "required": [
+    "part",
+    "source"
+  ],
+  "title": "VisualPart",
+  "type": "object"
+}

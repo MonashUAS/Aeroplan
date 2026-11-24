@@ -142,7 +142,7 @@ def test_the_redback_ardupilot_settings_have_no_fill_in_and_the_flight_names_a_r
     import yaml
     from pathlib import Path
 
-    text = (Path(__file__).resolve().parents[1] / "tools" / "ardupilot" / "settings" / "redback.yaml").read_text(encoding="utf-8")
+    text = (Path(__file__).resolve().parents[1] / "aeroplan" / "ardupilot" / "settings" / "redback.yaml").read_text(encoding="utf-8")
     st = yaml.safe_load(text)
     assert "FILL_IN" not in text
     releases = {r["release_id"]: r for r in st["releases"]}

@@ -1,0 +1,198 @@
+{
+  "$defs": {
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "design",
+          "default": "design",
+          "title": "Frame",
+          "type": "string"
+        },
+        "units": {
+          "default": "m",
+          "title": "Units",
+          "type": "string"
+        },
+        "xyz": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Xyz",
+          "type": "array"
+        }
+      },
+      "required": [
+        "xyz"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "units": {
+          "title": "Units",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "units"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "Segment": {
+      "additionalProperties": false,
+      "description": "A time slice of a flight for one purpose (for example a doublet for system identification).",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "purpose": {
+          "enum": [
+            "system_id",
+            "trim",
+            "performance",
+            "handling",
+            "other"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "t_end_s": {
+          "title": "T End S",
+          "type": "number"
+        },
+        "t_start_s": {
+          "minimum": 0,
+          "title": "T Start S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "t_start_s",
+        "t_end_s",
+        "purpose"
+      ],
+      "title": "Segment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One flight: the configuration flown, the as-flown mass and CG, the firmware and parameters, the segments.",
+  "properties": {
+    "aircraft_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Aircraft Version",
+      "type": "string"
+    },
+    "cg": {
+      "$ref": "#/$defs/Position"
+    },
+    "date": {
+      "format": "date",
+      "title": "Date",
+      "type": "string"
+    },
+    "event_id": {
+      "minLength": 1,
+      "title": "Event Id",
+      "type": "string"
+    },
+    "firmware": {
+      "description": "release_id of a 1.2.9 software release",
+      "minLength": 1,
+      "title": "Firmware",
+      "type": "string"
+    },
+    "log": {
+      "description": "The raw ArduPilot DataFlash log (linked)",
+      "pattern": "^asset:sha256:[0-9a-f]{64}$",
+      "title": "Log",
+      "type": "string"
+    },
+    "mass": {
+      "$ref": "#/$defs/Quantity"
+    },
+    "package_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The `.muas` package of the configuration flown",
+      "title": "Package Hash"
+    },
+    "parameters": {
+      "anyOf": [
+        {
+          "pattern": "^asset:sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The parameter dataset",
+      "title": "Parameters"
+    },
+    "placeholder": {
+      "default": false,
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "segments": {
+      "items": {
+        "$ref": "#/$defs/Segment"
+      },
+      "title": "Segments",
+      "type": "array"
+    },
+    "source": {
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "date",
+    "aircraft_version",
+    "mass",
+    "cg",
+    "firmware",
+    "log",
+    "source"
+  ],
+  "title": "FlightEvent",
+  "type": "object"
+}

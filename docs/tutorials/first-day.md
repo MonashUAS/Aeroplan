@@ -14,4 +14,4 @@
 
 The first command builds the patched ADH package in `standards/adh/build/` (git ignores it).
 
-Next: [Change the aircraft with your tool](../howto/change-the-aircraft.md).
+Next: read the [quadplane modelling report](../reports/quadplane_model/README.md) or a tool README in `aeroplan/<tool>/README.md`.

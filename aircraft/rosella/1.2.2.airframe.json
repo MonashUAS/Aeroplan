@@ -1,0 +1,184 @@
+{
+  "wbs_no": "1.2.2",
+  "name": "Airframe",
+  "muas": {
+    "ext_version": "0.6.0",
+    "instance": "airframe"
+  },
+  "subcomponents": [
+    {
+      "name": "Lift boom left",
+      "description": "Lift boom, left side: a carbon tube clamped to the wing, a rotor at each end",
+      "muas": {
+        "ext_version": "0.6.0",
+        "instance": "boom_left",
+        "fidelity": "L1",
+        "visual": [
+          {
+            "part": "boom_left",
+            "generator": "tube",
+            "units": "m",
+            "shape": {
+              "p0": [
+                0.5210039891279854,
+                -0.55,
+                0.020552
+              ],
+              "p1": [
+                -0.7989960108720144,
+                -0.55,
+                0.020552
+              ],
+              "radius_m": 0.0127
+            },
+            "material": "boom",
+            "source": "Boom of the sizing result (outer radius, length).",
+            "placeholder": true
+          }
+        ],
+        "tube": {
+          "radius": {
+            "value": 0.0127,
+            "units": "m"
+          },
+          "inner_radius": {
+            "value": 0.0107,
+            "units": "m"
+          },
+          "material": "bought-tube carbon tube",
+          "material_data": {
+            "name": "bought_tube",
+            "youngs_modulus": {
+              "value": 52000000000.0,
+              "units": "Pa"
+            },
+            "youngs_modulus_compression": {
+              "value": 45199362041.4673,
+              "units": "Pa"
+            },
+            "density": {
+              "value": 1522.0,
+              "units": "kg / m ** 3"
+            },
+            "tensile_strength": {
+              "value": 372000000.0,
+              "units": "Pa"
+            },
+            "compressive_strength": {
+              "value": 359000000.0,
+              "units": "Pa"
+            },
+            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "placeholder": true
+          },
+          "p0": [
+            0.5210039891279854,
+            -0.55,
+            0.020552
+          ],
+          "p1": [
+            -0.7989960108720144,
+            -0.55,
+            0.020552
+          ],
+          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-10-21: the lift boom tube is the tail boom tube, 23.4 mm inner diameter (wall 1.0 mm)",
+          "placeholder": false
+        },
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+            "role": "Rosella model file and sizing result H4_12S"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lift boom right",
+      "description": "Lift boom, right side: a carbon tube clamped to the wing, a rotor at each end",
+      "muas": {
+        "ext_version": "0.6.0",
+        "instance": "boom_right",
+        "fidelity": "L1",
+        "visual": [
+          {
+            "part": "boom_right",
+            "generator": "tube",
+            "units": "m",
+            "shape": {
+              "p0": [
+                0.5210039891279854,
+                0.55,
+                0.020552
+              ],
+              "p1": [
+                -0.7989960108720144,
+                0.55,
+                0.020552
+              ],
+              "radius_m": 0.0127
+            },
+            "material": "boom",
+            "source": "Boom of the sizing result (outer radius, length).",
+            "placeholder": true
+          }
+        ],
+        "tube": {
+          "radius": {
+            "value": 0.0127,
+            "units": "m"
+          },
+          "inner_radius": {
+            "value": 0.0107,
+            "units": "m"
+          },
+          "material": "bought-tube carbon tube",
+          "material_data": {
+            "name": "bought_tube",
+            "youngs_modulus": {
+              "value": 52000000000.0,
+              "units": "Pa"
+            },
+            "youngs_modulus_compression": {
+              "value": 45199362041.4673,
+              "units": "Pa"
+            },
+            "density": {
+              "value": 1522.0,
+              "units": "kg / m ** 3"
+            },
+            "tensile_strength": {
+              "value": 372000000.0,
+              "units": "Pa"
+            },
+            "compressive_strength": {
+              "value": 359000000.0,
+              "units": "Pa"
+            },
+            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "placeholder": true
+          },
+          "p0": [
+            0.5210039891279854,
+            0.55,
+            0.020552
+          ],
+          "p1": [
+            -0.7989960108720144,
+            0.55,
+            0.020552
+          ],
+          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-10-21: the lift boom tube is the tail boom tube, 23.4 mm inner diameter (wall 1.0 mm)",
+          "placeholder": false
+        },
+        "sources": [
+          {
+            "tool": "AeroSandbox",
+            "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+            "role": "Rosella model file and sizing result H4_12S"
+          }
+        ]
+      }
+    }
+  ]
+}

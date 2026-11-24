@@ -1,0 +1,1798 @@
+{
+  "wbs_no": "1.2",
+  "name": "AirVehicle",
+  "parameters": {
+    "reference_data": {
+      "Sref": 1.0762,
+      "BLref": 3.3,
+      "Cbar": 0.33
+    }
+  },
+  "muas": {
+    "ext_version": "0.6.0",
+    "instance": "rosella_airvehicle",
+    "mass_properties": {
+      "mass": {
+        "value": 17.2189637318753,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          -0.13899601087098487,
+          -6.447676189537124e-18,
+          0.002077691588290981
+        ],
+        "units": "m"
+      },
+      "inertia": {
+        "axes": "parallel_to_design",
+        "products_convention": "+integral(xy dm)",
+        "ixx": 3.2352884385249276,
+        "iyy": 4.112113563037215,
+        "izz": 7.31531717849272,
+        "ixy": -4.9797967584961814e-30,
+        "ixz": -0.057507850856511514,
+        "iyz": -1.1529709876413596e-18,
+        "units": "kg*m^2",
+        "unverified_products": []
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Roll-up of the 44 point masses of the H4_12S sizing result (mass_model.rollup). The sizing owns the mass model until a SpecSheet exists (ADR 0022).",
+        "Own inertia added for tail_boom, fuselage, battery and the two lift booms (the rules of model.QuadplaneModel). Every other item is a point mass.",
+        "The sizing result gives Ixx 3.2354, Iyy 4.1122, Izz 7.3153 kg m^2. Its Ixx is about y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
+        "The sizing CG x is -0.138996 m (FRD: the static margin target ahead of the neutral point)."
+      ]
+    },
+    "reference": {
+      "design_frame": "x_fwd_y_right_z_down_m_wingLE",
+      "kind": "quadplane",
+      "body_frame": "FRD",
+      "euler": "3-2-1/NED",
+      "nominal_cg": {
+        "frame": "design",
+        "xyz": [
+          -0.13899601087098487,
+          -6.447676189537124e-18,
+          0.002077691588290981
+        ],
+        "units": "m"
+      },
+      "mrp": {
+        "definition": "nominal_cg",
+        "config_id": "rosella.nominal",
+        "point": {
+          "frame": "design",
+          "xyz": [
+            -0.13899601087098487,
+            -6.447676189537124e-18,
+            0.002077691588290981
+          ],
+          "units": "m"
+        }
+      },
+      "surface_signs": {
+        "elevator": "trailing edge down positive",
+        "aileron": "positive rolls right",
+        "rudder": "trailing edge left positive"
+      },
+      "placeholder_fields": [
+        "nominal_cg",
+        "mrp"
+      ],
+      "notes": [
+        "Quadplane. S, b and c: the Currawong wing (copied from aircraft/currawong). The design frame has the wing root leading edge at x = 0.",
+        "MRP = the sized CG of the mass model. It lies ahead of the neutral point (vortex lattice) by the static margin target times c_ref. It is a sizing value (placeholder)."
+      ]
+    },
+    "initial_conditions": {
+      "rate_frame": "local_NED",
+      "latitude_type": "geodetic",
+      "attitude_sequence": "3-2-1",
+      "units": "SI",
+      "values": {
+        "speed_mps": 18.893463472960697,
+        "altitude_m": 0.0
+      },
+      "placeholder": true
+    },
+    "point_masses": [
+      {
+        "tag": "wing_1",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1641407076655567,
+            0.13750332045837782,
+            0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_2",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1535318406760365,
+            0.4125099613751334,
+            -0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_3",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.14292297368651638,
+            0.6875166022918892,
+            -0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_4",
+        "mass": {
+          "value": 0.2332550319250213,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13168751678594598,
+            0.9625202123533719,
+            -0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_5",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.12109452348673069,
+            1.2375141680322757,
+            -0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_6",
+        "mass": {
+          "value": 0.20174372921196534,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.11049045210730174,
+            1.5125060290475028,
+            -0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_7",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1641407076655567,
+            -0.13750332045837782,
+            0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_8",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1535318406760365,
+            -0.4125099613751334,
+            -0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_9",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.14292297368651638,
+            -0.6875166022918892,
+            -0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_10",
+        "mass": {
+          "value": 0.2332550319250213,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13168751678594598,
+            -0.9625202123533719,
+            -0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_11",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.12109452348673069,
+            -1.2375141680322757,
+            -0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "wing_12",
+        "mass": {
+          "value": 0.20174372921196534,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.11049045210730174,
+            -1.5125060290475028,
+            -0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item wing: kept from the Currawong wing mass (WINGS point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_1",
+        "mass": {
+          "value": 0.10055981223664391,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5400134975318476,
+            0.03108380519945251,
+            0.044370977425871955
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_2",
+        "mass": {
+          "value": 0.09722263092996836,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5441860840425616,
+            0.09325141559835753,
+            0.04418150138115377
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_3",
+        "mass": {
+          "value": 0.09388544962329268,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5483586705532757,
+            0.15541902599726254,
+            0.043992025336435606
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_4",
+        "mass": {
+          "value": 0.09054826831661712,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.55253125706399,
+            0.21758663639616757,
+            0.043802549291717424
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_5",
+        "mass": {
+          "value": 0.08721108700994147,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.556703843574704,
+            0.27975424679507255,
+            0.04361307324699924
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_6",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5608510965767841,
+            0.34191951536530224,
+            0.04342474759017655
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_7",
+        "mass": {
+          "value": 0.10055981223664391,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5400134975318476,
+            -0.03108380519945251,
+            0.044370977425871955
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_8",
+        "mass": {
+          "value": 0.09722263092996836,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5441860840425616,
+            -0.09325141559835753,
+            0.04418150138115377
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_9",
+        "mass": {
+          "value": 0.09388544962329268,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5483586705532757,
+            -0.15541902599726254,
+            0.043992025336435606
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_10",
+        "mass": {
+          "value": 0.09054826831661712,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.55253125706399,
+            -0.21758663639616757,
+            0.043802549291717424
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_11",
+        "mass": {
+          "value": 0.08721108700994147,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.556703843574704,
+            -0.27975424679507255,
+            0.04361307324699924
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_12",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5608510965767841,
+            -0.34191951536530224,
+            0.04342474759017655
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail: kept from the Currawong tail mass (TAIL-S point masses, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "tail_boom_1",
+        "mass": {
+          "value": 0.20347,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.792321,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item tail_boom: kept from the Currawong tail boom (TAIL-BOOM point mass, weighed)",
+        "placeholder": true
+      },
+      {
+        "tag": "avionics_flight_1",
+        "mass": {
+          "value": 0.609,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.044369561718928564,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item avionics_flight: kept from the Currawong avionics (AVIONICS-REST point mass: servos, PDB, BMS, Cube, Herelink, Here4, wires)",
+        "placeholder": true
+      },
+      {
+        "tag": "avionics_projects_1",
+        "mass": {
+          "value": 1.01,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13899601087098237,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item avionics_projects: component avionics, projects_mass_kg (stand-in for the project equipment)",
+        "placeholder": true
+      },
+      {
+        "tag": "fuselage_1",
+        "mass": {
+          "value": 2.826273768426121,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.014871104671990876,
+            0.0,
+            -0.02
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item fuselage: shell area of the new fuselage times the Currawong mass per area (FUSELAGE-REST, weighed, over the area of the same body rule at the Currawong length)",
+        "placeholder": true
+      },
+      {
+        "tag": "payload_cargo_1",
+        "mass": {
+          "value": 0.41,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13899601087098237,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item payload_cargo: component cargo (aircraft/redback 1.2.17 cargo), released at the deployment",
+        "placeholder": true
+      },
+      {
+        "tag": "landing_gear_1",
+        "mass": {
+          "value": 0.6,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.16,
+            0.0,
+            0.1
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item landing_gear: component landing_gear (stand-in for VTOL skids)",
+        "placeholder": true
+      },
+      {
+        "tag": "cruise_motor_1",
+        "mass": {
+          "value": 0.436,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.6226759891290177,
+            0.0,
+            0.035
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item cruise_motor: kept from the Currawong nose motor (X5220), moved with the nose propeller hub",
+        "placeholder": true
+      },
+      {
+        "tag": "cruise_esc_1",
+        "mass": {
+          "value": 0.208,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.5154431891290177,
+            0.0,
+            0.035
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item cruise_esc: kept from the Currawong cruise ESC, moved with the nose propeller hub",
+        "placeholder": true
+      },
+      {
+        "tag": "cruise_prop_1",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.6484259891290177,
+            0.0,
+            0.035
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item cruise_prop: kept from the Currawong cruise propeller, moved with the nose propeller hub",
+        "placeholder": true
+      },
+      {
+        "tag": "cruise_rest_1",
+        "mass": {
+          "value": 0.179,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.5543819490183066,
+            0.0,
+            0.035
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item cruise_rest: kept from the Currawong propulsion rest mass, moved with the nose propeller hub",
+        "placeholder": true
+      },
+      {
+        "tag": "battery_1",
+        "mass": {
+          "value": 3.259700997211964,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.04131312250760174,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item battery: AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack (component battery), cells and capacity from the sizing",
+        "placeholder": true
+      },
+      {
+        "tag": "boom_1",
+        "mass": {
+          "value": 0.2953821922631442,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1389960108720145,
+            -0.55,
+            0.020552
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item boom: carbon tube: density times the tube section times the boom length (component boom_material)",
+        "placeholder": true
+      },
+      {
+        "tag": "boom_clamp_1",
+        "mass": {
+          "value": 0.06,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1389960108720145,
+            -0.55,
+            0.020552
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item boom_clamp: component boom, clamp_kg (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "lift_front_1",
+        "mass": {
+          "value": 0.491276001497411,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.46100398912798546,
+            -0.55,
+            0.0005520000000000004
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item lift_front: motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the front end of a boom",
+        "placeholder": true
+      },
+      {
+        "tag": "lift_rear_1",
+        "mass": {
+          "value": 0.491276001497411,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.7389960108720145,
+            -0.55,
+            0.0005520000000000004
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item lift_rear: motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the rear end of a boom",
+        "placeholder": true
+      },
+      {
+        "tag": "boom_2",
+        "mass": {
+          "value": 0.2953821922631442,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1389960108720145,
+            0.55,
+            0.020552
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item boom: carbon tube: density times the tube section times the boom length (component boom_material)",
+        "placeholder": true
+      },
+      {
+        "tag": "boom_clamp_2",
+        "mass": {
+          "value": 0.06,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1389960108720145,
+            0.55,
+            0.020552
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item boom_clamp: component boom, clamp_kg (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "lift_front_2",
+        "mass": {
+          "value": 0.491276001497411,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.46100398912798546,
+            0.55,
+            0.0005520000000000004
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item lift_front: motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the front end of a boom",
+        "placeholder": true
+      },
+      {
+        "tag": "lift_rear_2",
+        "mass": {
+          "value": 0.491276001497411,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.7389960108720145,
+            0.55,
+            0.0005520000000000004
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item lift_rear: motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the rear end of a boom",
+        "placeholder": true
+      },
+      {
+        "tag": "cables_1",
+        "mass": {
+          "value": 0.7501205757212799,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1389960108720145,
+            0.0,
+            0.010276
+          ],
+          "units": "m"
+        },
+        "source": "H4_12S sizing, item cables: copper area from the peak current times the run lengths (model.py), with insulation factor (stand-in)",
+        "placeholder": true
+      }
+    ],
+    "sources": [
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "role": "Rosella model file and sizing result H4_12S"
+      }
+    ]
+  },
+  "performance": [
+    {
+      "name": "sizing",
+      "description": "Rosella sizing, case H4_12S (H4, 12S), level L4. Minimum mission energy under the limits of the settings. Active constraints: motor_current_front, motor_current_rear, energy_Wh, control_yaw_rad_s2. 44 settings values are stand-ins (the result file lists them).",
+      "tools": [
+        {
+          "model_name": "Rosella quadplane propulsion sizing",
+          "generation_tool": "AeroSandbox (aeroplan/aerosandbox/model.py, QuadplaneModel) with the Proptimiser BEMT",
+          "description": "Bershadsky, Haviland, Johnson, AIAA 2016-0581, with a geometric prop scale. The record is an estimate. Every input marked placeholder is a stand-in.",
+          "data_exchange": {
+            "model_identifier": "rosella",
+            "inputs": [
+              {
+                "name": "mtow_kg",
+                "value": 18.0,
+                "units": "kg",
+                "placeholder": false,
+                "source": "user requirement 2026-10-17"
+              },
+              {
+                "name": "thrust_to_weight",
+                "value": 2.3,
+                "units": "nd",
+                "placeholder": false,
+                "source": "user requirement 2026-10-17 (hover thrust at full throttle over MTOW)"
+              },
+              {
+                "name": "reserve_hover_s",
+                "value": 300.0,
+                "units": "s",
+                "placeholder": false,
+                "source": "user requirement 2026-10-17 (5 min reserve hover battery)"
+              },
+              {
+                "name": "load_factor",
+                "value": 3.0,
+                "units": "nd",
+                "placeholder": false,
+                "source": "user requirement 2026-10-17 (3 g boom strength)"
+              },
+              {
+                "name": "safety_factor",
+                "value": 1.5,
+                "units": "nd",
+                "placeholder": true,
+                "source": "stand-in: the usual factor for ultimate load on a composite part"
+              },
+              {
+                "name": "static_margin_target",
+                "value": 0.1,
+                "units": "nd",
+                "placeholder": true,
+                "source": "user decision 2026-10-17: CG = NP - SM x MAC; 10 % MAC is the design choice"
+              },
+              {
+                "name": "battery_usable_fraction",
+                "value": 0.8,
+                "units": "nd",
+                "placeholder": true,
+                "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "take_off_mass",
+                "value": 17.2189637318753,
+                "units": "kg",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_total",
+                "value": 430.5258211604837,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_nominal_battery",
+                "value": 516.1097006334203,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_vtol_takeoff_climb",
+                "value": 8.114349543515745,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_vtol_takeoff_climb",
+                "value": 12.0,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_transitions",
+                "value": 17.00036856351639,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_transitions",
+                "value": 30.0,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_fw_climb",
+                "value": 7.712711710551354,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_fw_climb",
+                "value": 24.23076923076923,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_transit_laps_rtl",
+                "value": 177.8649844674126,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_transit_laps_rtl",
+                "value": 1853.3393864027632,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_survey",
+                "value": 11.47105332285661,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_survey",
+                "value": 112.97048200917769,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_deploy_hover",
+                "value": 32.884524357016076,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_deploy_hover",
+                "value": 60.0,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_landing",
+                "value": 10.963124709420882,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_landing",
+                "value": 20.0,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "energy_reserve",
+                "value": 164.51470448619398,
+                "units": "Wh",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "time_reserve",
+                "value": 300.0,
+                "units": "s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cells_s",
+                "value": 12.0,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "battery_capacity",
+                "value": 11.624092356608564,
+                "units": "A*h",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_diameter",
+                "value": 0.6604000065983552,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_scale_over_reference",
+                "value": 1.181818193626262,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "motor_kv",
+                "value": 180.0,
+                "units": "rpm/V",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "motor_peak_torque",
+                "value": 2.8594838108843863,
+                "units": "N*m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "motor_peak_current",
+                "value": 54.14064968676215,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "thrust_to_weight_at_full_throttle",
+                "value": 2.3020769487512833,
+                "units": "nd",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_outer_radius",
+                "value": 0.0127,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_wall",
+                "value": 0.002,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_length",
+                "value": 1.3199999999999998,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_y",
+                "value": 0.55,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_clamp_x",
+                "value": -0.1389960108720145,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_dx",
+                "value": 0.05627597586417665,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_cant",
+                "value": 0.04248157671369568,
+                "units": "rad",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_f1",
+                "value": 18.83083382046852,
+                "units": "Hz",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "boom_f2",
+                "value": 211.39324822744751,
+                "units": "Hz",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "hover_1P",
+                "value": 53.51446410825293,
+                "units": "Hz",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "control_roll",
+                "value": 24.42183645788721,
+                "units": "rad/s^2",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "control_pitch",
+                "value": 20.961237218261026,
+                "units": "rad/s^2",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "control_yaw",
+                "value": 1.4999999007900435,
+                "units": "rad/s^2",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "control_required_roll_pitch",
+                "value": 6.122949719335398,
+                "units": "rad/s^2",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "neutral_point_x",
+                "value": -0.17199601087098237,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cg_x",
+                "value": -0.13899601087098237,
+                "units": "m",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_speed_laps",
+                "value": 18.893463472960697,
+                "units": "m/s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_speed_survey",
+                "value": 19.317599534900346,
+                "units": "m/s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "stall_speed",
+                "value": 14.3806219109219,
+                "units": "m/s",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_f_rpm",
+                "value": 3210.8678464951754,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_f_thrust",
+                "value": 42.253208789337556,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_f_shaft_power",
+                "value": 410.83548854468114,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_f_current",
+                "value": 24.13127735972167,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_r_rpm",
+                "value": 3210.8678464897093,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_r_thrust",
+                "value": 42.253208789192165,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_r_shaft_power",
+                "value": 410.83548854256617,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_TO_r_current",
+                "value": 24.131277359642315,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_f_rpm",
+                "value": 3436.1347120979103,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_f_thrust",
+                "value": 42.25320878933751,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_f_shaft_power",
+                "value": 489.5339296910492,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_f_current",
+                "value": 26.743961813880727,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_r_rpm",
+                "value": 3436.1347120924106,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_r_thrust",
+                "value": 42.25320878919216,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_r_shaft_power",
+                "value": 489.5339296886707,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_C_TO_r_current",
+                "value": 26.743961813797178,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_f_rpm",
+                "value": 3172.8194111465477,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_f_thrust",
+                "value": 41.247119464022404,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_f_shaft_power",
+                "value": 396.28635616870247,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_f_current",
+                "value": 23.58206874295114,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_r_rpm",
+                "value": 3172.8194111411503,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_r_thrust",
+                "value": 41.247119463880495,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_r_shaft_power",
+                "value": 396.2863561666629,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_H_L_r_current",
+                "value": 23.582068742873677,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_f_rpm",
+                "value": 4849.094342449294,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_f_thrust",
+                "value": 97.1823802154764,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_f_shaft_power",
+                "value": 1428.883981782259,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_f_current",
+                "value": 54.14065018270906,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_r_rpm",
+                "value": 4849.094342441058,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_r_thrust",
+                "value": 97.18238021514198,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_r_shaft_power",
+                "value": 1428.8839817749054,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "rotor_MAX_r_current",
+                "value": 54.14065018252618,
+                "units": "A",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_laps_rpm",
+                "value": 5168.481661222949,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_laps_thrust",
+                "value": 10.139312572192805,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_laps_shaft_power",
+                "value": 264.24027688938963,
+                "units": "W",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_survey_rpm",
+                "value": 5277.824043395632,
+                "units": "rpm",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_survey_thrust",
+                "value": 10.613969998784402,
+                "units": "N",
+                "units_basis": "SI model output"
+              },
+              {
+                "name": "cruise_survey_shaft_power",
+                "value": 282.09213795518224,
+                "units": "W",
+                "units_basis": "SI model output"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "sizing:mtow",
+      "description": "Sizing limit mtow of the rosella model (limits.mtow_kg).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "mtow is at most 18 kg.",
+      "muas": {
+        "target": {
+          "key": "mtow",
+          "value": 18.0,
+          "bound": "max",
+          "units": "kg",
+          "source": "user requirement 2026-10-17",
+          "placeholder": false
+        }
+      },
+      "source": "user requirement 2026-10-17"
+    },
+    {
+      "name": "sizing:thrust_to_weight_full_throttle",
+      "description": "Sizing limit thrust_to_weight_full_throttle of the rosella model (limits.thrust_to_weight).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "thrust_to_weight_full_throttle is at least 2.3 nd.",
+      "muas": {
+        "target": {
+          "key": "thrust_to_weight_full_throttle",
+          "value": 2.3,
+          "bound": "min",
+          "units": "nd",
+          "source": "user requirement 2026-10-17 (hover thrust at full throttle over MTOW)",
+          "placeholder": false
+        }
+      },
+      "source": "user requirement 2026-10-17 (hover thrust at full throttle over MTOW)"
+    },
+    {
+      "name": "sizing:load_factor_boom",
+      "description": "Sizing limit load_factor_boom of the rosella model (limits.load_factor).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "load_factor_boom is equal to 3 nd.",
+      "muas": {
+        "target": {
+          "key": "load_factor_boom",
+          "value": 3.0,
+          "bound": "target",
+          "units": "nd",
+          "source": "user requirement 2026-10-17 (3 g boom strength)",
+          "placeholder": false
+        }
+      },
+      "source": "user requirement 2026-10-17 (3 g boom strength)"
+    },
+    {
+      "name": "sizing:safety_factor_boom",
+      "description": "Sizing limit safety_factor_boom of the rosella model (limits.safety_factor).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "safety_factor_boom is at least 1.5 nd.",
+      "muas": {
+        "target": {
+          "key": "safety_factor_boom",
+          "value": 1.5,
+          "bound": "min",
+          "units": "nd",
+          "source": "stand-in: the usual factor for ultimate load on a composite part",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: the usual factor for ultimate load on a composite part"
+    },
+    {
+      "name": "sizing:reserve_hover",
+      "description": "Sizing limit reserve_hover of the rosella model (mission.reserve_hover_s).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "reserve_hover is at least 300 s.",
+      "muas": {
+        "target": {
+          "key": "reserve_hover",
+          "value": 300.0,
+          "bound": "min",
+          "units": "s",
+          "source": "user requirement 2026-10-17 (5 min reserve hover battery)",
+          "placeholder": false
+        }
+      },
+      "source": "user requirement 2026-10-17 (5 min reserve hover battery)"
+    },
+    {
+      "name": "sizing:static_margin",
+      "description": "Sizing limit static_margin of the rosella model (airframe.static_margin_target).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "static_margin is equal to 0.1 nd.",
+      "muas": {
+        "target": {
+          "key": "static_margin",
+          "value": 0.1,
+          "bound": "target",
+          "units": "nd",
+          "source": "user decision 2026-10-17: CG = NP - SM x MAC; 10 % MAC is the design choice",
+          "placeholder": true
+        }
+      },
+      "source": "user decision 2026-10-17: CG = NP - SM x MAC; 10 % MAC is the design choice"
+    },
+    {
+      "name": "sizing:battery_usable_fraction",
+      "description": "Sizing limit battery_usable_fraction of the rosella model (battery.usable_fraction).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "battery_usable_fraction is at most 0.8 nd.",
+      "muas": {
+        "target": {
+          "key": "battery_usable_fraction",
+          "value": 0.8,
+          "bound": "max",
+          "units": "nd",
+          "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)"
+    },
+    {
+      "name": "sizing:battery_c_rate",
+      "description": "Sizing limit battery_c_rate of the rosella model (battery.c_rate_max).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "battery_c_rate is at most 25 1/hour.",
+      "muas": {
+        "target": {
+          "key": "battery_c_rate",
+          "value": 25.0,
+          "bound": "max",
+          "units": "1/hour",
+          "source": "Gens ace / Tattu 4500 mAh 25C pack, maximum continuous",
+          "placeholder": false
+        }
+      },
+      "source": "Gens ace / Tattu 4500 mAh 25C pack, maximum continuous"
+    },
+    {
+      "name": "sizing:yaw_control_power",
+      "description": "Sizing limit yaw_control_power of the rosella model (control.yaw_rad_s2).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "yaw_control_power is at least 1.5 rad/s^2.",
+      "muas": {
+        "target": {
+          "key": "yaw_control_power",
+          "value": 1.5,
+          "bound": "min",
+          "units": "rad/s^2",
+          "source": "user decision 2026-10-17 after a sweep of 0.5 to 3.0 (cost 2 Wh above 1.0, cant 5.6 deg). No yaw figure in Ivler et al.",
+          "placeholder": true
+        }
+      },
+      "source": "user decision 2026-10-17 after a sweep of 0.5 to 3.0 (cost 2 Wh above 1.0, cant 5.6 deg). No yaw figure in Ivler et al."
+    },
+    {
+      "name": "sizing:boom_tip_slope",
+      "description": "Sizing limit boom_tip_slope of the rosella model (boom.tip_slope_max_deg).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "boom_tip_slope is at most 0.0349066 rad.",
+      "muas": {
+        "target": {
+          "key": "boom_tip_slope",
+          "value": 0.03490658503988659,
+          "bound": "max",
+          "units": "rad",
+          "source": "stand-in: boom tip slope at T_max",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: boom tip slope at T_max"
+    },
+    {
+      "name": "sizing:boom_r_over_t",
+      "description": "Sizing limit boom_r_over_t of the rosella model (boom.r_over_t_max).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "boom_r_over_t is at most 60 nd.",
+      "muas": {
+        "target": {
+          "key": "boom_r_over_t",
+          "value": 60.0,
+          "bound": "max",
+          "units": "nd",
+          "source": "stand-in: limit of the thin-wall tube formulas",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: limit of the thin-wall tube formulas"
+    },
+    {
+      "name": "sizing:boom_min_wall",
+      "description": "Sizing limit boom_min_wall of the rosella model (boom.min_wall_m).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "boom_min_wall is at least 0.001 m.",
+      "muas": {
+        "target": {
+          "key": "boom_min_wall",
+          "value": 0.001,
+          "bound": "min",
+          "units": "m",
+          "source": "user decision 2026-10-17: 1.0 mm minimum wall",
+          "placeholder": false
+        }
+      },
+      "source": "user decision 2026-10-17: 1.0 mm minimum wall"
+    },
+    {
+      "name": "sizing:boom_resonance_margin",
+      "description": "Sizing limit boom_resonance_margin of the rosella model (boom.resonance_margin).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "boom_resonance_margin is at least 0.2 nd.",
+      "muas": {
+        "target": {
+          "key": "boom_resonance_margin",
+          "value": 0.2,
+          "bound": "min",
+          "units": "nd",
+          "source": "stand-in: f1 stays outside 1P hover +/- 20 %. The principle (no coincidence of airframe and rotor frequency) is ISO 5109:2023. The margin is not from that text (not read)",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: f1 stays outside 1P hover +/- 20 %. The principle (no coincidence of airframe and rotor frequency) is ISO 5109:2023. The margin is not from that text (not read)"
+    },
+    {
+      "name": "sizing:rotor_tip_mach",
+      "description": "Sizing limit rotor_tip_mach of the rosella model (rotor.tip_mach_max).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "rotor_tip_mach is at most 0.65 nd.",
+      "muas": {
+        "target": {
+          "key": "rotor_tip_mach",
+          "value": 0.65,
+          "bound": "max",
+          "units": "nd",
+          "source": "stand-in: tip Mach limit of the NeuralFoil sections",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: tip Mach limit of the NeuralFoil sections"
+    },
+    {
+      "name": "sizing:rotor_tip_clearance",
+      "description": "Sizing limit rotor_tip_clearance of the rosella model (rotor.tip_clearance_m).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "rotor_tip_clearance is at least 0.02 m.",
+      "muas": {
+        "target": {
+          "key": "rotor_tip_clearance",
+          "value": 0.02,
+          "bound": "min",
+          "units": "m",
+          "source": "stand-in: gap between prop discs and the nearest structure",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: gap between prop discs and the nearest structure"
+    },
+    {
+      "name": "sizing:esc_duty",
+      "description": "Sizing limit esc_duty of the rosella model (esc.duty_max).",
+      "category": "sizing",
+      "priority": "medium",
+      "verification_method": "analysis",
+      "status": "draft",
+      "acceptance_criteria": "esc_duty is at most 0.95 nd.",
+      "muas": {
+        "target": {
+          "key": "esc_duty",
+          "value": 0.95,
+          "bound": "max",
+          "units": "nd",
+          "source": "stand-in: ESC duty limit with a margin for the control",
+          "placeholder": true
+        }
+      },
+      "source": "stand-in: ESC duty limit with a margin for the control"
+    }
+  ]
+}

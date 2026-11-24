@@ -1,0 +1,16 @@
+diff --git a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+--- a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
++++ b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+@@ -18,9 +18,9 @@
+ 
+ class ReferenceData(CommonBaseModel):
+     roughness: Optional[float] = Field(None, alias="RougHgt", ge=0., le=0.02, description="Equivalent Sand Surface roughness height")
+-    reference_area: Optional[float] = Field(None, alias="Sref", gt=0., description="Reference area (ft^2)")
+-    reference_length: Optional[float] = Field(None, alias="Cbar", gt=0., description="Longitudinal reference length (ft)")
+-    lateral_reference: Optional[float] = Field(None, alias="BLref", gt=0., description="Lateral reference length (ft)")
++    reference_area: Optional[float] = Field(None, alias="Sref", gt=0., description="Reference area, m^2 (SI: AeroPlan patch 0004)")
++    reference_length: Optional[float] = Field(None, alias="Cbar", gt=0., description="Longitudinal reference length (mean aerodynamic chord), m (SI: AeroPlan patch 0004)")
++    lateral_reference: Optional[float] = Field(None, alias="BLref", gt=0., description="Lateral reference length (span), m (SI: AeroPlan patch 0004)")
+ 
+     @field_validator('roughness')
+     def roughness_valid(cls, v):

@@ -1,7 +1,7 @@
 """Every committed aircraft source tree (aircraft/<name>/) passes every check of `aeroplan check`.
 
 The test types no aircraft number: it runs the checks on the committed data (ADH tree, dataset hashes, DAVE-ML DTD
-and checkData, datums, the consumers of aircraft.yaml). A check that needs a raw file (CAD, DAVE-ML source) is left
+and checkData, datums, the consumers of muas.package). A check that needs a raw file (CAD, DAVE-ML source) is left
 out when the file is not on the machine (a fresh clone), so the test runs the same on CI.
 """
 from pathlib import Path
@@ -11,7 +11,7 @@ import pytest
 from aeroplan import checks, source_tree
 
 ROOT = Path(__file__).resolve().parents[1]
-TREES = sorted(p.parent for p in (ROOT / "aircraft").glob("*/aircraft.yaml"))
+TREES = source_tree.list_aircraft(ROOT)
 
 
 @pytest.mark.parametrize("folder", TREES, ids=[p.name for p in TREES])

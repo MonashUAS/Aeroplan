@@ -1,15 +1,13 @@
 """The multirotor path: hubs from a CAD arm, the seed, the CSV mass model, the Propalyser rotors, the EMST maths, the body-drag
 DAVE-ML, the demo shapes, the consumer check by vehicle kind and the datum rows. Every number here is synthetic.
 
-The EMST maths is `MultirotorModel` of `tools/aerosandbox/model.py`. It uses numpy only, so these tests import it as a plain module. The
+The EMST maths is `MultirotorModel` of `aeroplan/aerosandbox/model.py`. It uses numpy only, so these tests import it as a plain module. The
 tests that run the jobs in the AeroSandbox Python skip without it (`python -m aeroplan setup AeroSandbox`).
 """
 import copy
 import csv
-import importlib.util
 import json
 import math
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -32,8 +30,7 @@ asb_spoke = load("AeroSandbox")
 runner = asb_spec = asb_spoke
 needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
 
-sys.path.insert(0, str(ROOT / "tools" / "aerosandbox"))
-import model as asb_model  # noqa: E402
+from aeroplan.aerosandbox import model as asb_model  # noqa: E402
 
 
 class _Worker:
@@ -133,7 +130,7 @@ SHEET = [["", "", "INSTRUCTIONS with\na new line", "", "", "", ""],
 
 
 def write_settings(root, spoke, name, data):
-    f = Path(root) / "tools" / spoke.lower() / "settings" / f"{name}.yaml"
+    f = Path(root) / "aeroplan" / spoke.lower() / "settings" / f"{name}.yaml"
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
@@ -214,8 +211,9 @@ def test_the_seed_writes_valid_adh_items(tmp_path):
     adh_doc.validate_document(doc)
     ref = adh_doc.node(doc, "1.2")["muas"]["reference"]
     assert ref["kind"] == "multirotor" and ref["design_frame"] == "x_fwd_y_right_z_down_m_bodyOrigin"
-    assert ref["s_ref"]["value"] == pytest.approx(0.2 * 0.1) and ref["b_ref"]["value"] == pytest.approx(1.0)
-    assert ref["c_ref"]["value"] == pytest.approx(2 * math.cos(math.radians(30)))
+    rv = adh_doc.reference(doc)
+    assert rv["s_ref"]["value"] == pytest.approx(0.2 * 0.1) and rv["b_ref"]["value"] == pytest.approx(1.0)
+    assert rv["c_ref"]["value"] == pytest.approx(2 * math.cos(math.radians(30)))
     rot = {adh_doc.find(doc, f"prop_lift_{n}")["muas"]["propeller"]["motor"]: adh_doc.find(doc, f"prop_lift_{n}")["muas"]["propeller"]
            for n in (1, 2, 3, 4)}
     assert sorted(rot) == [1, 2, 3, 4] and all(r["role"] == "lift" and r["thrust_axis"] == [0.0, 0.0, -1.0] for r in rot.values())
@@ -256,7 +254,7 @@ def test_a_lift_rotor_needs_a_motor_number_and_a_motor_output_has_no_sign():
 def test_csv_mass_rollup_against_a_hand_calculation(tmp_path):
     """Hubs (+-a, +-b, h) = (0.5, 0.8, 0.1)-style: motors 0.2 kg at the hubs, arms 0.1 kg half way, the rest at the origin."""
     acft, _ = make_quad(tmp_path, propulsion=False, results=False)
-    a, b, h = math.cos(math.radians(30)), 0.5, 0.0
+    a, b, h = math.cos(math.radians(30)), 0.5, 0.0  # noqa: F841  (h names the motor height of the comment)
     # the hand calculation: 4 motors of 0.2 kg at (+-a, +-b, h), 4 arms of 0.1 kg at half that, 1.1 kg at the origin
     mm, ma, m0 = 0.2, 0.1, 0.8 + 0.3
     M = 4 * mm + 4 * ma + m0
@@ -833,13 +831,12 @@ def test_the_sizing_record_holds_the_emst_outputs_and_the_placeholder_inputs(tmp
 
 def test_the_aero_dataset_constants_carry_their_source_and_placeholder_flag(tmp_path):
     acft, _ = make_quad(tmp_path)
-    air = adh_doc.node(acft.doc, "1.2")["muas"]
     d = acft.datasets[assets.item_dataset(adh_doc.node(acft.doc, "1.2"), "aero")["ref"]]
     cd = next(v for v in d["variable_def"] if v["var_id"] == "CDx")
     assert float(cd["initial_value"]) == pytest.approx(1.4) and "placeholder: true" in cd["description"]["value"] and "combine max" in cd["description"]["value"]
     e = next(e for e in assets.register(acft.doc, create=False) if e.get("dataset_role") == "aero")
     assert e["dataset"]["placeholder"] is True and e["dataset"]["analysis_mass_model"]["mass"]["value"] == pytest.approx(2.3)
-    assert air["reference"]["s_ref"]["value"] == pytest.approx(0.02)
+    assert adh_doc.reference(acft.doc)["s_ref"]["value"] == pytest.approx(0.02)
 
 
 def test_stale_results_for_another_reference_area_are_refused(tmp_path):

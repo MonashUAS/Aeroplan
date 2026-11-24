@@ -2,7 +2,7 @@
 
 Date: 2026-10-17
 
-Status: accepted
+Status: accepted. Amended by 0029 (the x axis points forward: FRD).
 
 ## Context
 

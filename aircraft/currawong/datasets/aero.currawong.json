@@ -8,13 +8,13 @@
       }
     ],
     "creation_date": {
-      "date": "2026-10-15"
+      "date": "2026-10-30"
     },
     "file_version": {
       "value": "1"
     },
     "description": {
-      "value": "currawong aero build-up from the flow5 sweep currawong_sheetcg (plane currawong_aeroplan). Moments about the MRP (the T7 CoG). Trim point of the T7 analysis: V 15.1247 m/s, alpha 3.10014 deg, CL 0.698823. The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."
+      "value": "currawong aero build-up from the flow5 sweep currawong_2026-10-30 (plane currawong_aeroplan). Moments about the MRP (the T7 CoG). Trim point of the T7 analysis: V 18.6757 m/s, alpha 0.256741 deg, CL 0.458926. The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."
     }
   },
   "variable_def": [
@@ -94,225 +94,225 @@
       "name": "CD0",
       "var_id": "CD0",
       "units": "nd",
-      "initial_value": "0.01511110463075244",
+      "initial_value": "0.014512596205071945",
       "description": {
-        "value": "source: flow5 viscous alpha polar currawong_sheetcg (6 points, least squares CD on CL^2); placeholder: false"
+        "value": "source: flow5 viscous alpha polar currawong_2026-10-30 (6 points, least squares CD on CL^2); placeholder: false"
       }
     },
     {
       "name": "CDde",
       "var_id": "CDde",
       "units": "1_per_rad",
-      "initial_value": "0.01280170957107119",
+      "initial_value": "0.011937102303268866",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0000); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0000); placeholder: false"
       }
     },
     {
       "name": "CL0",
       "var_id": "CL0",
       "units": "nd",
-      "initial_value": "0.4408269019693446",
+      "initial_value": "0.43743219312023129",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (CL_trim - CLa alpha_trim); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (CL_trim - CLa alpha_trim); placeholder: false"
       }
     },
     {
       "name": "CLa",
       "var_id": "CLa",
       "units": "1_per_rad",
-      "initial_value": "4.7682000000000002",
+      "initial_value": "4.7966800000000003",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (-CZa); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (-CZa); placeholder: false"
       }
     },
     {
       "name": "CLde",
       "var_id": "CLde",
       "units": "1_per_rad",
-      "initial_value": "0.30657379066771673",
+      "initial_value": "0.3091766598332028",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0102); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0213); placeholder: false"
       }
     },
     {
       "name": "CLq",
       "var_id": "CLq",
       "units": "1_per_rad",
-      "initial_value": "6.12277",
+      "initial_value": "7.4295299999999997",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (-CZq); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (-CZq); placeholder: false"
       }
     },
     {
       "name": "CYb",
       "var_id": "CYb",
       "units": "1_per_rad",
-      "initial_value": "-0.22014",
+      "initial_value": "-0.22698699999999999",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cyb); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cyb); placeholder: false"
       }
     },
     {
       "name": "CYdr",
       "var_id": "CYdr",
       "units": "1_per_rad",
-      "initial_value": "0.1623605101093186",
+      "initial_value": "0.16662536847008957",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0004); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0004); placeholder: false"
       }
     },
     {
       "name": "CYp",
       "var_id": "CYp",
       "units": "1_per_rad",
-      "initial_value": "-0.041202700000000002",
+      "initial_value": "-0.055466300000000003",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cyp); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cyp); placeholder: false"
       }
     },
     {
       "name": "CYr",
       "var_id": "CYr",
       "units": "1_per_rad",
-      "initial_value": "0.194437",
+      "initial_value": "0.199902",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cyr); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cyr); placeholder: false"
       }
     },
     {
       "name": "Clb",
       "var_id": "Clb",
       "units": "1_per_rad",
-      "initial_value": "-0.064190300000000006",
+      "initial_value": "-0.053783299999999999",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Clb); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Clb); placeholder: false"
       }
     },
     {
       "name": "Clda",
       "var_id": "Clda",
       "units": "1_per_rad",
-      "initial_value": "0.14859600746236479",
+      "initial_value": "0.15015772920721046",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run aileron (plane currawong_aeroplan, flow5 7.57, linearity 0.0158); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run aileron (plane currawong_aeroplan, flow5 7.57, linearity 0.0162); placeholder: false"
       }
     },
     {
       "name": "Cldr",
       "var_id": "Cldr",
       "units": "1_per_rad",
-      "initial_value": "0.0061820597398108343",
+      "initial_value": "0.010249701660494144",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0033); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0032); placeholder: false"
       }
     },
     {
       "name": "Clp",
       "var_id": "Clp",
       "units": "1_per_rad",
-      "initial_value": "-0.38913500000000001",
+      "initial_value": "-0.38749600000000001",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Clp); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Clp); placeholder: false"
       }
     },
     {
       "name": "Clr",
       "var_id": "Clr",
       "units": "1_per_rad",
-      "initial_value": "-0.0037448400000000001",
+      "initial_value": "0.0052398999999999996",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Clr); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Clr); placeholder: false"
       }
     },
     {
       "name": "Cm0",
       "var_id": "Cm0",
       "units": "nd",
-      "initial_value": "0.083804103076687952",
+      "initial_value": "0.0086144839678849155",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cm_trim - Cma alpha_trim); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cm_trim - Cma alpha_trim); placeholder: false"
       }
     },
     {
       "name": "Cma",
       "var_id": "Cma",
       "units": "1_per_rad",
-      "initial_value": "-1.54884",
+      "initial_value": "-1.92245",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt; placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt; placeholder: false"
       }
     },
     {
       "name": "Cmde",
       "var_id": "Cmde",
       "units": "1_per_rad",
-      "initial_value": "-1.2093093964718113",
+      "initial_value": "-1.1919139632065341",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0121); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run elevator (plane currawong_aeroplan, flow5 7.57, linearity 0.0238); placeholder: false"
       }
     },
     {
       "name": "Cmq",
       "var_id": "Cmq",
       "units": "1_per_rad",
-      "initial_value": "-17.725100000000001",
+      "initial_value": "-17.4878",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt; placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt; placeholder: false"
       }
     },
     {
       "name": "Cnb",
       "var_id": "Cnb",
       "units": "1_per_rad",
-      "initial_value": "0.068637299999999998",
+      "initial_value": "0.0637041",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cnb); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cnb); placeholder: false"
       }
     },
     {
       "name": "Cnda",
       "var_id": "Cnda",
       "units": "1_per_rad",
-      "initial_value": "-0.014696226255602548",
+      "initial_value": "-0.007526311461577239",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run aileron (plane currawong_aeroplan, flow5 7.57, linearity 0.0322); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run aileron (plane currawong_aeroplan, flow5 7.57, linearity 0.0374); placeholder: false"
       }
     },
     {
       "name": "Cndr",
       "var_id": "Cndr",
       "units": "1_per_rad",
-      "initial_value": "-0.069278308565860813",
+      "initial_value": "-0.069129830444228671",
       "description": {
-        "value": "source: flow5 sweep currawong_sheetcg run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0029); placeholder: false"
+        "value": "source: flow5 sweep currawong_2026-10-30 run rudder (plane currawong_aeroplan, flow5 7.57, linearity 0.0029); placeholder: false"
       }
     },
     {
       "name": "Cnp",
       "var_id": "Cnp",
       "units": "1_per_rad",
-      "initial_value": "-0.0103531",
+      "initial_value": "-0.024721099999999999",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cnp); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cnp); placeholder: false"
       }
     },
     {
       "name": "Cnr",
       "var_id": "Cnr",
       "units": "1_per_rad",
-      "initial_value": "-0.077137499999999998",
+      "initial_value": "-0.074117299999999997",
       "description": {
-        "value": "source: flow5 T7 currawong_sheetcg/t7_reference_opoint.txt (Cnr); placeholder: false"
+        "value": "source: flow5 T7 currawong_2026-10-30/t7_reference_opoint.txt (Cnr); placeholder: false"
       }
     },
     {
       "name": "K",
       "var_id": "K",
       "units": "nd",
-      "initial_value": "0.045240907931990919",
+      "initial_value": "0.048293431130541312",
       "description": {
-        "value": "source: flow5 viscous alpha polar currawong_sheetcg (6 points, least squares CD on CL^2); placeholder: false"
+        "value": "source: flow5 viscous alpha polar currawong_2026-10-30 (6 points, least squares CD on CL^2); placeholder: false"
       }
     },
     {
@@ -395,7 +395,7 @@
       "name": "alpha breakpoints",
       "bp_id": "BP_ALPHA",
       "units": "rad",
-      "bp_vals": "-1.5707963267948966, -0.56735092694123923, -0.21828507654237334, 0.18018814186289489, 0.35472106706232787, 0.78539816339744828, 1.5707963267948966"
+      "bp_vals": "-1.5707963267948966, -0.56534715186576201, -0.21628130146689611, 0.17982600608749566, 0.35435893128692864, 0.78539816339744828, 1.5707963267948966"
     }
   ],
   "gridded_table_def": [
@@ -449,7 +449,7 @@
           "signal": [
             {
               "var_id": "alpha",
-              "signal_value": "0.05410765027277701"
+              "signal_value": "0.0044809757748627615"
             },
             {
               "var_id": "beta",
@@ -485,12 +485,12 @@
           "signal": [
             {
               "var_id": "CL",
-              "signal_value": "0.69882300000000008",
+              "signal_value": "0.45892600000000006",
               "tol": "1e-09"
             },
             {
               "var_id": "CD",
-              "signal_value": "0.037204664222879394",
+              "signal_value": "0.02468382416417679",
               "tol": "1e-09"
             },
             {
@@ -505,7 +505,7 @@
             },
             {
               "var_id": "Cm",
-              "signal_value": "1.0028200006506616e-08",
+              "signal_value": "3.2089499999929383e-08",
               "tol": "1e-09"
             },
             {
@@ -558,12 +558,12 @@
           "signal": [
             {
               "var_id": "CL",
-              "signal_value": "0.85591896080925012",
+              "signal_value": "0.86763599373524303",
               "tol": "1e-09"
             },
             {
               "var_id": "CD",
-              "signal_value": "0.049406624021113309",
+              "signal_value": "0.051941854529843783",
               "tol": "1e-09"
             },
             {
@@ -578,7 +578,7 @@
             },
             {
               "var_id": "Cm",
-              "signal_value": "-0.10851625124084907",
+              "signal_value": "-0.21278725934352707",
               "tol": "1e-09"
             },
             {
@@ -631,32 +631,32 @@
           "signal": [
             {
               "var_id": "CL",
-              "signal_value": "0.67923690196934461",
+              "signal_value": "0.6772661931202314",
               "tol": "1e-09"
             },
             {
               "var_id": "CD",
-              "signal_value": "0.035983575186190178",
+              "signal_value": "0.03666428580704284",
               "tol": "1e-09"
             },
             {
               "var_id": "CY",
-              "signal_value": "-0.0045586242923476954",
+              "signal_value": "-0.0047670142070937293",
               "tol": "1e-09"
             },
             {
               "var_id": "Cl",
-              "signal_value": "-0.0054192796182132418",
+              "signal_value": "-0.0040182198837654098",
               "tol": "1e-09"
             },
             {
               "var_id": "Cm",
-              "signal_value": "0.0063621030766879416",
+              "signal_value": "-0.087508016032115082",
               "tol": "1e-09"
             },
             {
               "var_id": "Cn",
-              "signal_value": "-0.00021487459961025759",
+              "signal_value": "-0.00058806513109600778",
               "tol": "1e-09"
             }
           ]
@@ -704,32 +704,32 @@
           "signal": [
             {
               "var_id": "CL",
-              "signal_value": "0.72691890196934461",
+              "signal_value": "0.72523299312023137",
               "tol": "1e-09"
             },
             {
               "var_id": "CD",
-              "signal_value": "0.039016902105509413",
+              "signal_value": "0.039913149018658362",
               "tol": "1e-09"
             },
             {
               "var_id": "CY",
-              "signal_value": "-0.001236081",
+              "signal_value": "-0.001663989",
               "tol": "1e-09"
             },
             {
               "var_id": "Cl",
-              "signal_value": "0.0061574708954837739",
+              "signal_value": "0.0063940475048652537",
               "tol": "1e-09"
             },
             {
               "var_id": "Cm",
-              "signal_value": "-0.0091262969233120439",
+              "signal_value": "-0.10673251603211507",
               "tol": "1e-09"
             },
             {
               "var_id": "Cn",
-              "signal_value": "-0.0020741401506723057",
+              "signal_value": "-0.0016447903753892686",
               "tol": "1e-09"
             }
           ]

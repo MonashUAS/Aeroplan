@@ -1,5 +1,0 @@
-name: f16
-kind: aircraft
-consumers:
-- review
-- archive

@@ -1,0 +1,1375 @@
+{
+  "wbs_no": "1.2",
+  "name": "AirVehicle",
+  "parameters": {
+    "reference_data": {
+      "Sref": 1.0762,
+      "BLref": 3.3,
+      "Cbar": 0.33
+    }
+  },
+  "muas": {
+    "ext_version": "0.6.0",
+    "instance": "currawong_airvehicle",
+    "mass_properties": {
+      "mass": {
+        "value": 10.753333333333334,
+        "units": "kg"
+      },
+      "cg": {
+        "frame": "design",
+        "xyz": [
+          -0.13762104874820252,
+          -9.67917624537586e-18,
+          -0.001997467570199184
+        ],
+        "units": "m"
+      },
+      "inertia": {
+        "axes": "parallel_to_design",
+        "products_convention": "+integral(xy dm)",
+        "ixx": 2.4118630076363896,
+        "iyy": 3.2958136740909563,
+        "izz": 5.698109509177507,
+        "ixy": 1.5408256830212274e-17,
+        "ixz": -0.06949230091480242,
+        "iyz": 4.33078030702925e-21,
+        "units": "kg*m^2",
+        "unverified_products": []
+      },
+      "source": "estimate",
+      "placeholder": true,
+      "notes": [
+        "Configuration measured_no_payload: the weight log of the Master Specification Sheet (1st Airframe), positions from CG Calcs 1 forward tank. No payload and no water tanks.",
+        "The mass is the sum of the weighed subassembly totals. The CG x comes from the position sheet. y = 0 and z = 0 for every point mass: the sheet has no vertical positions (stand-in).",
+        "The inertia is the parallel-axis sum of the point masses. A part has no inertia of its own in it."
+      ]
+    },
+    "reference": {
+      "design_frame": "x_fwd_y_right_z_down_m_wingLE",
+      "body_frame": "FRD",
+      "euler": "3-2-1/NED",
+      "nominal_cg": {
+        "frame": "design",
+        "xyz": [
+          -0.13762104874820252,
+          -9.67917624537586e-18,
+          -0.001997467570199184
+        ],
+        "units": "m"
+      },
+      "mrp": {
+        "definition": "nominal_cg",
+        "config_id": "currawong.nominal",
+        "point": {
+          "frame": "design",
+          "xyz": [
+            -0.13762104874820252,
+            -9.67917624537586e-18,
+            -0.001997467570199184
+          ],
+          "units": "m"
+        }
+      },
+      "surface_signs": {
+        "elevator": "trailing edge down positive",
+        "aileron": "positive rolls right",
+        "rudder": "trailing edge left positive"
+      },
+      "placeholder_fields": [
+        "nominal_cg",
+        "mrp"
+      ],
+      "notes": [
+        "S, b and c: the CUSTOM reference dimensions of the flow5 T7 analysis t7_reference.xml.",
+        "The design frame is FRD (x forward, y right, z down), flipped from the flow5 axes (x aft, z up) at the file edge. The origin is the flow5 origin, the wing root leading edge.",
+        "MRP = the CoG of the T7 analysis (the nominal CG). It is a mass model value (placeholder)."
+      ]
+    },
+    "initial_conditions": {
+      "rate_frame": "local_NED",
+      "latitude_type": "geodetic",
+      "attitude_sequence": "3-2-1",
+      "units": "SI",
+      "values": {
+        "speed_mps": 18.6757,
+        "altitude_m": 0.0
+      },
+      "placeholder": true
+    },
+    "datasets": [
+      {
+        "role": "aero",
+        "ref": "asset:sha256:9fbebcf0e33da7ea7447d611ec3d1c26a77a1683b44feaf5b4e9d6b638f4383b"
+      }
+    ],
+    "aero_settings": {
+      "cl_max": 1.3,
+      "cl_min": -0.6,
+      "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (dml/aero.dml, description of the CL table: hand config stall, from the retired hand config)",
+      "placeholder": true
+    },
+    "point_masses": [
+      {
+        "tag": "FUSELAGE-REST",
+        "mass": {
+          "value": 2.814,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.044369561718928564,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Fuselage weighed total (row 26) less the mapped parts. Itemised in the rest: Tail Pin, Spine, LG Plate, LG Plate Supports, Motor Plate, Crux Plates, Fuse Hatch, Tail Clamps (all 3 clamps), Backbone, Battery Cage, Bottom Fuse Skin, Top Fuse Skin, Crux Booms, Glue Epoxy, Hardware. Not weighed: none. x: mass-weighted mean of CG Calcs 1 forward tank fuse: skin, spine, crux aly, crux tube, motor plate, motor bracket, tail mount. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "WINGS-S1",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1641407076655567,
+            0.13750332045837782,
+            0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S2",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1535318406760365,
+            0.4125099613751334,
+            -0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S3",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.14292297368651638,
+            0.6875166022918892,
+            -0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S4",
+        "mass": {
+          "value": 0.2332550319250213,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13168751678594598,
+            0.9625202123533719,
+            -0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S5",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.12109452348673069,
+            1.2375141680322757,
+            -0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S6",
+        "mass": {
+          "value": 0.20174372921196534,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.11049045210730174,
+            1.5125060290475028,
+            -0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S7",
+        "mass": {
+          "value": 0.2817104404950413,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1641407076655567,
+            -0.13750332045837782,
+            0.0012423079529582416
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S8",
+        "mass": {
+          "value": 0.2658197555322014,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.1535318406760365,
+            -0.4125099613751334,
+            -0.009875588521229706
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S9",
+        "mass": {
+          "value": 0.24998077936813398,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.14292297368651638,
+            -0.6875166022918892,
+            -0.020993484995417658
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S10",
+        "mass": {
+          "value": 0.2332550319250213,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.13168751678594598,
+            -0.9625202123533719,
+            -0.03200959115262634
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S11",
+        "mass": {
+          "value": 0.21749026346763667,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.12109452348673069,
+            -1.2375141680322757,
+            -0.042706002660618095
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "WINGS-S12",
+        "mass": {
+          "value": 0.20174372921196534,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.11049045210730174,
+            -1.5125060290475028,
+            -0.05333532788015943
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Wings weighed total (row 40) less the mapped parts. Itemised in the rest: Rear Spar, Front Spar, Inner Spar to Boom Connector, Outer Spar to Boom Connector, pitot tube mouint, Wing Booms, Wing Tips. Not weighed: Top Wing Skin, Bottom Wing Skin, Ribs, BPR. x: mass-weighted mean of CG Calcs 1 forward tank wing: skins, spars, crux aly, crux tube. Spread over the planform of wing_main in strips of equal area density, shifted in x to the mean above",
+        "placeholder": false
+      },
+      {
+        "tag": "LANDING_GEAR-MAIN",
+        "mass": {
+          "value": 1.056,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.16,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 41 MLG Composite Part (Weighed the physical item); row 42 MLG Mounting Hardware (Weighed the physical item). x: CG Calcs 1 forward tank lg/main. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "LANDING_GEAR-FRONT",
+        "mass": {
+          "value": 0.264,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.626922,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 44 FLG Tube (Not Weighed). x: CG Calcs 1 forward tank lg/front. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-BOOM",
+        "mass": {
+          "value": 0.20347,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.792321,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 51 Tail Boom (Not Weighed). x: CG Calcs 1 forward tank tail/boom. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S1",
+        "mass": {
+          "value": 0.10055981223664391,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5400134975318476,
+            0.03108380519945251,
+            0.044370977425871955
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S2",
+        "mass": {
+          "value": 0.09722263092996836,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5441860840425616,
+            0.09325141559835753,
+            0.04418150138115377
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S3",
+        "mass": {
+          "value": 0.09388544962329268,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5483586705532757,
+            0.15541902599726254,
+            0.043992025336435606
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S4",
+        "mass": {
+          "value": 0.09054826831661712,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.55253125706399,
+            0.21758663639616757,
+            0.043802549291717424
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S5",
+        "mass": {
+          "value": 0.08721108700994147,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.556703843574704,
+            0.27975424679507255,
+            0.04361307324699924
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S6",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5608510965767841,
+            0.34191951536530224,
+            0.04342474759017655
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S7",
+        "mass": {
+          "value": 0.10055981223664391,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5400134975318476,
+            -0.03108380519945251,
+            0.044370977425871955
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S8",
+        "mass": {
+          "value": 0.09722263092996836,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5441860840425616,
+            -0.09325141559835753,
+            0.04418150138115377
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S9",
+        "mass": {
+          "value": 0.09388544962329268,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5483586705532757,
+            -0.15541902599726254,
+            0.043992025336435606
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S10",
+        "mass": {
+          "value": 0.09054826831661712,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.55253125706399,
+            -0.21758663639616757,
+            0.043802549291717424
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S11",
+        "mass": {
+          "value": 0.08721108700994147,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.556703843574704,
+            -0.27975424679507255,
+            0.04361307324699924
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "TAIL-S12",
+        "mass": {
+          "value": 0.08383775188353645,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.5608510965767841,
+            -0.34191951536530224,
+            0.04342474759017655
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Tail weighed total (row 55) less the mapped parts. Itemised in the rest: Tail Servo Mount. Not weighed: HSTAB, VSTAB. x: mass-weighted mean of CG Calcs 1 forward tank tail: tail. Spread over the planform of htail in strips of equal area density, shifted in x to the mean above",
+        "placeholder": true
+      },
+      {
+        "tag": "AVIONICS-REST",
+        "mass": {
+          "value": 0.609,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -0.044369561718928564,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Avionics weighed total (row 64) less the mapped parts. Itemised in the rest: Servo, PDB + bms + mnt, Cube + herelink + here4 + wires + mnts. Not weighed: none. x: mass-weighted mean of stand-in: the x of Fuselage (the position sheet has no Avionics rows). y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      },
+      {
+        "tag": "PROPULSION-MOTOR",
+        "mass": {
+          "value": 0.44,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.617672,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 65 Cruise Motor + ally mount (Weighed from unfinished physical item). x: CG Calcs 1 forward tank prop/motor. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-ESC",
+        "mass": {
+          "value": 0.208,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.5104392,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 66 Cruise ESC (Weighed from unfinished physical item). x: CG Calcs 1 forward tank prop/esc. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-BAT",
+        "mass": {
+          "value": 0.9283333333333333,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.4855892392181465,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 67 Battery (no source stated). x: CG Calcs 1 forward tank prop/bat. y = 0, z = 0: not in the sheet (stand-in). Battery cage trim: moved -24.8 mm in x to reach the best flight CG with static margin 0.100 (middle of the requirement band) about the neutral point of work/aerosandbox/currawong/neutral_point.json. Flight day: the crew trims the CG with the battery cage",
+        "placeholder": true
+      },
+      {
+        "tag": "PROPULSION-PROP",
+        "mass": {
+          "value": 0.045,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.643422,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: row 69 Propellor (Weighed the physical item). x: CG Calcs 1 forward tank prop/prop. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": false
+      },
+      {
+        "tag": "PROPULSION-REST",
+        "mass": {
+          "value": 0.179,
+          "units": "kg"
+        },
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.549377959889289,
+            0.0,
+            0.0
+          ],
+          "units": "m"
+        },
+        "source": "1st Airframe: Propulsion weighed total (row 74) less the mapped parts. Itemised in the rest: Estop, Propellor Mount. Not weighed: none. x: mass-weighted mean of CG Calcs 1 forward tank prop: motor, esc, bat, prop. y = 0, z = 0: not in the sheet (stand-in)",
+        "placeholder": true
+      }
+    ],
+    "sources": [
+      {
+        "tool": "OpenVSP",
+        "asset": "asset:sha256:1f0b4d4ebd6b8cfa66c0e80b28c17c1eb02d87df48a507ac6345db50040e48e0",
+        "role": "OpenVSP model (the member's changed copy)"
+      },
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:69c089c2a8211b6152006f1d9fcd4b4e84701fe55ff92854a40d73716155bc3a",
+        "role": "initial sizing outputs (Athena)"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:2183175820fcfbf7a533448bbd3c4dcfbe1029e87210b07e02e55b70907adf09",
+        "role": "plane definition of the sweep (wings, body, point masses)"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:495fec23b481867035055f78d7d9c231bf84f50b540d65f290c3fb5248b2758f",
+        "role": "T7 analysis: reference dimensions and the custom mass model"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:1e6e89bd30c32262d5d7c1454504a669032757d07885abb88303ec0c1f5d9335",
+        "role": "T7 point: stability derivatives and trim"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:c9aa30bbc540103c6cbb6c31cb70f2551d38cfe02d418e8f05271f7aeabef666",
+        "role": "viscous alpha polar: CD0 and K"
+      },
+      {
+        "tool": "flow5",
+        "asset": "asset:sha256:199cb1fd63ef0fa693baf32de851d4b2a609ca41fc0b16458e3032729172663a",
+        "role": "sweep results: control derivatives and validation"
+      },
+      {
+        "tool": "SpecSheet",
+        "asset": "asset:sha256:a8995f0cd85ce77fe7a453350dbc952b0801b2f83b5ab78bc83f6be4c5f7c37e",
+        "role": "mass model: weight log and CG sheet"
+      }
+    ]
+  },
+  "performance": [
+    {
+      "name": "sizing",
+      "description": "Initial sizing of the aircraft (the first design stage). Unit checks: b^2/S = 9.6243 = AR 9.6243: S in m^2 and b in m (or both in one other unit); the mass parts sum to m_total 8.0228; C_D_i + C_D_o = C_D; C_L / C_D = glide ratio",
+      "tools": [
+        {
+          "model_name": "Athena initial sizing",
+          "generation_tool": "AeroSandbox (Athena sizing scripts)",
+          "description": "Printout of the sizing scripts. The printout gives no units: see units_basis of each output (AeroPlan aeroplan/aerosandbox/spoke.py).",
+          "data_exchange": {
+            "model_identifier": "athena",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "Take-off distance",
+                "value": 21.7809,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Climb angle",
+                "value": 31.7518,
+                "units": "deg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Glide ratio",
+                "value": 8.4776,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Max speed",
+                "value": 34.579,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Min speed",
+                "value": 9.9304,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing angle",
+                "value": 31.7518,
+                "units": "deg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing distance",
+                "value": 19.8608,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Flight distance",
+                "value": 8.4,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "Specific energy consumption",
+                "value": 92.1399,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "Payload mass",
+                "value": 0.9772,
+                "units": "kg",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Payload volume",
+                "value": 0.0011,
+                "units": "m^3",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Wing area",
+                "value": 0.9745,
+                "units": "m^2",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Wing span",
+                "value": 3.0625,
+                "units": "m",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Aspect ratio",
+                "value": 9.6243,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D",
+                "value": 0.0678,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D_i",
+                "value": 0.0109,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_D_o",
+                "value": 0.0569,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "C_L",
+                "value": 0.575,
+                "units": "nd",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Cruise speed",
+                "value": 17.5,
+                "units": "m/s",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Energy consumed",
+                "value": 90.0358,
+                "units": "unknown",
+                "units_basis": "unknown"
+              },
+              {
+                "name": "m_avionics",
+                "value": 0.8,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_misc",
+                "value": 1.2673,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_fuselage",
+                "value": 0.8788,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_wing",
+                "value": 0.894,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_batteries",
+                "value": 0.905,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_propulsion",
+                "value": 0.63,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_spars",
+                "value": 2.501,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_payload_tank",
+                "value": 0.1466,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "m_total",
+                "value": 8.0228,
+                "units": "kg",
+                "units_basis": "consistency"
+              },
+              {
+                "name": "Root chord",
+                "value": 0.4052,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "MAC length",
+                "value": 0.3669,
+                "units": "m",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "MAC location",
+                "value": 1.2997,
+                "units": "m",
+                "units_basis": "unknown datum"
+              },
+              {
+                "name": "Take off points",
+                "value": 10.0113,
+                "units": "nd",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Landing points",
+                "value": 40.3074,
+                "units": "nd",
+                "units_basis": "magnitude"
+              },
+              {
+                "name": "Energy efficiency points",
+                "value": 30.2559,
+                "units": "nd",
+                "units_basis": "magnitude"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "acceptance_criteria": "The aircraft flies every item and lands. The flight ends disarmed.",
+      "category": "mission",
+      "description": "Mission profile demo_circuit",
+      "muas": {
+        "mission": {
+          "items": [
+            {
+              "alt_agl_m": 50.0,
+              "type": "takeoff",
+              "pitch_rad": 0.20943951023931956
+            },
+            {
+              "airspeed_ms": 12.75,
+              "type": "speed"
+            },
+            {
+              "ahead_m": 300.0,
+              "alt_agl_m": 80.0,
+              "label": "north_leg",
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 300.0,
+              "alt_agl_m": 80.0,
+              "right_m": 250.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 0.0,
+              "alt_agl_m": 80.0,
+              "right_m": 250.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": 0.0,
+              "alt_agl_m": 80.0,
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "repeat": 1,
+              "to": "north_leg",
+              "type": "jump"
+            },
+            {
+              "ahead_m": 150.0,
+              "alt_agl_m": 100.0,
+              "radius_m": 60.0,
+              "right_m": 125.0,
+              "turns": 2.0,
+              "type": "loiter_turns"
+            },
+            {
+              "ahead_m": 150.0,
+              "alt_agl_m": 20.0,
+              "radius_m": 60.0,
+              "right_m": 125.0,
+              "type": "loiter_to_alt"
+            },
+            {
+              "ahead_m": -330.0,
+              "alt_agl_m": 20.0,
+              "label": "approach",
+              "right_m": 0.0,
+              "type": "waypoint"
+            },
+            {
+              "ahead_m": -60.0,
+              "right_m": 0.0,
+              "type": "land"
+            }
+          ],
+          "name": "demo_circuit",
+          "notes": [],
+          "params": {
+            "AIRSPEED_CRUISE": 12.75,
+            "LAND_FLARE_ALT": 2.0,
+            "LAND_FLARE_SEC": 1.5,
+            "TECS_LAND_ARSPD": 13.0,
+            "TECS_LAND_SINK": 0.6,
+            "WP_LOITER_RAD": 60.0,
+            "WP_RADIUS": 35.0
+          }
+        }
+      },
+      "name": "mission:demo_circuit",
+      "priority": "medium",
+      "status": "draft",
+      "verification_method": "SITL run, then flight test"
+    },
+    {
+      "acceptance_criteria": "static_margin_min is at least 0.05 nd.",
+      "category": "handling",
+      "description": "Handling target static_margin_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "static_margin_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:static_margin_min, from the retired hand config). Was: hand config requirements.static_margin_min",
+          "units": "nd",
+          "value": 0.05
+        }
+      },
+      "name": "handling:static_margin_min",
+      "priority": "medium",
+      "source": "hand config requirements.static_margin_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "static_margin_max is at most 0.15 nd.",
+      "category": "handling",
+      "description": "Handling target static_margin_max",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "static_margin_max",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:static_margin_max, from the retired hand config). Was: hand config requirements.static_margin_max",
+          "units": "nd",
+          "value": 0.15
+        }
+      },
+      "name": "handling:static_margin_max",
+      "priority": "medium",
+      "source": "hand config requirements.static_margin_max",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "htail_volume is equal to 0.65 nd.",
+      "category": "sizing",
+      "description": "Sizing target htail_volume",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "htail_volume",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:htail_volume, from the retired hand config). Was: hand config requirements.htail_volume",
+          "units": "nd",
+          "value": 0.65
+        }
+      },
+      "name": "sizing:htail_volume",
+      "priority": "medium",
+      "source": "hand config requirements.htail_volume",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "vtail_volume is equal to 0.05 nd.",
+      "category": "sizing",
+      "description": "Sizing target vtail_volume",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "vtail_volume",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:vtail_volume, from the retired hand config). Was: hand config requirements.vtail_volume",
+          "units": "nd",
+          "value": 0.05
+        }
+      },
+      "name": "sizing:vtail_volume",
+      "priority": "medium",
+      "source": "hand config requirements.vtail_volume",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "bank_angle_deg is equal to 30 deg.",
+      "category": "sizing",
+      "description": "Sizing target bank_angle_deg",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "bank_angle_deg",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:bank_angle_deg, from the retired hand config). Was: hand config requirements.bank_angle_deg",
+          "units": "deg",
+          "value": 30.0
+        }
+      },
+      "name": "sizing:bank_angle_deg",
+      "priority": "medium",
+      "source": "hand config requirements.bank_angle_deg",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "bank_time_s is at most 2 s.",
+      "category": "sizing",
+      "description": "Sizing target bank_time_s",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "bank_time_s",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:bank_time_s, from the retired hand config). Was: hand config requirements.bank_time_s",
+          "units": "s",
+          "value": 2.0
+        }
+      },
+      "name": "sizing:bank_time_s",
+      "priority": "medium",
+      "source": "hand config requirements.bank_time_s",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "vne_ms is equal to 20 m/s.",
+      "category": "sizing",
+      "description": "Sizing target vne_ms",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "vne_ms",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:vne_ms, from the retired hand config). Was: hand config requirements.vne_ms",
+          "units": "m/s",
+          "value": 20.0
+        }
+      },
+      "name": "sizing:vne_ms",
+      "priority": "medium",
+      "source": "hand config requirements.vne_ms",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "servo_safety_factor is equal to 2 nd.",
+      "category": "sizing",
+      "description": "Sizing target servo_safety_factor",
+      "muas": {
+        "target": {
+          "bound": "target",
+          "key": "servo_safety_factor",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement sizing:servo_safety_factor, from the retired hand config). Was: hand config requirements.servo_safety_factor",
+          "units": "nd",
+          "value": 2.0
+        }
+      },
+      "name": "sizing:servo_safety_factor",
+      "priority": "medium",
+      "source": "hand config requirements.servo_safety_factor",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "short_period_zeta_min is at least 0.3 nd.",
+      "category": "handling",
+      "description": "Handling target short_period_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "short_period_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:short_period_zeta_min, from the retired hand config). Was: hand config requirements.short_period_zeta_min",
+          "units": "nd",
+          "value": 0.3
+        }
+      },
+      "name": "handling:short_period_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.short_period_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "short_period_zeta_max is at most 1.3 nd.",
+      "category": "handling",
+      "description": "Handling target short_period_zeta_max",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "short_period_zeta_max",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:short_period_zeta_max, from the retired hand config). Was: hand config requirements.short_period_zeta_max",
+          "units": "nd",
+          "value": 1.3
+        }
+      },
+      "name": "handling:short_period_zeta_max",
+      "priority": "medium",
+      "source": "hand config requirements.short_period_zeta_max",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "phugoid_zeta_min is at least 0.04 nd.",
+      "category": "handling",
+      "description": "Handling target phugoid_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "phugoid_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:phugoid_zeta_min, from the retired hand config). Was: hand config requirements.phugoid_zeta_min",
+          "units": "nd",
+          "value": 0.04
+        }
+      },
+      "name": "handling:phugoid_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.phugoid_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "dutch_roll_zeta_min is at least 0.2 nd.",
+      "category": "handling",
+      "description": "Handling target dutch_roll_zeta_min",
+      "muas": {
+        "target": {
+          "bound": "min",
+          "key": "dutch_roll_zeta_min",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:dutch_roll_zeta_min, from the retired hand config). Was: hand config requirements.dutch_roll_zeta_min",
+          "units": "nd",
+          "value": 0.2
+        }
+      },
+      "name": "handling:dutch_roll_zeta_min",
+      "priority": "medium",
+      "source": "hand config requirements.dutch_roll_zeta_min",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "roll_mode_tau_max_s is at most 1 s.",
+      "category": "handling",
+      "description": "Handling target roll_mode_tau_max_s",
+      "muas": {
+        "target": {
+          "bound": "max",
+          "key": "roll_mode_tau_max_s",
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement handling:roll_mode_tau_max_s, from the retired hand config). Was: hand config requirements.roll_mode_tau_max_s",
+          "units": "s",
+          "value": 1.0
+        }
+      },
+      "name": "handling:roll_mode_tau_max_s",
+      "priority": "medium",
+      "source": "hand config requirements.roll_mode_tau_max_s",
+      "status": "draft",
+      "verification_method": "analysis"
+    },
+    {
+      "acceptance_criteria": "A linear model exists at each airspeed.",
+      "category": "analysis",
+      "description": "Airspeeds of the linear model family (gain-scheduling study)",
+      "muas": {
+        "analysis_points": {
+          "placeholder": true,
+          "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (requirement analysis:speeds, from the retired hand config). Was: hand config analysis_points.speeds_ms",
+          "speeds_mps": [
+            11.5,
+            12.75,
+            15.0,
+            17.5,
+            20.0
+          ]
+        }
+      },
+      "name": "analysis:speeds",
+      "priority": "medium",
+      "source": "hand config analysis_points.speeds_ms",
+      "status": "draft",
+      "verification_method": "analysis"
+    }
+  ]
+}

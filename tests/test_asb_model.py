@@ -1,11 +1,11 @@
-"""The AeroSandbox model files (tools/aerosandbox: component.py, mission.py, model.py, optimise.py, result.py). Every number is synthetic.
+"""The AeroSandbox model files (aeroplan/aerosandbox: component.py, mission.py, model.py, optimise.py, result.py). Every number is synthetic.
 
 The sizing runs in the AeroSandbox Python (`python -m aeroplan setup AeroSandbox`). That Python has no pytest. So each check is a plain
 function (`check_*`) and each test runs it in one of two ways:
   - the Python that runs pytest has aerosandbox: the test calls the check directly;
   - it has not, but the AeroSandbox Python exists: the test runs this file there (`python tests/test_asb_model.py NAME`);
   - neither: the test skips (CI has none).
-Run all checks in the AeroSandbox Python with `tools/aerosandbox/.venv/Scripts/python tests/test_asb_model.py`.
+Run all checks in the AeroSandbox Python with `aeroplan/aerosandbox/.venv/Scripts/python tests/test_asb_model.py`.
 """
 import csv
 import importlib.util
@@ -21,7 +21,7 @@ except ImportError:                                    # the AeroSandbox Python 
     pytest = None
 
 HERE = Path(__file__).resolve().parent
-TOOL = HERE.parent / "tools" / "aerosandbox"
+TOOL = HERE.parent / "aeroplan" / "aerosandbox"
 HAS_ASB = importlib.util.find_spec("aerosandbox") is not None
 CHECKS = {}
 G0 = 9.80665
@@ -37,10 +37,8 @@ def rel(a, b, tol=1e-9):
 
 
 def tool():
-    """component, mission, model, optimise, result of tools/aerosandbox as modules."""
-    if str(TOOL) not in sys.path:
-        sys.path.insert(0, str(TOOL))
-    import component, mission, model, optimise, result
+    """component, mission, model, optimise, result of aeroplan/aerosandbox."""
+    from aeroplan.aerosandbox import component, mission, model, optimise, result
     return component, mission, model, optimise, result
 
 
@@ -171,6 +169,7 @@ def stub_airframe(c, fus):
     a.m_cruise_esc, a.m_cruise_prop, a.m_cruise_rest = 0.1, 0.06, 0.1
     a.cruise = {"kv_rad_s_V": 23.0, "i0_A": 2.0, "kappa": 1.05, "r_tot_ohm": 0.04, "mass_kg": 0.4, "imax_A": 70.0, "diameter_m": 0.5}
     a.cruise_offsets = {"motor": 0.0, "esc": 0.25, "prop": -0.03, "rest": 0.15}
+    a.cruise_hub_base = [-0.68, 0.0, 0.0]                               # hub of the base aircraft, on the body axis
     a.s_ref, a.b_ref, a.c_ref = 1.0, 3.3, 0.33
     a.neutral_point, a.x_cg, a.x_hub = 0.15, 0.12, -0.68
     a.polar = {"cd0": 0.03, "k": 0.05, "cl_max": 1.2}
@@ -278,7 +277,7 @@ def check_motor_fit_on_the_committed_survey():
     """The committed survey gives a motor near the Redback M6C10 (234 g, KV150, holds about 2.3 N m)."""
     c, mi, m, o, r = tool()
     fit = c.MotorModel(TOOL / "data" / "motor_survey.csv")
-    assert fit.n >= 10 and 150.0 < float(fit.mass_g(150.0, 2.3)) < 1200.0 and 0.0 < fit.mass_fit[1] < 1.0
+    assert fit.n >= 100 and 150.0 < float(fit.mass_g(150.0, 2.3)) < 1200.0 and 0.0 < fit.mass_fit[1] < 1.0
     assert float(fit.mass_g(100.0, 2.3)) == float(fit.mass_g(300.0, 2.3))               # kv does not change the mass
 
 
@@ -292,7 +291,16 @@ def check_esc_fit_recovers_the_power_law_and_skips_other_cells():
     assert fit.n == 4 and fit.rms < 1e-9 and abs(fit.fit[1] - 0.9) < 1e-9          # the 24S row is out
     assert rel(float(fit.mass_g(50.0)), 2.5 * 50.0 ** 0.9, 1e-9)
     real = c.ESCModel(TOOL / "data" / "esc_survey.csv", 12)                         # the committed maker rows
-    assert real.n >= 6 and 0.5 < real.fit[1] < 1.5
+    assert real.n >= 100 and 0.5 < real.fit[1] < 1.5
+
+
+@check
+def check_every_survey_row_names_its_page_and_read_date():
+    """Each maker row gives the page it was read from (url) and the note says when (or where the row came from)."""
+    for name in ("motor_survey.csv", "esc_survey.csv"):
+        for row in csv.DictReader((TOOL / "data" / name).open(encoding="utf-8")):
+            assert row["url"].startswith("http"), (name, row["model"])
+            assert row["note"].strip(), (name, row["model"])
 
 
 @check
@@ -475,8 +483,7 @@ def check_boom_mode_roots_and_frequencies():
 def check_weight_chart_stacks_every_item():
     import matplotlib
     matplotlib.use("Agg")
-    tool()                                                                          # puts tools/aerosandbox on the path
-    import plot
+    from aeroplan.aerosandbox import plot
 
     class R:                                                                        # a result with synthetic items
         names = {}
@@ -506,8 +513,7 @@ def check_weight_chart_stacks_every_item():
 def check_energy_chart_stacks_every_segment():
     import matplotlib
     matplotlib.use("Agg")
-    tool()
-    import plot
+    from aeroplan.aerosandbox import plot
 
     class R:
         def energy_by_segment(self):
@@ -641,7 +647,8 @@ if pytest is not None:
 
     for _name in ("check_param_json_roundtrip_free_fix_and_placeholders", "check_material_with_E_keeps_the_compression_ratio",
                   "check_bershadsky_mass_equations", "check_motor_fit_recovers_exact_power_laws", "check_motor_fit_on_the_committed_survey",
-                  "check_esc_fit_recovers_the_power_law_and_skips_other_cells", "check_energy_chart_stacks_every_segment",
+                  "check_esc_fit_recovers_the_power_law_and_skips_other_cells", "check_every_survey_row_names_its_page_and_read_date",
+                  "check_energy_chart_stacks_every_segment",
                   "check_levels_and_the_rotor_model_kind", "check_mission_segments_and_energy", "check_ocv_fit_and_the_pack_discharge",
                   "check_l0_solve_and_the_hand_formulas",
                   "check_resonance_side_above_flips_the_limit", "check_boom_mode_roots_and_frequencies", "check_weight_chart_stacks_every_item",

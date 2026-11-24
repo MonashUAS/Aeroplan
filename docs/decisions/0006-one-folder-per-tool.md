@@ -2,7 +2,7 @@
 
 Date: 2026-10-10
 
-Status: accepted
+Status: accepted. Amended by ADR 25 (the folder is `aeroplan/<tool>/`)
 
 ## Context
 

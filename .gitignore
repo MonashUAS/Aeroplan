@@ -14,8 +14,8 @@ aircraft/*.h5
 *.muas.tmp
 
 # the Python of a tool on this machine (aeroplan setup OpenVSP, aeroplan setup AeroSandbox)
-tools/openvsp/.venv/
-tools/aerosandbox/.venv/
+aeroplan/openvsp/.venv/
+aeroplan/aerosandbox/.venv/
 
 # the AeroPlan Python of a checkout (uv venv .venv)
 .venv/

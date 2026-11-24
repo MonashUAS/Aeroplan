@@ -3,6 +3,7 @@ import math
 import pytest
 from pydantic import ValidationError
 
+from aeroplan import adh_doc
 from aeroplan.muas.mass import Inertia, MassProperties
 from aeroplan.muas.propulsion import PropellerInstallation
 from aeroplan.muas.reference import ReferenceData
@@ -39,8 +40,7 @@ def test_inertia_rejects_unphysical():
 
 # --- reference and MRP (user answer 7) ---
 def _ref(**kw):
-    d = dict(s_ref=Q(1, "m^2"), b_ref=Q(2, "m"), c_ref=Q(0.5, "m"), nominal_cg={"xyz": [1, 0, 0.1]},
-             mrp={"config_id": "c", "point": {"xyz": [1, 0, 0.1]}})
+    d = dict(nominal_cg={"xyz": [1, 0, 0.1]}, mrp={"config_id": "c", "point": {"xyz": [1, 0, 0.1]}})
     d.update(kw)
     return ReferenceData(**d)
 
@@ -51,9 +51,19 @@ def test_mrp_is_nominal_cg():
         _ref(mrp={"config_id": "c", "point": {"xyz": [1.5, 0, 0.1]}})
 
 
-def test_reference_rejects_wrong_dimension():
+def test_reference_values_are_adh_data_with_the_adh_aliases():
+    """ADR 0027: S, b and c are the ADH reference_data of node 1.2. ADH reads only its aliases (Sref, BLref, Cbar): a field
+    name passes the ADH validation as an unknown extra key and the value is lost, so validate_document refuses it."""
+    doc = adh_doc.new_document("T", "synthetic")
+    adh_doc.set_reference(doc, 1.0, 2.0, 0.5)
+    adh_doc.validate_document(doc)
+    assert adh_doc.reference(doc) == {"s_ref": {"value": 1.0, "units": "m^2"}, "b_ref": {"value": 2.0, "units": "m"},
+                                      "c_ref": {"value": 0.5, "units": "m"}}
     with pytest.raises(ValidationError):
-        _ref(s_ref=Q(1, "m"))
+        _ref(s_ref=Q(1, "m^2"))                                         # no copy in muas.reference
+    adh_doc.node(doc, "1.2")["parameters"]["reference_data"]["reference_area"] = 1.0
+    with pytest.raises(ValueError, match="aliases"):
+        adh_doc.validate_document(doc)
 
 
 # --- propeller installation ---

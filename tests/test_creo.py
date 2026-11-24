@@ -4,7 +4,7 @@ import pytest
 
 from aeroplan import adh_doc
 from aeroplan.frame import planform_le_x
-from aeroplan.geometry import body_frames, planform_wing
+from aeroplan.geometry import body_frames, planform_of, planform_wing
 from aeroplan.spokes import load
 from aeroplan.visual import PIVOT
 from test_openvsp import make_doc
@@ -21,7 +21,7 @@ def test_the_tube_runs_from_the_aft_end_of_the_body_to_the_tail_quarter_chord():
     assert boom in adh_doc.node(doc, "1.2.2.4")["subcomponents"] and "wbs_no" not in boom
     frames = body_frames(boom["geometry"]["body"])
     aft = body_frames(adh_doc.find(doc, "fuselage")["geometry"]["body"])[-1]
-    wing = planform_wing(adh_doc.find(doc, "htail")["muas"]["planform"])
+    wing = planform_wing(planform_of(adh_doc.find(doc, "htail")))
     s0 = wing.sections[0]
     assert frames[0][0, 0] == pytest.approx(aft[0, 0])
     assert frames[-1][0, 0] == pytest.approx(planform_le_x(wing.position[0], s0.x_offset) - PIVOT * s0.chord)

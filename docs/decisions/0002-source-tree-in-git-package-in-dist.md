@@ -2,7 +2,7 @@
 
 Date: 2026-10-10
 
-Status: accepted
+Status: accepted. Amended by ADR 26 (the flat aircraft folder)
 
 ## Context
 

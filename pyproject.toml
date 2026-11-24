@@ -1,11 +1,13 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aeroplan"
 version = "0.2.0"
 description = "ADH-based single source of truth (SSOT) for aircraft data: one .muas file per aircraft"
+readme = "README.md"
+authors = [{ name = "Liam M." }]
 requires-python = ">=3.10"
 # graphviz, tabulate and IPython: the vendored ADH package imports them when it loads
 dependencies = ["pydantic>=2", "pyyaml", "pint", "numpy", "pandas", "pyarrow", "h5py", "lxml", "graphviz", "tabulate", "IPython", "openpyxl"]
@@ -17,10 +19,22 @@ test = ["pytest"]
 [project.scripts]
 aeroplan = "aeroplan.cli:main"
 
+# Flat layout: the package is ./aeroplan. Only folders with an __init__.py are packages (no namespace packages), so the
+# tool settings, data, notebooks and the tool Pythons (.venv) stay out of the wheel.
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["aeroplan", "aeroplan.*"]
+namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = ["ignore::pydantic.warnings.PydanticDeprecatedSince20"]
-pythonpath = ["src", "standards/adh/build/src"]
+pythonpath = [".", "standards/adh/build/src"]
+
+# Static analysis (the ADH report, NASA/CR-20250007045 section 17, asks for code-quality tools). CI runs `ruff check`.
+[tool.ruff]
+line-length = 130
+extend-exclude = ["aeroplan/*/.venv", "standards/adh/upstream", "standards/adh/build", "*.ipynb", "work", "dist"]
+
+[tool.ruff.lint]
+select = ["E9", "F"]

@@ -13,8 +13,8 @@ import yaml
 
 from aeroplan import adh_doc, assets, datum, source_tree
 from aeroplan.frame import flip_array, flip_point
-from aeroplan.geometry import (body_adh, body_frames, distance_to_mesh, foils_of, lifting_surface_adh, planform_wing,
-                               section_points)
+from aeroplan.geometry import (body_adh, distance_to_mesh, foils_of, lifting_surface_adh, planform_of, planform_wing,
+                               set_planform)
 from aeroplan.parts import _hinge_point
 from aeroplan.spokes import Context, load
 from aeroplan.step_mesh import StepMeshError, read_step_faceted
@@ -73,15 +73,25 @@ def frames():
 
 def surface_item(pf, instance, name):
     foils = {s["foil"]: FOILS[s["foil"]] for s in pf["sections"]}
-    return {"name": name, "geometry": {"lifting_surface": lifting_surface_adh(planform_wing(pf), foils)},
-            "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": instance, "planform": copy.deepcopy(pf)}}
+    item = {"name": name, "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": instance}}
+    set_planform(item, copy.deepcopy(pf), foils)
+    return item
+
+
+def move_surface(doc, instance, x):
+    """Move a lifting surface (its section frame and its ADH shape) to the design x."""
+    item = adh_doc.find(doc, instance)
+    pf = planform_of(item)
+    pf["position"]["xyz"][0] = x
+    set_planform(item, pf, foils_of(item))
 
 
 def control(instance, parent, eta, hinge, side):
-    return {"name": instance, "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": instance,
-                                       "control_surface": {"parent": parent, "eta_span": eta, "hinge_x_over_c": hinge,
-                                                           "limit_min_rad": -0.3, "limit_max_rad": 0.3,
+    item = {"name": instance, "muas": {"ext_version": adh_doc.MUAS_SCHEMA_VERSION, "instance": instance,
+                                       "control_surface": {"parent": parent, "limit_min_rad": -0.3, "limit_max_rad": 0.3,
                                                            "positive_sign": "JSBSim", "s119_name": "x", "side": side}}}
+    adh_doc.set_control_geometry(item, eta, hinge)
+    return item
 
 
 def make_doc():
@@ -280,7 +290,7 @@ def test_parameter_round_trip_is_exact(written):
 @needs_openvsp
 def test_the_openvsp_surface_holds_the_adh_shape(written):
     doc, spec, path = written
-    wings = {w["instance"]: (adh_doc.find(doc, w["instance"])["muas"]["planform"],
+    wings = {w["instance"]: (planform_of(adh_doc.find(doc, w["instance"])),
                              {k: np.asarray(v) for k, v in w["foils"].items()}) for w in spec["wings"]}
     gaps = vsp.shape_gaps(path, wings, ("fuselage", frames()))
     assert set(gaps) == {"wing_main", "htail", "fin", "fuselage"}
@@ -355,10 +365,10 @@ def test_ingest_of_an_edit_writes_only_the_changed_value(written, tmp_path):
     changes = vsp.ingest(doc, ctx)
     assert changes == ["htail: section 1 chord 0.17 -> 0.15 m"]
     ht = adh_doc.find(doc, "htail")
-    assert ht["muas"]["planform"]["sections"][1]["chord"] == pytest.approx(0.15, abs=EXACT)
+    assert planform_of(ht)["sections"][1]["chord"] == pytest.approx(0.15, abs=EXACT)
     assert ht["muas"]["geometry_tool"] == "OpenVSP"
     assert ht["muas"]["sources"][0]["tool"] == "OpenVSP"
-    assert ht["geometry"]["lifting_surface"] == lifting_surface_adh(planform_wing(ht["muas"]["planform"]),
+    assert ht["geometry"]["lifting_surface"] == lifting_surface_adh(planform_wing(planform_of(ht)),
                                                                      foils_of(ht))
     for inst in ("wing_main", "fin", "fuselage", "elevator"):
         assert adh_doc.find(before, inst) == adh_doc.find(doc, inst), inst
@@ -378,7 +388,7 @@ def test_ingest_of_a_moved_aileron_writes_both_sides(written, tmp_path):
     changes = vsp.ingest(doc, ctx)
     assert [c.split(":")[0] for c in changes] == ["aileron_l", "aileron_r"]
     for inst in ("aileron_l", "aileron_r"):
-        assert adh_doc.find(doc, inst)["muas"]["control_surface"]["eta_span"] == pytest.approx([0.5, 0.9], abs=1e-9)
+        assert adh_doc.control_surface(adh_doc.find(doc, inst))["eta_span"] == pytest.approx([0.5, 0.9], abs=1e-9)
 
 
 @needs_openvsp

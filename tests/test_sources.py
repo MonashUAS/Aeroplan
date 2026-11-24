@@ -1,11 +1,8 @@
-import json
 
-import pandas as pd
 import pytest
-import yaml
 from pydantic import ValidationError
 
-from aeroplan.adapters.flow5 import PolarError, control_range, parse_polar_text
+from aeroplan.flow5.polar import PolarError, control_range, parse_polar_text
 from aeroplan.muas.uncertainty import ScalarResult, Uncertainty
 
 from sources import polar_text

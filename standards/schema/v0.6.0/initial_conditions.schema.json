@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "LatitudeType": {
+      "enum": [
+        "geodetic",
+        "geocentric"
+      ],
+      "title": "LatitudeType",
+      "type": "string"
+    },
+    "RateFrame": {
+      "enum": [
+        "local_NED",
+        "inertial"
+      ],
+      "title": "RateFrame",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attitude_sequence": {
+      "description": "Euler sequence, for example 3-2-1",
+      "pattern": "^[1-3]-[1-3]-[1-3]$",
+      "title": "Attitude Sequence",
+      "type": "string"
+    },
+    "latitude_type": {
+      "$ref": "#/$defs/LatitudeType"
+    },
+    "placeholder": {
+      "default": false,
+      "title": "Placeholder",
+      "type": "boolean"
+    },
+    "rate_frame": {
+      "$ref": "#/$defs/RateFrame",
+      "description": "Frame that the velocity and rotation rates are relative to"
+    },
+    "units": {
+      "default": "SI",
+      "title": "Units",
+      "type": "string"
+    },
+    "values": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Named state values in SI. Angles in radians",
+      "title": "Values",
+      "type": "object"
+    }
+  },
+  "required": [
+    "rate_frame",
+    "latitude_type",
+    "attitude_sequence",
+    "values"
+  ],
+  "title": "InitialConditions",
+  "type": "object"
+}

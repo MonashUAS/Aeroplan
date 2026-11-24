@@ -1,18 +1,14 @@
 """The flow5 sweep runner: script and polar XML, the T6 flap table, the log diagnosis and the fits. Every number is
 synthetic. A live flow5 run needs flow5 on this machine (FLOW5_EXE or an install in Program Files) and skips without it.
 """
-import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from aeroplan.adapters.flow5 import Polar
-from aeroplan.spokes import load
-
-load("flow5")
-sw = sys.modules["aeroplan_spokes.flow5.sweep"]
+from aeroplan.flow5.polar import Polar
+from aeroplan.flow5 import sweep as sw
 
 PLANE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <xflplane version="1.0"><Plane><Name>synth</Name>

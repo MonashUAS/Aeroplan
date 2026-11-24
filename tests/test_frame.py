@@ -1,4 +1,4 @@
-"""The FRD design frame (ADR 0025): the flip between x aft, z up and FRD. Synthetic numbers only."""
+"""The FRD design frame (ADR 0029): the flip between x aft, z up and FRD. Synthetic numbers only."""
 import numpy as np
 import pytest
 

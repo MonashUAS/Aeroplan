@@ -90,7 +90,7 @@ def test_flaps_on_four_triangle_edges_are_removed():
 
 
 def test_needle_triangle_is_removed_and_the_mesh_stays_closed():
-    from aeroplan.skin_body import mesh_volume, repair_for_panel
+    from aeroplan.skin_body import repair_for_panel
 
     tri = ellipsoid(n_u=20, n_v=12)
     k = len(tri) // 2

@@ -22,7 +22,7 @@ Step 5A of the Redback twin plan. The numbers are in `results.json` in this fold
 
 ## Segments of flight 00000171
 
-Written to `tools/ardupilot/settings/redback.yaml` (13 segments, log time). The speed is the EKF ground speed. The aircraft has no airspeed sensor, so the wind is not known.
+Written to `aeroplan/ardupilot/settings/redback.yaml` (13 segments, log time). The speed is the EKF ground speed. The aircraft has no airspeed sensor, so the wind is not known.
 
 | Segment | Start (s) | End (s) | Ground speed (m/s) | Climb (m/s) | Mean actuator |
 |---|---|---|---|---|---|
@@ -319,7 +319,7 @@ Notes on the battery data of this flight:
 | Battery internal resistance Rb | not fitted, no voltage and current | nothing |
 | Chain kappa | not fitted, no rpm and no power | nothing. The Propalyser file keeps the fitted chain_kappa_nd and chain_r_tot_ohm from the maker tables (the user accepts this). |
 | Current scale | not fitted, no logged current | nothing |
-| Segments | 13 segments | `tools/ardupilot/settings/redback.yaml` |
+| Segments | 13 segments | `aeroplan/ardupilot/settings/redback.yaml` |
 
 The AeroPlan package is not rebuilt. The segments need a new AeroPlan version before they reach a package. The motor outputs of the package stay marked as placeholder, as the user decided.
 

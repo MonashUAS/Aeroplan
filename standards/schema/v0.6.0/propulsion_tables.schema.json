@@ -1,0 +1,51 @@
+{
+  "$defs": {
+    "Table": {
+      "additionalProperties": false,
+      "description": "Columns of a lookup table. Every column has the same length. `units` maps each column to its units.",
+      "properties": {
+        "columns": {
+          "additionalProperties": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Columns",
+          "type": "object"
+        },
+        "units": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Units",
+          "type": "object"
+        }
+      },
+      "required": [
+        "columns",
+        "units"
+      ],
+      "title": "Table",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The tables of a propulsion system: a dataset of form `tables`, role propulsion.",
+  "properties": {
+    "prop_ctcp": {
+      "$ref": "#/$defs/Table",
+      "description": "Columns J, CT, CP"
+    },
+    "throttle_map": {
+      "$ref": "#/$defs/Table",
+      "description": "Columns esc_command_norm, power_fraction"
+    }
+  },
+  "required": [
+    "prop_ctcp",
+    "throttle_map"
+  ],
+  "title": "PropulsionTables",
+  "type": "object"
+}

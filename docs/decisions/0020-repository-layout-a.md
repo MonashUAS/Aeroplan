@@ -2,7 +2,7 @@
 
 Date: 2026-10-17
 
-Status: accepted
+Status: superseded by ADR 25
 
 ## Context
 

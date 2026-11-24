@@ -2,7 +2,7 @@
 
 Date: 2026-10-21
 
-Status: accepted
+Status: accepted. Amended by ADR 28 (the model files are in `aeroplan/aerosandbox/`)
 
 ## Context
 

@@ -9,7 +9,7 @@ from aeroplan import MUAS_SCHEMA_VERSION, adh_doc
 from aeroplan.schema_export import export_schemas
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src" / "aeroplan"
+SRC = ROOT / "aeroplan"
 
 
 def _doc(prov):
@@ -92,16 +92,77 @@ def test_committed_schema_is_current():
 
 def test_imports():
     from aeroplan import adh_doc, assets, build, checks, consumers, daveml_adh, gltf, h5json, package, source_tree, spokes  # noqa: F401,E501
-    from aeroplan.muas import aircraft, assets, dataset, flight, mass, node, propulsion, reference, uncertainty  # noqa: F401,E501
+    from aeroplan.muas import aircraft, assets, dataset, flight, mass, node, propulsion, reference, uncertainty  # noqa: F401,F811,E501
 
 
 def test_tool_independence():
     """ADH principle: data is separate from tools. AeroPlan imports no sibling repo."""
     pattern = re.compile(r"^\s*(import|from)\s+(aerolink|propalyser|proptimiser)", re.I | re.M)
-    spokes = [ROOT / "tools" / name for name in ("prototype", "aerosandbox", "flow5", "propalyser", "creo", "openvsp", "daveml", "ardupilot", "aerolink")]
-    # These scripts run in tools/aerosandbox/.venv, not in AeroPlan: they may import proptimiser
-    workers = {ROOT / "tools" / "aerosandbox" / name for name in ("model.py", "component.py", "mission.py", "optimise.py", "result.py",
-                                                                    "plot.py", "window.py")}
-    for py in [*SRC.rglob("*.py"), *(f for d in spokes for f in d.glob("*.py"))]:
+    # These modules run in aeroplan/aerosandbox/.venv, not in AeroPlan: they may import proptimiser
+    workers = {SRC / "aerosandbox" / name for name in ("model.py", "component.py", "mission.py", "optimise.py", "result.py",
+                                                       "plot.py", "window.py")}
+    for py in (p for p in SRC.rglob("*.py") if ".venv" not in p.parts):
         text = py.read_text(encoding="utf-8")
         assert not (re.compile(r"^\s*(import|from)\s+(aerolink|propalyser)", re.I | re.M) if py in workers else pattern).search(text), py
+
+
+def test_every_muas_key_has_a_row_in_the_extension_register():
+    """ADR 0027: standards/adh/EXTENSIONS.md says, for each muas key, what ADH has and why MUAS adds the key. A new key
+    needs a row before it goes in. A row for a key that is gone is stale."""
+    from aeroplan.muas.node import MuasNodeExt, PackageInfo
+    from aeroplan.muas.requirement import RequirementExt
+
+    text = (ROOT / "standards" / "adh" / "EXTENSIONS.md").read_text(encoding="utf-8")
+    rows = set(re.findall(r"^\| `([a-z_]+)` \|", text, re.M))
+    keys = set(MuasNodeExt.model_fields) | set(RequirementExt.model_fields) | {"package"}
+    assert set(PackageInfo.model_fields) == {"kind", "consumers"}
+    assert keys - rows == set(), f"muas keys with no row in EXTENSIONS.md: {sorted(keys - rows)}"
+    assert rows - keys == set(), f"EXTENSIONS.md rows for keys that do not exist: {sorted(rows - keys)}"
+
+
+TOOLS = ("aerolink", "aerosandbox", "ardupilot", "creo", "daveml", "flow5", "openvsp", "propalyser", "specsheet")
+
+
+def _imports(py: Path):
+    """(module name, the function that holds the import or None) of each import of a file."""
+    import ast
+
+    out = []
+
+    def walk(node, fn):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                walk(child, child.name)
+                continue
+            if isinstance(child, ast.Import):
+                out.extend((a.name, fn) for a in child.names)
+            elif isinstance(child, ast.ImportFrom):
+                base = "." * child.level + (child.module or "")
+                sep = "." if child.module else ""
+                out.extend([(base, fn)] + [(base + sep + a.name, fn) for a in child.names])
+            walk(child, fn)
+
+    walk(ast.parse(py.read_text(encoding="utf-8")), None)
+    return out
+
+
+def test_core_code_imports_no_tool_package():
+    """ADR 0025: aeroplan/<tool>/ uses the core. The core (aeroplan/*.py, aeroplan/muas/) never imports a tool package."""
+    core = [*SRC.glob("*.py"), *(SRC / "muas").glob("*.py")]
+    for py in core:
+        for name, _ in _imports(py):
+            parts = name.lstrip(".").split(".")
+            tool = parts[1] if parts[0] == "aeroplan" and len(parts) > 1 else (parts[0] if name.startswith(".") else None)
+            assert tool not in TOOLS, f"{py.name} imports the tool package {name}"
+
+
+def test_the_aerosandbox_model_reads_the_source_tree_in_one_place():
+    """ADR 0028: the model files of aeroplan/aerosandbox read the source tree only in component.base_document, so a split
+    into their own repository changes one function. They never import the spoke machinery."""
+    workers = ("model.py", "component.py", "mission.py", "optimise.py", "result.py", "plot.py", "window.py")
+    for name in workers:
+        for mod, fn in _imports(SRC / "aerosandbox" / name):
+            if mod.endswith("spokes") or ".spokes." in mod:
+                raise AssertionError(f"aerosandbox/{name} imports {mod}")
+            if mod.endswith("source_tree"):
+                assert (name, fn) == ("component.py", "base_document"), f"aerosandbox/{name} reads the tree in {fn}"

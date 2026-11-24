@@ -1,7 +1,7 @@
 # Mirrors Boeing/aircraft-data-hierarchy .github/workflows/test-package.yml (commit 96179ca):
 # build, install the wheel, install the test extras, run pytest. Same triggers as ADH.
-# AeroPlan adds two steps that ADH has no need for: build the patched ADH copy (brief D01),
-# and run the upstream ADH tests against it, so a patch can never break an upstream test.
+# AeroPlan adds three steps that ADH has no need for: build the patched ADH copy (brief D01), run the upstream
+# ADH tests against it, so a patch can never break an upstream test, and lint with ruff.
 
 name: Test Package
 
@@ -50,6 +50,11 @@ jobs:
       - name: Run the upstream ADH tests on the patched copy
         run: |
           PYTHONPATH=standards/adh/build/src pytest standards/adh/upstream/tests
+
+      - name: Lint with ruff (syntax errors and pyflakes, settings in pyproject.toml)
+        run: |
+          python -m pip install ruff
+          ruff check .
 
       - name: Run tests
         run: |

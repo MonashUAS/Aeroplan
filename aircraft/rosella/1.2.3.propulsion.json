@@ -1,0 +1,106 @@
+{
+  "wbs_no": "1.2.3",
+  "name": "Propulsion",
+  "description": "Rosella propulsion: the Currawong nose propeller (cruise) and the sized lift rotors",
+  "muas": {
+    "ext_version": "0.6.0",
+    "instance": "propulsion",
+    "datasets": [
+      {
+        "role": "other",
+        "ref": "asset:sha256:68380cd2ec12d1dcf8a16891cd6f2d663f3dec4a752efdedaa2fe0844a9724db"
+      }
+    ],
+    "propulsion_system": {
+      "system_id": "rosella_lift",
+      "basis": "sizing estimate",
+      "p_max": {
+        "value": 1428.883981782259,
+        "units": "W"
+      },
+      "diameter": {
+        "value": 0.6604000065983552,
+        "units": "m"
+      },
+      "blades": 2,
+      "ixx": {
+        "value": 0.0024814239583546504,
+        "units": "kg * m ** 2"
+      },
+      "model": "Rosella lift rotor: MAD_FLUXER_22x6_6_jung scaled to 0.6604 m (Proptimiser scale 1.1818)",
+      "motor": {
+        "model": "T-Motor VL6011 KV180",
+        "kv": {
+          "value": 18.84955592153876,
+          "units": "rad / V / s"
+        },
+        "r": {
+          "value": 0.08,
+          "units": "ohm"
+        },
+        "i0": {
+          "value": 1.1,
+          "units": "A"
+        },
+        "mass": {
+          "value": 0.3,
+          "units": "kg"
+        },
+        "imax_continuous": {
+          "value": 54.14064968676215,
+          "units": "A"
+        }
+      },
+      "esc": {
+        "model": "T-Motor V80A 14S",
+        "imax_continuous": {
+          "value": 40.0,
+          "units": "A"
+        },
+        "vmax": {
+          "value": 50.400000000000006,
+          "units": "V"
+        }
+      },
+      "battery": {
+        "model": "sized pack (not a maker part)",
+        "cells_s": 12,
+        "cells_p": 1,
+        "capacity": {
+          "value": 41846.73248379083,
+          "units": "A * s"
+        },
+        "v_nominal": {
+          "value": 44.400000000000006,
+          "units": "V"
+        },
+        "mass": {
+          "value": 3.259700997211964,
+          "units": "kg"
+        }
+      },
+      "warnings": [
+        "Estimate from the H4_12S sizing. The motor is T-Motor VL6011 KV180 and the ESC is T-Motor V80A 14S. The battery is a sized value, not a maker part.",
+        "Propeller inertia: a rod of the propeller mass and length D (stand-in).",
+        "Blade count 2: from the Proptimiser design MAD_FLUXER_22x6_6_jung.",
+        "Each lift rotor tilts about its radial axis (CG to hub) by the cant. The tilt sign follows the spin, so the tilts cancel in hover. the sizing gives the cant size only.",
+        "H4: motors 5 to 8 follow the ArduPilot Quad X order (front right, rear left, front left, rear right).",
+        "Motor imax_continuous is the largest motor current of the sizing (54.1 A at full throttle), not a maker rating.",
+        "ESC imax_continuous is the maker continuous rating. The sizing needs 65.0 A at full throttle (peak factor times the motor current). The maker peak rating is 80 A."
+      ],
+      "source": {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "role": "Rosella model file and sizing result H4_12S"
+      },
+      "placeholder": true
+    },
+    "sources": [
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "role": "Rosella model file and sizing result H4_12S"
+      }
+    ]
+  }
+}

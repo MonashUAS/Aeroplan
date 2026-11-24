@@ -5,11 +5,11 @@ import openpyxl
 import pytest
 import yaml
 
-from aeroplan import adh_doc
+from aeroplan import adh_doc, geometry
 from aeroplan.consumers import missing_for_flight
 from aeroplan.datum import datum_checks
 from aeroplan.spokes import Context, load
-from test_openvsp import make_doc
+from test_openvsp import make_doc, move_surface
 
 sheet = load("SpecSheet")
 OVERRIDE = "Subassembly weight override"
@@ -32,10 +32,11 @@ def q(value, units):
 def make_full_doc():
     """The test aircraft of the OpenVSP tests with a valid 1.2 reference (MRP at x = 0.2 m)."""
     doc = make_doc()
-    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.0     # ADR 0023: wing root LE at x = 0
+    move_surface(doc, "wing_main", 0.0)                                                 # ADR 0023: wing root LE at x = 0
     air = adh_doc.node(doc, "1.2")
+    adh_doc.set_reference(doc, 0.9, 2.8, 0.33)
     air["muas"]["reference"] = {
-        "s_ref": q(0.9, "m^2"), "b_ref": q(2.8, "m"), "c_ref": q(0.33, "m"), "nominal_cg": {"xyz": [0.2, 0.0, 0.0]},
+        "nominal_cg": {"xyz": [0.2, 0.0, 0.0]},
         "mrp": {"config_id": "test.nominal", "point": {"frame": "design", "xyz": [0.2, 0.0, 0.0], "units": "m"}}}
     return doc
 
@@ -100,7 +101,7 @@ def test_a_group_without_a_total_is_refused(tmp_path):
 
 
 def planform_of(doc):
-    return lambda inst: adh_doc.find(doc, inst)["muas"]["planform"]
+    return lambda inst: geometry.planform_of(adh_doc.find(doc, inst))
 
 
 def test_point_masses(tmp_path):
@@ -130,8 +131,8 @@ def test_mapped_parts_over_the_total_are_refused(tmp_path):
 
 def ingest(tmp_path):
     write_book(tmp_path / "sheet.xlsx")
-    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
-    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
+    (tmp_path / "aeroplan" / "specsheet" / "settings").mkdir(parents=True)
+    (tmp_path / "aeroplan" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
     doc = make_full_doc()
     ctx = Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc))
     return doc, sheet.ingest(doc, ctx)
@@ -175,10 +176,10 @@ def test_a_datum_other_than_zero_is_refused(tmp_path):
 
 def test_a_wing_not_at_x_zero_is_refused(tmp_path):
     write_book(tmp_path / "sheet.xlsx")
-    (tmp_path / "tools" / "specsheet" / "settings").mkdir(parents=True)
-    (tmp_path / "tools" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
+    (tmp_path / "aeroplan" / "specsheet" / "settings").mkdir(parents=True)
+    (tmp_path / "aeroplan" / "specsheet" / "settings" / "test.yaml").write_text(yaml.safe_dump(SETTINGS), encoding="utf-8")
     doc = make_full_doc()
-    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.1
+    move_surface(doc, "wing_main", 0.1)
     assert sheet._root_le_x(doc, SETTINGS) == pytest.approx(0.1)
     with pytest.raises(ValueError, match="ADR 0023"):
         sheet.ingest(doc, Context("test", tmp_path, "SpecSheet", SimpleNamespace(doc=doc)))
@@ -258,7 +259,7 @@ def test_the_origin_check_passes_at_x_zero(tmp_path):
 
 def test_a_wing_at_x_001_fails_the_origin_check(tmp_path):
     doc = make_full_doc()
-    adh_doc.find(doc, "wing_main")["muas"]["planform"]["position"]["xyz"][0] = 0.01
+    move_surface(doc, "wing_main", 0.01)
     rows = origin_rows(doc, tmp_path)
     assert rows[0].status == "fail" and not datum_checks(doc, tmp_path).ok
 

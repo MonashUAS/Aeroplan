@@ -5,11 +5,10 @@ Without it they skip (CI has none). The other tests run everywhere.
 """
 import math
 
-import numpy as np
 import pytest
 
 from aeroplan import adh_doc
-from aeroplan.geometry import planform_reference
+from aeroplan.geometry import planform_of, planform_reference
 from aeroplan.spokes import load
 from test_openvsp import HTAIL, make_doc
 
@@ -48,9 +47,9 @@ def q(value, units):
 def make_full_doc():
     doc = make_doc()
     air = adh_doc.node(doc, "1.2")
+    adh_doc.set_reference(doc, 0.9, 2.8, 0.33)
     air["muas"].update({
-        "reference": {"s_ref": q(0.9, "m^2"), "b_ref": q(2.8, "m"), "c_ref": q(0.33, "m"),
-                      "mrp": {"point": {"frame": "design", "xyz": [0.2, 0.0, 0.0], "units": "m"}}},
+        "reference": {"mrp": {"point": {"frame": "design", "xyz": [0.2, 0.0, 0.0], "units": "m"}}},
         "mass_properties": {"mass": q(2.0, "kg"), "cg": {"frame": "design", "xyz": [0.2, 0.0, 0.0], "units": "m"},
                             "inertia": {"ixx": 0.2, "iyy": 0.3, "izz": 0.4}, "placeholder": True},
         "point_masses": [{"tag": "A", "mass": q(0.5, "kg"), "position": {"xyz": [0.0, 0.0, 0.0]}, "placeholder": True}]})
@@ -87,7 +86,7 @@ def test_the_spec_twist_holds_the_pitch_incidence_of_the_surface():
     doc = make_full_doc()
     spec = asb_spec.spec_from_doc(doc, STAND_IN, Ctx())
     for inst in ("wing_main", "htail", "fin"):
-        pf = adh_doc.find(doc, inst)["muas"]["planform"]
+        pf = planform_of(adh_doc.find(doc, inst))
         got = next(s for s in spec["surfaces"] if s["name"] == inst)
         for sec in got["sections"]:
             if pf["kind"] == "FIN":
@@ -185,7 +184,7 @@ def test_the_notebooks_are_committed_with_outputs_and_stay_small():
     repository grow on every run: each notebook stays below 5 MB. The deprecated notebooks are old files, not checked."""
     import json
 
-    assert NOTEBOOKS, "tools/aerosandbox/notebooks has no notebook"
+    assert NOTEBOOKS, "aeroplan/aerosandbox/notebooks has no notebook"
     for nb in NOTEBOOKS:
         assert nb.stat().st_size < 5_000_000, f"{nb.name} is {nb.stat().st_size / 1e6:.1f} MB: strip the widget state"
         d = json.loads(nb.read_text(encoding="utf-8"))

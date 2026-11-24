@@ -1,0 +1,501 @@
+{
+  "wbs_no": "1.10.2",
+  "name": "DataRepository",
+  "muas": {
+    "ext_version": "0.6.0",
+    "instance": "data_repository",
+    "assets": [
+      {
+        "id": "asset:sha256:69c089c2a8211b6152006f1d9fcd4b4e84701fe55ff92854a40d73716155bc3a",
+        "kind": "file",
+        "name": "AeroSandbox.athena_outputs.txt",
+        "role": "initial sizing outputs (Athena)",
+        "tool": "AeroSandbox",
+        "media_type": "text/plain",
+        "size": 754,
+        "locations": [
+          {
+            "repo": "work/aerosandbox/currawong/athena_outputs.txt"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:79a7ded9d7f9699f034b604202f67b5260a4e7a28de236e7864a40406b0f8191",
+        "kind": "file",
+        "name": "CREO.aileron_l.stl",
+        "role": "CAD mesh of aileron_l",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 7584,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/aileron_l.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:81e9aeb344cba37c17cd7c72c567ea5eeb7c220cb0abb42e15665c8a490655e7",
+        "kind": "file",
+        "name": "CREO.aileron_r.stl",
+        "role": "CAD mesh of aileron_r",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 7584,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/aileron_r.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:a490399c0f9b99bf7bdf86361fc8c935df0848d5320757e5db5cb0889acb42aa",
+        "kind": "file",
+        "name": "CREO.elevator.stl",
+        "role": "CAD mesh of elevator",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 246784,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/elevator.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:26a50bbbee1131b0b8a13e4464543efd4badb84c743ba8cb51b2409b3e9b6574",
+        "kind": "file",
+        "name": "CREO.fuselage.stl",
+        "role": "CAD mesh of fuselage",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 1163784,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/fuselage.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:03155cd8d0d6655c519ed098793e658e7749da4cfa3a63cd3374598ba8370531",
+        "kind": "file",
+        "name": "CREO.fuseskinshrinkwrap.stp",
+        "role": "outer skin fuselage (faceted STEP)",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 12819089,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/fuseskinshrinkwrap.stp"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:b4ec673d4c25c5daecf2a364018646aad0b95dcc9658d0bfee5de54a29f3d0cd",
+        "kind": "file",
+        "name": "CREO.gear.stl",
+        "role": "CAD mesh of gear",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 243584,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/gear.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:ad26071472ea248a6ef997992852b43e8b97c68845198895003fca1eed13e730",
+        "kind": "file",
+        "name": "CREO.hstab.stl",
+        "role": "CAD mesh of htail",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 243684,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/hstab.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:087029f9c76dee9abc59e245996cf55ff405cef4d8c1828d33ed2d08d43726ac",
+        "kind": "file",
+        "name": "CREO.propeller.stl",
+        "role": "CAD mesh of propeller",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 221584,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/propeller.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:29a45429e9e9a45cb8aeaf2d1cec82029aed65f57d9fcfa40672c45bf571fb86",
+        "kind": "file",
+        "name": "CREO.rudder.stl",
+        "role": "CAD mesh of rudder",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 76284,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/rudder.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:66641746b9793c41c3919996c8197b1362a645ea344eb16661237a4aa8d6bbed",
+        "kind": "file",
+        "name": "CREO.wing.stl",
+        "role": "CAD mesh of wing",
+        "tool": "CREO",
+        "media_type": "application/octet-stream",
+        "size": 250484,
+        "locations": [
+          {
+            "repo": "work/creo/currawong/cad/wing.stl"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:1f0b4d4ebd6b8cfa66c0e80b28c17c1eb02d87df48a507ac6345db50040e48e0",
+        "kind": "file",
+        "name": "OpenVSP.currawong.vsp3",
+        "role": "OpenVSP model (the member's changed copy)",
+        "tool": "OpenVSP",
+        "media_type": "application/octet-stream",
+        "size": 5575288,
+        "locations": [
+          {
+            "repo": "work/openvsp/currawong/currawong.vsp3"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d",
+        "kind": "file",
+        "name": "Propalyser.currawongcustom.v2.h5",
+        "role": "contract B file of the propulsion system currawongcustom",
+        "tool": "Propalyser",
+        "media_type": "application/x-hdf5",
+        "size": 96255,
+        "locations": [
+          {
+            "repo": "work/propalyser/currawong/currawongcustom.v2.h5"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:a8995f0cd85ce77fe7a453350dbc952b0801b2f83b5ab78bc83f6be4c5f7c37e",
+        "kind": "file",
+        "name": "SpecSheet.Currawong_Master_Specification_Sheet.xlsx",
+        "role": "mass model: weight log and CG sheet",
+        "tool": "SpecSheet",
+        "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "size": 359026,
+        "locations": [
+          {
+            "repo": "aeroplan/specsheet/sheets/currawong/Currawong Master Specification Sheet.xlsx"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:9fbebcf0e33da7ea7447d611ec3d1c26a77a1683b44feaf5b4e9d6b638f4383b",
+        "kind": "dataset",
+        "name": "aero.currawong",
+        "role": "aero model (DAVE-ML in ADH form)",
+        "tool": "flow5",
+        "media_type": "application/json",
+        "size": 16312,
+        "locations": [
+          {
+            "repo": "aircraft/currawong/datasets/aero.currawong.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:199cb1fd63ef0fa693baf32de851d4b2a609ca41fc0b16458e3032729172663a",
+          "asset:sha256:1e6e89bd30c32262d5d7c1454504a669032757d07885abb88303ec0c1f5d9335",
+          "asset:sha256:2183175820fcfbf7a533448bbd3c4dcfbe1029e87210b07e02e55b70907adf09",
+          "asset:sha256:495fec23b481867035055f78d7d9c231bf84f50b540d65f290c3fb5248b2758f",
+          "asset:sha256:c9aa30bbc540103c6cbb6c31cb70f2551d38cfe02d418e8f05271f7aeabef666"
+        ],
+        "built_against": "currawong@0.2.21",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "flow5 7.57 + AeroPlan aero build-up",
+            "model_name": "currawong aero build-up",
+            "description": "flow5 sweep currawong_2026-10-30 (2026-10-30)"
+          },
+          "fidelity": "L2",
+          "mrp": {
+            "frame": "design",
+            "xyz": [
+              -0.13762104874820252,
+              -9.67917624537586e-18,
+              -0.001997467570199184
+            ],
+            "units": "m"
+          },
+          "analysis_mass_model": {
+            "mass": {
+              "value": 10.753333333333334,
+              "units": "kg"
+            },
+            "cg": {
+              "frame": "design",
+              "xyz": [
+                -0.13762104874820252,
+                -9.67917624537586e-18,
+                -0.001997467570199184
+              ],
+              "units": "m"
+            },
+            "inertia": {
+              "axes": "parallel_to_design",
+              "products_convention": "+integral(xy dm)",
+              "ixx": 2.4118630076363896,
+              "iyy": 3.2958136740909563,
+              "izz": 5.698109509177507,
+              "ixy": 0.0,
+              "ixz": -0.06949230091480242,
+              "iyz": 0.0,
+              "units": "kg*m^2",
+              "unverified_products": [
+                "ixz"
+              ]
+            },
+            "source": "estimate",
+            "placeholder": true,
+            "notes": [
+              "The custom inertia of the flow5 T7 analysis t7_reference.xml (sweep currawong_2026-10-30). It is a typed mass model, not a weighing or a CAD mass report.",
+              "flow5 does not document its Ixz sign convention in the export: Ixz is not verified."
+            ]
+          },
+          "units_system": "SI",
+          "placeholder": true,
+          "notes": [
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "Trim point of the T7 analysis: V 18.6757 m/s, alpha 0.256741 deg, CL 0.458926.",
+            "The T7 point is inviscid. CD0 and K come from the viscous alpha polar instead (M-09)."
+          ]
+        },
+        "dataset_role": "aero"
+      },
+      {
+        "id": "asset:sha256:8d1d5281ccce0d259f2c3bb2759038e95ab702b7741d325537cf0660f0641bf7",
+        "kind": "file",
+        "name": "flow5.EPPLER_393_AIRFOIL.dat",
+        "role": "foil EPPLER 393 AIRFOIL",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 5619,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/EPPLER 393 AIRFOIL.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:4ff387e24f6e965c6c22b0644c61548d38f8b5b89c27a012864a34db0397e96b",
+        "kind": "file",
+        "name": "flow5.EPPLER_393_AIRFOIL_0_Deg.dat",
+        "role": "foil EPPLER 393 AIRFOIL 0 Deg",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 5625,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/EPPLER 393 AIRFOIL 0 Deg.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:a57d15042057a6c83a7bcb8384b1becd81afed9633f409fd1cd8a884a5235014",
+        "kind": "file",
+        "name": "flow5.EPPLER_395_AIRFOIL.dat",
+        "role": "foil EPPLER 395 AIRFOIL",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 5619,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/EPPLER 395 AIRFOIL.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:65b9475eb8003610e8fbf8298c3d27a5512e1c231f9a705f775c0e8945ed7389",
+        "kind": "file",
+        "name": "flow5.NACA_0012.dat",
+        "role": "foil NACA 0012",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 5610,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/NACA 0012.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:864624584c70467f64421e5e6d324d4c151d43cdb5d743d683dbbec251ca0cef",
+        "kind": "file",
+        "name": "flow5.NACA_0012_0_Deg.dat",
+        "role": "foil NACA 0012 0 Deg",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 5616,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/NACA 0012 0 Deg.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:00280e628435eeb24f4e213c57bc9cc9c98315e042d4f96ecacd756723941889",
+        "kind": "file",
+        "name": "flow5.NACA_3410.dat",
+        "role": "foil NACA 3410",
+        "tool": "flow5",
+        "media_type": "application/octet-stream",
+        "size": 2782,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/plane/NACA 3410.dat"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:c9aa30bbc540103c6cbb6c31cb70f2551d38cfe02d418e8f05271f7aeabef666",
+        "kind": "file",
+        "name": "flow5.alpha_viscous.csv",
+        "role": "viscous alpha polar: CD0 and K",
+        "tool": "flow5",
+        "media_type": "application/vnd.ms-excel",
+        "size": 6131,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/sweeps/currawong_2026-10-30/alpha_viscous.csv"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:2183175820fcfbf7a533448bbd3c4dcfbe1029e87210b07e02e55b70907adf09",
+        "kind": "file",
+        "name": "flow5.plane_with_body.xml",
+        "role": "plane definition of the sweep (wings, body, point masses)",
+        "tool": "flow5",
+        "media_type": "text/xml",
+        "size": 132069,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/sweeps/currawong_2026-10-30/plane_with_body.xml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:199cb1fd63ef0fa693baf32de851d4b2a609ca41fc0b16458e3032729172663a",
+        "kind": "file",
+        "name": "flow5.results.json",
+        "role": "sweep results: control derivatives and validation",
+        "tool": "flow5",
+        "media_type": "application/json",
+        "size": 4308,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/sweeps/currawong_2026-10-30/results.json"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:495fec23b481867035055f78d7d9c231bf84f50b540d65f290c3fb5248b2758f",
+        "kind": "file",
+        "name": "flow5.t7_reference.xml",
+        "role": "T7 analysis: reference dimensions and the custom mass model",
+        "tool": "flow5",
+        "media_type": "text/xml",
+        "size": 1584,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/sweeps/currawong_2026-10-30/t7_reference.xml"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:1e6e89bd30c32262d5d7c1454504a669032757d07885abb88303ec0c1f5d9335",
+        "kind": "file",
+        "name": "flow5.t7_reference_opoint.txt",
+        "role": "T7 point: stability derivatives and trim",
+        "tool": "flow5",
+        "media_type": "text/plain",
+        "size": 159284,
+        "locations": [
+          {
+            "repo": "work/flow5/currawong/sweeps/currawong_2026-10-30/t7_reference_opoint.txt"
+          }
+        ],
+        "derived_from": []
+      },
+      {
+        "id": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c",
+        "kind": "dataset",
+        "name": "propulsion.currawongcustom",
+        "role": "Ct/Cp table and throttle map",
+        "tool": "Propalyser",
+        "media_type": "application/json",
+        "size": 3279,
+        "locations": [
+          {
+            "repo": "aircraft/currawong/datasets/propulsion.currawongcustom.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:f942d9efe79aba9dabc183613a8a4322be1c70c1e6d1e50c917a8154e49c1f4d"
+        ],
+        "built_against": "currawong@0.2.21",
+        "dataset": {
+          "form": "tables",
+          "model_description": {
+            "generation_tool": "Propalyser (contract B v2)",
+            "model_name": "currawongcustom",
+            "description": "Currawong V1 (Proptimiser, commit 588118a)"
+          },
+          "fidelity": "L0",
+          "units_system": "SI",
+          "placeholder": false,
+          "notes": [
+            "basis mixed"
+          ]
+        },
+        "dataset_role": "propulsion"
+      }
+    ]
+  }
+}

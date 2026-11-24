@@ -1,5 +1,4 @@
 """Uncertainty schema tests. The three states follow NASA-STD-7009B [M&S 33] a, b, c."""
-import copy
 
 import pytest
 from pydantic import ValidationError
@@ -48,10 +47,10 @@ def test_uniform_bounds_order(unc_normal):
 
 def test_factors_and_correlations_recorded(unc_normal):
     u = Uncertainty(**unc_normal, factors=[{"name": "FS", "value": 1.5, "covers": "model form"}],
-                    correlations=[{"var_id": "Cl", "coefficient": 0.3}])
+                    correlations=[{"var_id": "Cl", "corr_coef": 0.3}])
     assert u.factors[0].covers == "model form"
     with pytest.raises(ValidationError):
-        Uncertainty(**unc_normal, correlations=[{"var_id": "Cl", "coefficient": 1.5}])
+        Uncertainty(**unc_normal, correlations=[{"var_id": "Cl", "corr_coef": 1.5}])
 
 
 def test_extra_keys_rejected(unc_normal):

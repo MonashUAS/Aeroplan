@@ -12,12 +12,14 @@ import pytest
 from sources import make_propalyser_h5
 
 from aeroplan import adh_doc, assets, daveml_adh, gltf, h5json, package, source_tree
-from aeroplan.adapters.flow5_geometry import Section, Wing, read_plane
+from aeroplan.flow5.files import read_plane
+from aeroplan.wing import Section, Wing
 from aeroplan.aero_buildup import AeroBuildUp, Coefficient, _cl_table, to_daveml
 from aeroplan.build import placeholders
 from aeroplan.consumers import missing_for_flight
 from aeroplan.dml_validate import validate_dml
-from aeroplan.geometry import body_adh, body_frames, foils_of, lifting_surface_adh, planform_reference
+from aeroplan.geometry import (body_adh, body_frames, foils_of, lifting_surface_adh, planform_of, planform_reference,
+                               set_planform)
 from aeroplan.spokes import Context, load, set_sources
 
 FOIL = np.array([[1.0, 0.0], [0.5, 0.05], [0.0, 0.0], [0.5, -0.03], [1.0, 0.0]])
@@ -111,11 +113,19 @@ def test_stale_derived_asset_gives_a_warning(tmp_path):
 def test_source_tree_round_trip(tmp_path):
     acft = _aircraft(tmp_path)
     source_tree.write(acft, tmp_path / "tree")
-    names = sorted(p.name for p in (tmp_path / "tree" / "adh").iterdir())
+    names = sorted(p.name for p in (tmp_path / "tree").iterdir())
     assert names == ["1.0.aircraft_system.json", "1.10.2.data_repository.json", "1.10.data.json",
-                     "1.2.air_vehicle.json"]
+                     "1.2.air_vehicle.json", "datasets"]
     back = source_tree.read(tmp_path / "tree")
     assert back.doc == acft.doc and back.datasets == acft.datasets
+    assert back.info == {**acft.info, "name": "tree"}                # the folder name is the aircraft name
+
+
+def test_source_tree_refuses_a_stray_file(tmp_path):
+    source_tree.write(_aircraft(tmp_path), tmp_path / "tree")
+    (tmp_path / "tree" / "notes.txt").write_text("x")
+    with pytest.raises(source_tree.SourceTreeError, match="not node files or datasets"):
+        source_tree.read(tmp_path / "tree")
 
 
 def test_source_tree_refuses_an_edited_dataset(tmp_path):
@@ -295,7 +305,7 @@ def test_planform_reference_of_a_trapezoid():
 def test_lifting_surface_and_foils_round_trip():
     ls = lifting_surface_adh(_wing(), {"F": FOIL})
     item = {"geometry": {"lifting_surface": ls},
-            "muas": {"instance": "w", "planform": {"sections": [{"foil": "F"}, {"foil": "F"}]}}}
+            "muas": {"instance": "w", "lifting_surface": {"foils": ["F", "F"]}}}
     assert np.allclose(foils_of(item)["F"], FOIL)
     le = ls["leading_edge_spline"]["points"]
     assert le[0]["x"] == pytest.approx(0.1, abs=1e-4) and math.isclose(le[1]["y"], 1.0)
@@ -340,11 +350,37 @@ def test_propalyser_reads_contract_b(tmp_path):
         load("Propalyser").read_system(tmp_path / "bad.h5")
 
 
+@pytest.mark.parametrize("rx, ry, y0, x0", [(0.0, 0.0, 0.0, 0.0), (0.0, 1.5, 0.0, 0.0), (-90.0, 0.0, 0.0, 0.0),
+                                            (-5.0, -2.0, 0.1, 0.03)])
+def test_the_planform_comes_back_from_the_adh_shape(rx, ry, y0, x0):
+    """ADR 0027: the ADH lifting surface is the only stored shape. A wing with dihedral and twist, a fin (rx -90), a
+    pitch incidence and a root away from the origin of the section frame each come back to 1e-9."""
+    pf = {"surface_name": "S", "kind": "FIN" if rx == -90.0 else "MAINWING", "position": {"xyz": [0.1, 0.02, -0.03]},
+          "rx_deg": rx, "ry_deg": ry, "symmetric": True, "two_sided": True, "source": "synthetic", "placeholder": False,
+          "sections": [{"y": y0, "chord": 0.4, "x_offset": x0, "dihedral_deg": 3.0, "twist_deg": 2.0, "foil": "F"},
+                       {"y": y0 + 0.8, "chord": 0.3, "x_offset": x0 + 0.05, "dihedral_deg": 6.0, "twist_deg": -1.0,
+                        "foil": "F"},
+                       {"y": y0 + 1.2, "chord": 0.2, "x_offset": x0 + 0.1, "dihedral_deg": 6.0, "twist_deg": -2.5,
+                        "foil": "G"}]}
+    item = {"muas": {"instance": "s"}}
+    set_planform(item, pf, {"F": FOIL, "G": FOIL * [1.0, 0.8]})
+    assert set(item["muas"]["lifting_surface"]) >= {"position", "rx", "ry", "foils"} and "planform" not in item["muas"]
+    assert item["muas"]["lifting_surface"]["ry"] == pytest.approx(math.radians(ry))       # SI: radians
+    back = planform_of(item)
+    for a, b in zip(pf["sections"], back["sections"]):
+        for k in ("y", "chord", "x_offset", "dihedral_deg", "twist_deg"):
+            assert b[k] == pytest.approx(a[k], abs=1e-9), k
+        assert b["foil"] == a["foil"]
+    assert back["position"]["xyz"] == pytest.approx(pf["position"]["xyz"], abs=1e-12)
+    assert (back["rx_deg"], back["ry_deg"]) == (pytest.approx(rx, abs=1e-12), pytest.approx(ry, abs=1e-12))
+    assert np.allclose(foils_of(item)["G"], FOIL * [1.0, 0.8])
+
+
 def test_flow5_plane_xml_round_trip(tmp_path):
     import importlib
 
     load("flow5")
-    px = importlib.import_module("aeroplan_spokes.flow5.plane_xml")
+    px = importlib.import_module("aeroplan.flow5.plane_xml")
     read_body_and_masses, write_plane = px.read_body_and_masses, px.write_plane
     pf = {"surface_name": "W", "kind": "MAINWING", "position": {"xyz": [0.1, 0.0, 0.0]}, "rx_deg": 0.0, "ry_deg": 0.0,
           "symmetric": True, "two_sided": True,

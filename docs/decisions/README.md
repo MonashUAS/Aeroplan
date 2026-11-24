@@ -22,8 +22,13 @@ One short file for each decision (Nygard format). A new decision gets the next n
 | [0017](0017-flight-files-as-datasets.md) | 2026-10-16 | Flight files are datasets of the autopilot node |
 | [0018](0018-multirotor-path.md) | 2026-10-16 | Multirotor path |
 | [0019](0019-web-editor-shelved.md) | 2026-10-10 | The web editor and viewer are shelved |
-| [0020](0020-repository-layout-a.md) | 2026-10-17 | Repository layout A |
+| [0020](0020-repository-layout-a.md) | 2026-10-17 | Repository layout A (superseded by 0025) |
 | [0021](0021-merge-ardupilot-and-missionplanner.md) | 2026-10-17 | One ArduPilot spoke for flight events and flight files |
 | [0022](0022-quadplane-path.md) | 2026-10-17 | Quadplane path |
-| [0023](0023-design-frame-origin-at-the-wing-le.md) | 2026-10-17 | The design frame starts at the root leading edge of the main wing |
+| [0023](0023-design-frame-origin-at-the-wing-le.md) | 2026-10-17 | The design frame starts at the root leading edge of the main wing (axes amended by 0029) |
 | [0024](0024-aircraft-models-in-code.md) | 2026-10-21 | Aircraft models are made in code, saved in one JSON file, and shown in evaluated notebooks |
+| [0025](0025-one-package-with-tool-subpackages.md) | 2026-10-30 | One package, with a subpackage for each tool |
+| [0026](0026-flat-aircraft-folder.md) | 2026-10-30 | A flat aircraft folder |
+| [0027](0027-store-each-fact-once.md) | 2026-10-30 | Store each fact once: ADH fields first |
+| [0028](0028-aerosandbox-stays-in-aeroplan.md) | 2026-10-30 | The AeroSandbox model stays in AeroPlan, with one seam |
+| [0029](0029-design-frame-is-frd.md) | 2026-10-21 | The design frame is FRD (x forward, y right, z down) |
