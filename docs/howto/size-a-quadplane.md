@@ -5,10 +5,16 @@ The notebook [rosella_sizing.ipynb](../../tools/aerosandbox/notebooks/rosella_si
 ## Before you start
 
 1. Run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`. The checkout must have the geometric scale (Proptimiser 711ef86).
-2. Copy the Proptimiser design `MAD_FLUXER_22x6_6` into `work/aerosandbox/redback/proptimiser/`. Copy `Currawong_V1` into `work/aerosandbox/currawong/proptimiser/`. Use the `designs` and `propellers` folders.
-3. Open `tools/aerosandbox/notebooks/rosella_sizing.ipynb` in the kernel "AeroPlan AeroSandbox".
+2. Copy these 4 files by hand from the Proptimiser checkout. Git ignores `work/`, so a new clone does not have them:
+   ```
+   work/aerosandbox/redback/proptimiser/designs/MAD_FLUXER_22x6_6_jung.yaml
+   work/aerosandbox/redback/proptimiser/propellers/MAD_FLUXER_22x6_6_jung.state.json
+   work/aerosandbox/currawong/proptimiser/designs/Currawong_V1.yaml
+   work/aerosandbox/currawong/proptimiser/propellers/Currawong_V1.state.json
+   ```
+3. Open `tools/aerosandbox/notebooks/rosella_sizing.ipynb` in the kernel "AeroPlan AeroSandbox". If the kernel is missing, select the interpreter `tools/aerosandbox/.venv/bin/python` (Linux and macOS) or `tools\aerosandbox\.venv\Scripts\python.exe` (Windows).
 
-The notebook writes to `work/aerosandbox/rosella/` and to `settings/rosella.json`. It never writes the source tree.
+The notebook writes to `work/aerosandbox/rosella/` and to `settings/rosella.json`. It never writes the source tree. The first run on a computer makes the CT and CP tables of the blades from Proptimiser solves (`work/aerosandbox/rosella/.../tables`), so it takes longer than the later runs.
 
 ## Run the study
 

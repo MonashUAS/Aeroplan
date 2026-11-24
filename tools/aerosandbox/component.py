@@ -617,6 +617,9 @@ def proptimiser_home(aircraft: str, designs: Iterable[Tuple[str, str]]) -> Path:
     for name, src in designs:
         for sub, ext in (("designs", ".yaml"), ("propellers", ".state.json")):
             dst, org = home / sub / (name + ext), work_dir(src) / "proptimiser" / sub / (name + ext)
+            if not org.is_file() and not dst.is_file():
+                raise FileNotFoundError(f"the Proptimiser file {org.relative_to(ROOT)} is missing: copy it by hand from the "
+                                        f"Proptimiser checkout (git ignores work/)")
             if org == dst or (dst.is_file() and not org.is_file()):
                 continue
             if not dst.is_file() or _sha256(dst) != _sha256(org):
