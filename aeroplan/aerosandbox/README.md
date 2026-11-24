@@ -59,7 +59,11 @@ python -m aeroplan setup AeroSandbox --proptimiser <Proptimiser checkout>
 python -m aeroplan setup AeroSandbox            # installs Proptimiser from proptimiser_git in the settings
 ```
 
+<<<<<<< HEAD:aeroplan/aerosandbox/README.md
 This makes `aeroplan/aerosandbox/.venv` (Python 3.12, uv). It holds aerosandbox, casadi, Proptimiser (no JAX), JupyterLab, ipywidgets and anywidget. The kernel is "AeroPlan AeroSandbox". Reload the VS Code window after the setup. If the kernel is still missing, use **Python: Select Interpreter** and choose `.venv\Scripts\python.exe`.
+=======
+This makes `tools/aerosandbox/.venv` (Python 3.12, uv). It holds aerosandbox, casadi, Proptimiser (no JAX), JupyterLab, ipywidgets and anywidget. The kernel is "AeroPlan AeroSandbox". Reload the VS Code window after the setup. If the kernel is still missing, use **Python: Select Interpreter** and choose `.venv\Scripts\python.exe` (Windows) or `.venv/bin/python` (Linux and macOS).
+>>>>>>> b31b0d65b77b3a5c09863475a94377eaacd237c6:tools/aerosandbox/README.md
 
 Copy the Proptimiser design and state file of each blade by hand into `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/`. The Rosella notebook copies them from the work folders of Redback (lift blade) and Currawong (cruise blade).
 

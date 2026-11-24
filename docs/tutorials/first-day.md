@@ -14,4 +14,12 @@
 
 The first command builds the patched ADH package in `standards/adh/build/` (git ignores it).
 
+<<<<<<< HEAD
 Next: read the [quadplane modelling report](../reports/quadplane_model/README.md) or a tool README in `aeroplan/<tool>/README.md`.
+=======
+Next: [Change the aircraft with your tool](../howto/change-the-aircraft.md).
+
+To run the Rosella sizing notebook, you must also do the steps in [Size a quadplane](../howto/size-a-quadplane.md#before-you-start):
+make the AeroSandbox Python with a Proptimiser checkout (`python -m aeroplan setup AeroSandbox --proptimiser <checkout>`) and copy
+the 4 blade files into `work/`.
+>>>>>>> b31b0d65b77b3a5c09863475a94377eaacd237c6
