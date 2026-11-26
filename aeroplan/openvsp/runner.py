@@ -107,9 +107,19 @@ def needed_python(vsp_dir: Path) -> str:
 
 
 def _uv() -> List[str]:
+    """The uv command: `uv` on the PATH, else the uv module of this Python. Inside a venv a missing uv is installed. Outside a
+    venv it is not: a system Python can refuse pip (PEP 668), so the error gives the fix."""
+    import shutil
+
+    found = shutil.which("uv")
+    if found:
+        return [found]
     try:
         subprocess.run([sys.executable, "-m", "uv", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
+        if sys.prefix == sys.base_prefix:
+            raise RuntimeError("uv is missing and this Python is not a venv: activate the repository .venv "
+                               "(docs/tutorials/first-day.md), then run the command again") from None
         subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "uv"], check=True)
     return [sys.executable, "-m", "uv"]
 

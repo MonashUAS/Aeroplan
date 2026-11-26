@@ -6,11 +6,11 @@
     "ext_version": "0.6.0",
     "instance": "aircraft_system",
     "build": {
-      "aeroplan_commit": "1ecb7dfe1246ce4336c340661ae264aa551e9607",
+      "aeroplan_commit": "d420ae59097fc67392af28ae58c5602953f6eed7",
       "aeroplan_dirty": true,
-      "built": "2026-11-17",
+      "built": "2026-11-25",
       "author": "Liam M.",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "spokes": {
         "AeroSandbox": "9 changes"
       },
@@ -63,7 +63,6 @@
         "aircraft_system.air_vehicle.muas.point_masses[43]",
         "aircraft_system.air_vehicle.requirements[3].muas.target",
         "aircraft_system.air_vehicle.requirements[5].muas.target",
-        "aircraft_system.air_vehicle.requirements[6].muas.target",
         "aircraft_system.air_vehicle.requirements[8].muas.target",
         "aircraft_system.air_vehicle.requirements[9].muas.target",
         "aircraft_system.air_vehicle.requirements[10].muas.target",

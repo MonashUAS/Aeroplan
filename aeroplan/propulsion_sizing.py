@@ -16,7 +16,7 @@ import math
 from dataclasses import dataclass, fields
 from typing import Any, Dict, List
 
-G = 9.80665
+from .constants import G0 as G
 
 
 @dataclass(frozen=True)

@@ -15,16 +15,16 @@
       "system_id": "rosella_lift",
       "basis": "sizing estimate",
       "p_max": {
-        "value": 1428.883981782259,
+        "value": 1423.1159550614398,
         "units": "W"
       },
       "diameter": {
-        "value": 0.6604000065983552,
+        "value": 0.6604000065970297,
         "units": "m"
       },
       "blades": 2,
       "ixx": {
-        "value": 0.0024814239583546504,
+        "value": 0.002481423958333756,
         "units": "kg * m ** 2"
       },
       "model": "Rosella lift rotor: MAD_FLUXER_22x6_6_jung scaled to 0.6604 m (Proptimiser scale 1.1818)",
@@ -47,7 +47,7 @@
           "units": "kg"
         },
         "imax_continuous": {
-          "value": 54.14064968676215,
+          "value": 53.99711475422643,
           "units": "A"
         }
       },
@@ -67,7 +67,7 @@
         "cells_s": 12,
         "cells_p": 1,
         "capacity": {
-          "value": 41846.73248379083,
+          "value": 32400.0,
           "units": "A * s"
         },
         "v_nominal": {
@@ -75,7 +75,7 @@
           "units": "V"
         },
         "mass": {
-          "value": 3.259700997211964,
+          "value": 2.524,
           "units": "kg"
         }
       },
@@ -85,12 +85,12 @@
         "Blade count 2: from the Proptimiser design MAD_FLUXER_22x6_6_jung.",
         "Each lift rotor tilts about its radial axis (CG to hub) by the cant. The tilt sign follows the spin, so the tilts cancel in hover. the sizing gives the cant size only.",
         "H4: motors 5 to 8 follow the ArduPilot Quad X order (front right, rear left, front left, rear right).",
-        "Motor imax_continuous is the largest motor current of the sizing (54.1 A at full throttle), not a maker rating.",
-        "ESC imax_continuous is the maker continuous rating. The sizing needs 65.0 A at full throttle (peak factor times the motor current). The maker peak rating is 80 A."
+        "Motor imax_continuous is the largest motor current of the sizing (54.0 A at full throttle), not a maker rating.",
+        "ESC imax_continuous is the maker continuous rating. The sizing needs 64.8 A at full throttle (peak factor times the motor current). The maker peak rating is 80 A."
       ],
       "source": {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "role": "Rosella model file and sizing result H4_12S"
       },
       "placeholder": true
@@ -98,7 +98,7 @@
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "role": "Rosella model file and sizing result H4_12S"
       }
     ]

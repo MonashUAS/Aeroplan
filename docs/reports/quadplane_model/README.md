@@ -152,11 +152,11 @@ Limits of the rotor model:
 
 | Function | Equation | Source |
 |---|---|---|
-| [`QuadplaneModel._lift_rotor`](../../../aeroplan/aerosandbox/model.py#L299) | I = Q Kv + I0, Vm = omega / Kv + Rm I, Pe = Vm I + (Re + Rw) I^2 | First-order DC motor (Drela), AIAA 2016-0581 |
+| [`QuadplaneModel._lift_rotor`](../../../aeroplan/aerosandbox/model.py#L301) | I = Q Kv + I0, Vm = omega / Kv + Rm I, Pe = Vm I + (Re + Rw) I^2 | First-order DC motor (Drela), AIAA 2016-0581 |
 | [`electric_chain`](../../../aeroplan/aerosandbox/component.py#L1159) | The Propalyser chain for the cruise motor: I = I0 + (Q + Q0) Kv, V = omega / (kappa Kv) + R_tot I | Propalyser `estimate/chain.py` |
 | [`Battery.mass_kg_of`](../../../aeroplan/aerosandbox/component.py#L337) | m = k (p1 S + p2) C, k from the NXE 6S 4500 pack (0.631 kg) | AIAA 2016-0581 Eq. 4 |
 | [`OCVModel`](../../../aeroplan/aerosandbox/component.py#L554) | Cell OCV against SOC: polynomial of degree 6 on `data/ocv_lipo.csv`, and its integral F | Galeotti et al. 2023 (stand-in cell) |
-| [`pack_current`](../../../aeroplan/aerosandbox/mission.py#L141) | P = (V_oc - R_b I) I, the low root | Xing et al. 2014, Eq. 5 (as in Aerolink) |
+| [`pack_current`](../../../aeroplan/aerosandbox/mission.py#L149) | P = (V_oc - R_b I) I, the low root | Xing et al. 2014, Eq. 5 (as in Aerolink) |
 
 The pack resistance is R_b = S r_cell 4.5 / C (the cell resistance of a 4.5 Ah cell, scaled with the capacity). The
 wire resistance comes from the copper area and the run length from the battery to each hub (`Cables`). The MAX state
@@ -220,7 +220,7 @@ definitions.
 | [`Tube.section`](../../../aeroplan/aerosandbox/component.py#L236) | Area and second moment of a thin tube |
 | [`Tube.buckling_stress`](../../../aeroplan/aerosandbox/component.py#L242) | Local buckling of a thin cylinder, times a knockdown factor |
 | [`Tube.f1_hz`](../../../aeroplan/aerosandbox/component.py#L247), [`Tube.modes_hz`](../../../aeroplan/aerosandbox/component.py#L276) | First (and second) bending mode of a cantilever with a tip mass and a tip rotary inertia |
-| `build`, structure block ([model.py](../../../aeroplan/aerosandbox/model.py#L418)) | Each boom end is a cantilever of length a from the clamp. Two load cases: the MAX thrust, and 3 g on the tip mass. Von Mises stress (bending and the torque of the motor), buckling, tip slope, r/t |
+| `build`, structure block ([model.py](../../../aeroplan/aerosandbox/model.py#L422)) | Each boom end is a cantilever of length a from the clamp. Two load cases: the MAX thrust, and 3 g on the tip mass. Von Mises stress (bending and the torque of the motor), buckling, tip slope, r/t |
 
 The first bending mode must stay out of the band of the hover 1P (shaft frequency) plus or minus the margin, at the
 take-off and the landing mass. With `resonance_side = below` the mode is under the band, so every speed from hover to
@@ -230,15 +230,16 @@ full throttle is above it. The model assumes a rigid clamp and a rigid wing, so 
 
 | Function | Job |
 |---|---|
-| [`Mission.conditions`](../../../aeroplan/aerosandbox/mission.py#L68) | Six steady states: H_TO (hover, take-off mass), C_TO (vertical climb), H_L (hover, cargo gone), MAX (thrust to weight 2.3), F_LAP and F_MAP (cruise on the nose propeller, F_MAP with the survey turns) |
-| [`QuadplaneModel._lift_condition`](../../../aeroplan/aerosandbox/model.py#L314) | Hover thrust of the front and the rear rotor from the moment balance about the CG, divided by cos(cant) |
-| [`QuadplaneModel._cruise_condition`](../../../aeroplan/aerosandbox/model.py#L327) | Drag = q S (CD0 + k CL^2) + q (boom, nacelle and stopped-prop drag areas). The nose propeller gives T = D. Duty, current and tip Mach limits |
-| [`Mission.segments`](../../../aeroplan/aerosandbox/mission.py#L85) | Eight segments: VTOL climb, transitions, fixed-wing climb, transit and laps and return, survey, deployment hover, landing, reserve hover |
-| [`Mission.discharge`](../../../aeroplan/aerosandbox/mission.py#L110) | Takes the pack from SOC 1 through the segments in flight order, four midpoint steps per segment. The energy of a segment is S C (F(SOC start) - F(SOC end)), so it includes the R_b I^2 loss. The limit: the energy is at most the usable energy to the lowest SOC |
+| [`Mission.conditions`](../../../aeroplan/aerosandbox/mission.py#L70) | Six steady states: H_TO (hover, take-off mass), C_TO (vertical climb), H_L (hover, cargo gone), MAX (thrust to weight 2.3), F_LAP and F_MAP (cruise on the nose propeller, F_MAP with the survey turns) |
+| [`QuadplaneModel._lift_condition`](../../../aeroplan/aerosandbox/model.py#L316) | Hover thrust of the front and the rear rotor from the moment balance about the CG, divided by cos(cant) |
+| [`QuadplaneModel._cruise_condition`](../../../aeroplan/aerosandbox/model.py#L329) | Drag = q S (CD0 + k CL^2) + q (boom, nacelle and stopped-prop drag areas). The nose propeller gives T = D. Duty, current and tip Mach limits |
+| [`Mission.segments`](../../../aeroplan/aerosandbox/mission.py#L87) | Eight segments: VTOL climb, transitions, fixed-wing climb, transit and laps and return, survey, deployment hover, landing, reserve hover. The deployment hover carries the cargo (H_TO) and releases it at the end |
+| [`Mission.clock_time`](../../../aeroplan/aerosandbox/mission.py#L105) | The time on the mission clock: every segment but the reserve, plus `ground_time_s`. Optional limit `mission_clock_s`. A second optional limit, `limits.uas_mass_kg`, holds the take-off mass less the cargo (the SUAS 2027 weight cap) |
+| [`Mission.discharge`](../../../aeroplan/aerosandbox/mission.py#L117) | Takes the pack from SOC 1 through the segments in flight order, four midpoint steps per segment. The energy of a segment is S C (F(SOC start) - F(SOC end)), so it includes the R_b I^2 loss. The limit: the energy is at most the usable energy to the lowest SOC |
 
 ## 9. Control, clearances and the bay
 
-`build` ([model.py](../../../aeroplan/aerosandbox/model.py#L458)) adds:
+`build` ([model.py](../../../aeroplan/aerosandbox/model.py#L462)) adds:
 - Clearances in plan view: rotor tip to fuselage, front disc to wing LE, rear disc to wing TE, rear disc to htail,
   disc to disc.
 - Control authority in hover: roll and pitch acceleration from the thrust change between idle and hover, against a
@@ -298,3 +299,16 @@ runs the ingest of each spoke). It reads the model file and writes:
 - Munk, M. M., "The aerodynamic forces on airship hulls", NACA Report 184, 1924. The destabilising body moment.
 - Sharpe, P. D., AeroSandbox (VortexLatticeMethod, AeroBuildup, NeuralFoil).
 - The Currawong AeroSandbox methods report: [../currawong_aero_methods/README.md](../currawong_aero_methods/README.md).
+
+## 14. Study choices (from ADR 22)
+
+These choices were in ADR 22 until 2026-11-26. They are study values, not repository rules, so they live here.
+
+The study of 2026-10-17 solved the H4 and H8 configurations for 6S, 8S, 10S, 12S and 14S as separate cases. The notebook
+now solves H4 with a 12S battery (team decision).
+
+The lift propeller is a geometric scale of the Proptimiser FLUXER 22x6.6 Fit C blade (Proptimiser 711ef86). The radius is an Opti variable between 16 in and 26 in diameter. A 30 in limit gave only 5.5 % less energy for a 36 % extrapolation of the blade. The map speed is an Opti variable. It stays above 1.3 Vs. The boom wall is 1.0 mm or more. The yaw requirement is 1.5 rad/s2. This value is a placeholder, chosen after a sweep.
+
+The solver climbs a fidelity ladder: L0 momentum, L1 CT and CP tables, L2 plus structure, stiffness, clearance and control, L3 BEMT at the hover take-off state, L4 BEMT at all states. Each level starts with an elastic feasibility phase. That phase names the infeasible constraint.
+
+The lift rotors have a cant for yaw authority. Each rotor tilts by the cant about its radial axis (the line from the CG to the hub), so the tilt force is tangential. The tilt moment of one rotor is T sin(cant) rho, with rho the horizontal distance from the CG to the hub. The tilt sign follows the spin: a cw rotor (seen from above) tilts to push the airframe the same way as its reaction torque. The tilts cancel in hover, because two rotors turn cw and two turn ccw. When the controller raises the thrust of the cw rotors and lowers the thrust of the ccw rotors, the tilt moment adds to the drag torque difference. A tilt about the tangential axis gives no yaw moment, so each rotor has one tilt angle only. The cant size is an Opti variable (0 to 10 deg). It costs 1 - cos(cant) of the thrust. The idea comes from the rotor-cant literature (Niemiec and Gandhi, "Effect of Rotor Cant on Trim and Autonomous Flight Dynamics of a Quadcopter", VFS 2018, and the RPI and SAE eVTOL cant papers). Those papers give no rule for the angle, so the yaw requirement sets it.

@@ -1,8 +1,14 @@
+---
+id: "0015"
+title: The wing root leading edge sits at x = 0.000
+date: 2026-10-15
+status: superseded
+kind: data
+superseded_by: ["0023"]
+---
 # 15. The wing root leading edge sits at x = 0.000
 
-Date: 2026-10-15
-
-Status: accepted
+Superseded by ADR 0023. The text below is history.
 
 ## Context
 

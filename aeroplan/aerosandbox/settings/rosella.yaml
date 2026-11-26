@@ -1,0 +1,20 @@
+# AeroSandbox spoke settings for the Rosella (tool settings, not aircraft data). `generate` reads this file.
+# The sizing model file settings/rosella.json is a different file: the sizing notebook writes it and `ingest` reads it.
+# wings: the ADH items (muas.instance) with a planform that go into the AeroSandbox airplane.
+# bodies: the ADH items with a body (geometry.body) that go into the AeroSandbox airplane: the fuselage and the
+#   tail boom (copied from the Currawong, placeholder).
+# propeller: the ADH item (muas.instance) of the cruise propeller installation. Its muas.propulsion_system gives the
+#   motor, ESC and battery (copied from the Currawong, placeholder).
+# proptimiser_design: the Proptimiser design of the propeller (designs/<name>.yaml and propellers/<name>.state.json).
+#   Copy both files by hand into work/aerosandbox/<aircraft>/proptimiser/designs and .../propellers.
+# Proptimiser itself comes from the `sizing` extra of pyproject.toml (ADR 0030).
+# cruise_speed_output: the name of the sizing output (node 1.2 performance "sizing") that gives the cruise speed.
+# alpha_deg: the angles of attack of the polar job.
+wings: [wing_main, htail, fin]
+bodies: [fuselage, tail_boom]
+propeller: prop_cruise
+proptimiser_design: Currawong_V1
+cruise_speed_output: cruise_speed_laps
+alpha_deg: [-4, -2, 0, 2, 4, 6, 8, 10, 12]
+# altitude_m: the altitude of the flight state. 0 is ISA sea level, the air of the Proptimiser and Propalyser tables.
+altitude_m: 0.0

@@ -4,13 +4,11 @@ The test types no aircraft number: it runs the checks on the committed data (ADH
 and checkData, datums, the consumers of muas.package). A check that needs a raw file (CAD, DAVE-ML source) is left
 out when the file is not on the machine (a fresh clone), so the test runs the same on CI.
 """
-from pathlib import Path
-
 import pytest
 
+from aeroplan import REPO_ROOT as ROOT
 from aeroplan import checks, source_tree
 
-ROOT = Path(__file__).resolve().parents[1]
 TREES = source_tree.list_aircraft(ROOT)
 
 
@@ -38,3 +36,16 @@ def test_aircraft_packs_and_unpacks(folder, tmp_path):
         unpack(out, tmp_path / profile / acft.name, ROOT)
         back = source_tree.read(tmp_path / profile / acft.name)
         assert back.doc == acft.doc and back.datasets == acft.datasets
+
+
+def test_the_redback_ardupilot_settings_have_no_fill_in_and_the_flight_names_a_release():
+    """The committed settings hold the facts of the log (no FILL_IN). The firmware of the flight is a release of the file."""
+    import yaml
+
+    text = (ROOT / "aeroplan" / "ardupilot" / "settings" / "redback.yaml").read_text(encoding="utf-8")
+    st = yaml.safe_load(text)
+    assert "FILL_IN" not in text
+    releases = {r["release_id"]: r for r in st["releases"]}
+    for f in st["flights"]:
+        assert f["firmware"] in releases and not f.get("wait_for_log")
+        assert releases[f["firmware"]]["git_hash"] and releases[f["firmware"]]["board"]

@@ -42,8 +42,7 @@ def planform_wing(planform: Dict[str, Any]) -> Wing:
 def _edges(wing: Wing) -> Tuple[np.ndarray, np.ndarray]:
     """Leading and trailing edge of each section, design frame (twist about the quarter chord, dihedral outboard)."""
     secs = wing.sections
-    sy = np.array([s.y for s in secs])
-    zd = np.concatenate([[0.0], np.cumsum(np.diff(sy) * np.tan(np.radians([s.dihedral_deg for s in secs[:-1]])))])
+    zd = np.array(wing.section_z())
     le, te = [], []
     for s, z in zip(secs, zd):
         tw = math.radians(s.twist_deg)
@@ -56,8 +55,7 @@ def _edges(wing: Wing) -> Tuple[np.ndarray, np.ndarray]:
 def section_points(wing: Wing, foils: Dict[str, np.ndarray]) -> List[np.ndarray]:
     """The foil of each section in the design frame (the ADH airfoil sections placed by the planform rules)."""
     secs = wing.sections
-    sy = np.array([s.y for s in secs])
-    zd = np.concatenate([[0.0], np.cumsum(np.diff(sy) * np.tan(np.radians([s.dihedral_deg for s in secs[:-1]])))])
+    zd = np.array(wing.section_z())
     out = []
     for s, z in zip(secs, zd):
         f = np.asarray(foils[s.foil], float)

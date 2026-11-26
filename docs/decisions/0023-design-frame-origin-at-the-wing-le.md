@@ -1,8 +1,14 @@
+---
+id: "0023"
+title: The design frame starts at the root leading edge of the main wing
+date: 2026-10-17
+status: accepted
+kind: data
+supersedes: ["0015"]
+amended_by: ["0029"]
+applies_to: ["aeroplan/datum.py", "aeroplan/frame.py", "aeroplan/specsheet/**"]
+---
 # 23. The design frame starts at the root leading edge of the main wing
-
-Date: 2026-10-17
-
-Status: accepted. Amended by 0029 (the x axis points forward: FRD).
 
 ## Context
 
@@ -21,3 +27,7 @@ An aircraft with no main wing (a multirotor) keeps ADR 0018.
 ## Consequences
 
 A change of the wing position moves the whole aircraft in the tree, not the origin. Old reports with the wing at x = -0.080 (flow5, AeroSandbox methods report section 1.4) use the old frame.
+
+## Rules
+
+- check: `aeroplan check` fails when the `wing_main` root leading edge is not at x = 0 within 1 mm.

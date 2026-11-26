@@ -1,8 +1,12 @@
+---
+id: "0004"
+title: Asset register, storage tiers and packing profiles
+date: 2026-10-10
+status: accepted
+kind: data
+applies_to: ["aeroplan/assets.py", "aeroplan/consumers.py", "aeroplan/muas/assets.py"]
+---
 # 4. Asset register, storage tiers and packing profiles
-
-Date: 2026-10-10
-
-Status: accepted
 
 ## Context
 
@@ -15,3 +19,8 @@ The asset register is `muas.assets` of node 1.10.2 DataRepository. Every item na
 ## Consequences
 
 A consumer states what it needs. `pack --profile aerolink` refuses an aircraft that lacks an item.
+
+## Rules
+
+- check: `validate_document` refuses the register or a flight key on another node (tests/test_adh_compat.py).
+- process: An item names an asset by its ID, never by a path.

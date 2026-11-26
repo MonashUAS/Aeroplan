@@ -14,9 +14,11 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
+from .constants import FOOT_M, INCH_M
+
 _ENTITY = re.compile(r"#(\d+)\s*=\s*(.*)", re.S)
 _REF = re.compile(r"#(\d+)")
-_CONVERSION = {"INCH": 0.0254, "FOOT": 0.3048, "MILLIMETRE": 0.001, "MILLIMETER": 0.001}
+_CONVERSION = {"INCH": INCH_M, "FOOT": FOOT_M, "MILLIMETRE": 0.001, "MILLIMETER": 0.001}
 _PREFIX = {".MILLI.": 1e-3, ".CENTI.": 1e-2, ".DECI.": 1e-1, "$": 1.0, ".KILO.": 1e3, ".MICRO.": 1e-6}
 
 
@@ -106,7 +108,7 @@ def read_step_faceted(path: Path) -> Tuple[np.ndarray, str]:
         out = []
         for t in np.linspace(0.0, 1.0, n + 1)[1:-1]:
             q = c.copy()
-            for k in range(1, len(q)):
+            for _k in range(1, len(q)):
                 q = (1 - t) * q[:-1] + t * q[1:]
             out.append(q[0])
         return out

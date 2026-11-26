@@ -1,6 +1,6 @@
 """aeroplan command line.
 
-    aeroplan build <aircraft> --author NAME    run the spokes and write the source tree aircraft/<aircraft>/
+    aeroplan build <aircraft> [--author NAME]  run the spokes and write the source tree aircraft/<aircraft>/
     aeroplan check <aircraft>                  every check: ADH tree, datasets (DAVE-ML), datums, consumers
     aeroplan show <aircraft>                   print the ADH tree and the asset register
     aeroplan show <aircraft> --md <file>       write the one-page summary of the aircraft (docs/reference/aircraft/<aircraft>.md)
@@ -13,6 +13,11 @@
     aeroplan spokes [<aircraft>]               list the spokes and the input in their work folders
     aeroplan setup <spoke> [<aircraft>]        make the tool runtime of a spoke on this machine (OpenVSP)
     aeroplan schema --out standards/schema               export the JSON Schema of the MUAS types
+    aeroplan doctor                            what this computer lacks, with the fix for each item
+    aeroplan codemap [--write]                 print the code map (CLAUDE.md holds a copy)
+    aeroplan new-spoke <Name>                  write the skeleton of a new spoke
+    aeroplan rules <path>                      print the ADR rules that apply to a file
+    aeroplan rules --index [--write]           print (or write) the index of docs/decisions
 """
 from __future__ import annotations
 
@@ -22,10 +27,25 @@ import sys
 from pathlib import Path
 
 
+def _git_user() -> str:
+    """The git user name of this machine, the default author of a build."""
+    import subprocess
+
+    try:
+        out = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True, check=False)
+    except OSError:
+        return ""
+    return out.stdout.strip()
+
+
 def _build(args) -> int:
     from .build import build
 
-    res = build(args.aircraft, author=args.author, version=args.version, new=args.new, only=args.only,
+    author = args.author or _git_user()
+    if not author:
+        print("error: give --author NAME, or set `git config user.name`.", file=sys.stderr)
+        return 2
+    res = build(args.aircraft, author=author, version=args.version, new=args.new, only=args.only,
                 dry_run=args.dry_run, consumers=args.consumers)
     for name, changes in res.changes.items():
         print(f"{name}:")
@@ -214,6 +234,50 @@ def _schema(args) -> int:
     return 0
 
 
+def _doctor(args) -> int:
+    from . import doctor
+
+    print(doctor.report())
+    return 0 if doctor.ok() else 1
+
+
+def _codemap(args) -> int:
+    from . import REPO_ROOT, codemap
+
+    if args.write:
+        changed = codemap.write(REPO_ROOT / "CLAUDE.md")
+        print("CLAUDE.md code map updated" if changed else "CLAUDE.md code map is current")
+    else:
+        print(codemap.render())
+    return 0
+
+
+def _rules(args) -> int:
+    from . import rules
+
+    if args.index:
+        if args.write:
+            print("docs/decisions/README.md updated" if rules.write_index() else "docs/decisions/README.md is current")
+        else:
+            print(rules.index())
+        return 0
+    if not args.path:
+        raise ValueError("give a path, or --index")
+    print(rules.text_for(args.path))
+    return 0
+
+
+def _new_spoke(args) -> int:
+    from .spokes import SPOKES, new_spoke
+
+    if args.name in SPOKES:
+        raise ValueError(f"{args.name} is a spoke already")
+    for path in new_spoke(args.name):
+        print(f"wrote {path}")
+    print(f"Next: add {args.name!r} to SPOKES in aeroplan/spokes.py, then run `python -m pytest tests/architecture`.")
+    return 0
+
+
 def main(argv=None) -> int:
     from .consumers import PROFILES
 
@@ -221,7 +285,7 @@ def main(argv=None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build", help="run the spokes and write the source tree aircraft/<aircraft>/")
     b.add_argument("aircraft")
-    b.add_argument("--author", required=True, help="the person who builds the source tree")
+    b.add_argument("--author", help="the person who builds the source tree (default: git config user.name)")
     b.add_argument("--version", help="version of the aircraft (default: the last version, patch + 1)")
     b.add_argument("--new", action="store_true", help="start a new aircraft (an empty ADH document)")
     b.add_argument("--only", nargs="+", help="run only these spokes")
@@ -270,7 +334,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("spokes", help="list the spokes")
     s.add_argument("aircraft", nargs="?")
     s.set_defaults(fn=_spokes)
-    su = sub.add_parser("setup", help="make the tool runtime of a spoke on this machine (OpenVSP, AeroSandbox)")
+    su = sub.add_parser("setup", help="make the tool runtime of a spoke on this machine (OpenVSP)")
     su.add_argument("spoke")
     su.add_argument("aircraft", nargs="?", default="currawong")
     su.add_argument("--vsp", help="the OpenVSP folder (the folder of vsp.exe), when the search does not find it")
@@ -279,10 +343,23 @@ def main(argv=None) -> int:
     sc = sub.add_parser("schema", help="export the JSON Schema of the MUAS types")
     sc.add_argument("--out", default="standards/schema")
     sc.set_defaults(fn=_schema)
+    dr = sub.add_parser("doctor", help="what this computer lacks for AeroPlan, with the fix for each item")
+    dr.set_defaults(fn=_doctor)
+    cm = sub.add_parser("codemap", help="print the code map (one row for each module, from its docstring)")
+    cm.add_argument("--write", action="store_true", help="update the copy in CLAUDE.md")
+    cm.set_defaults(fn=_codemap)
+    ru = sub.add_parser("rules", help="print the ADR rules for a file, or the ADR index")
+    ru.add_argument("path", nargs="?", help="a repository path, for example aeroplan/flow5/spoke.py")
+    ru.add_argument("--index", action="store_true", help="print the index of docs/decisions (with --write: update README.md)")
+    ru.add_argument("--write", action="store_true")
+    ru.set_defaults(fn=_rules)
+    ns = sub.add_parser("new-spoke", help="write the skeleton of a new spoke: aeroplan/<name>/")
+    ns.add_argument("name", help="the spoke name as SPOKES will hold it, for example MyTool")
+    ns.set_defaults(fn=_new_spoke)
     args = p.parse_args(argv)
     try:
         return args.fn(args)
-    except (ValueError, KeyError, OSError, RuntimeError) as err:
+    except (ValueError, KeyError, OSError, RuntimeError) as err:  # FileExistsError is an OSError
         print(f"error: {err}", file=sys.stderr)
         return 1
 

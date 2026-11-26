@@ -1,8 +1,12 @@
-# 3. Only ADH data goes into the source tree
-
-Date: 2026-10-10
-
-Status: accepted
+---
+id: "0003"
+title: Only small, sourced data goes into the source tree
+date: 2026-10-10
+status: accepted
+kind: data
+applies_to: ["aircraft/**", "aeroplan/assets.py"]
+---
+# 3. Only small, sourced data goes into the source tree
 
 ## Context
 
@@ -15,3 +19,8 @@ The source tree holds the ADH tree, the asset register, small geometry and looku
 ## Consequences
 
 A file that is not on this machine does not make a package invalid. A fetch checks the hash.
+
+## Rules
+
+- AP019: No file in `aircraft/` is larger than 1 MB.
+- process: A large tool file stays in `work/<tool>/<aircraft>/`. The asset register names it by its hash.

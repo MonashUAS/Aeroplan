@@ -300,7 +300,7 @@ def trim_inputs(doc: Dict[str, Any], st: Dict[str, Any], root: Path) -> Optional
 def apply_battery_trim(subs: List[Dict[str, Any]], st: Dict[str, Any], trim: Dict[str, Any]) -> Dict[str, Any]:
     """Move the battery point mass fore or aft so that the mass CG sits at the best flight CG
     x_best = x_np + SM_goal c_ref (FRD: the CG is ahead of the neutral point). SM_goal is the middle of the requirement band. The move is clamped to +/- travel_m.
-    Only the mass CG moves (ADR 0013). Raises ValueError for a missing tag or a margin outside the band."""
+    Only the mass CG moves: the MRP is a fixed point (ADR 0033). Raises ValueError for a missing tag or a margin outside the band."""
     bt = st["battery_trim"]
     pms = [p for s in subs for p in s["point_masses"]]
     bat = [p for p in pms if p["tag"] == bt["move"]]

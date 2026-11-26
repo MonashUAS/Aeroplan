@@ -80,8 +80,23 @@ def node(doc: Dict[str, Any], wbs: str, create: bool = False) -> Dict[str, Any]:
     return cur
 
 
-#: The ADH ReferenceData (airframe_parameters.py) takes its aliases only. A field name such as reference_area passes
-#: the validation as an unknown extra key and the value is lost, so validate_document refuses every other key.
+#: The facts that live in ADH fields (ADR 0027), each with the only functions that read and write it. A fact is a list of
+#: (parent key, key) pairs: the ADH field `<parent>.<key>` of a node. Only the modules in `owners` touch these fields
+#: (rule AP008). CLAUDE.md points here: this dict is the only list of the fact helpers.
+FACTS: Dict[str, Dict[str, Any]] = {
+    "S, b, c": {"fields": [("parameters", "reference_data")], "node": "1.2 `parameters.reference_data` (`Sref`, `BLref`, `Cbar`)",
+                "read": "adh_doc.reference", "write": "adh_doc.set_reference", "owners": ["aeroplan/adh_doc.py"]},
+    "Control surface span and hinge": {"fields": [("parameters", "asymmetric_control"), ("parameters", "symmetric_flap")],
+                                       "node": "`parameters.asymmetric_control` or `symmetric_flap`",
+                                       "read": "adh_doc.control_surface", "write": "adh_doc.set_control_geometry",
+                                       "owners": ["aeroplan/adh_doc.py"]},
+    "Lifting surface shape": {"fields": [("geometry", "lifting_surface")], "node": "`geometry.lifting_surface`",
+                              "read": "geometry.planform_of", "write": "geometry.set_planform",
+                              "owners": ["aeroplan/geometry.py"]},
+}
+
+#: The tree spells the ADH ReferenceData (airframe_parameters.py) with its aliases only, so each fact has one spelling.
+#: validate_document refuses every other key: the ADH classes accept an unknown key (extra="allow").
 REFERENCE_ALIASES = {"s_ref": "Sref", "b_ref": "BLref", "c_ref": "Cbar"}
 REFERENCE_UNITS = {"s_ref": "m^2", "b_ref": "m", "c_ref": "m"}
 

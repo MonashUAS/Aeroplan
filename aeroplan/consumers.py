@@ -114,7 +114,7 @@ def multirotor_problems(doc: Dict[str, Any]) -> List[str]:
             out.append(f"control_surface {m['instance']}: a multirotor has no control surfaces")
     if sorted(lift) != list(MOTOR_NUMBERS):
         out.append(f"propeller: lift rotors with motor {sorted(k for k in lift if k)} (needs {list(MOTOR_NUMBERS)})")
-    for k, r in sorted(lift.items(), key=lambda kv: kv[0] or 0):
+    for _k, r in sorted(lift.items(), key=lambda kv: kv[0] or 0):
         if r.get("system") not in systems:
             out.append(f"propeller {r['instance']}: system {r.get('system')!r} is not a muas.propulsion_system system_id "
                        f"({sorted(systems) or 'none in the document'})")

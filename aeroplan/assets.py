@@ -123,7 +123,7 @@ def register_file(doc: Dict[str, Any], path: Path, root: Path, *, tool: str, rol
         locs.append({"repo": path.resolve().relative_to(Path(root).resolve()).as_posix()})
     except ValueError:
         if url is None:
-            raise AssetError(f"{path} is outside the repository and has no URL: it cannot be fetched again")
+            raise AssetError(f"{path} is outside the repository and has no URL: it cannot be fetched again") from None
     if url:
         locs.append({"url": url, **({"member": member} if member else {})})
     e = {"id": asset_id(sha), "kind": "file", "name": name or f"{tool}.{path.name}".replace(" ", "_"),
@@ -139,12 +139,14 @@ def register_dataset(acft, name: str, content: Any, *, tool: str, role: str, dat
                      meta: Dict[str, Any], derived_from: Iterable[str] = (), built_against: Optional[str] = None,
                      reference: Optional[List[Dict[str, Any]]] = None, note: Optional[str] = None) -> str:
     """Register a dataset of the aircraft `acft` (source_tree.Aircraft) and keep its content in `acft.datasets`."""
+    from .source_tree import dataset_repo_path
+
     content = clean(content)
     data = canonical_json(content)
     aid = asset_id(sha256_bytes(data))
     e = {"id": aid, "kind": "dataset", "name": name, "role": role, "tool": tool,
          "media_type": "application/json", "size": len(data),
-         "locations": [{"repo": f"aircraft/{acft.name}/datasets/{name}.json"}],
+         "locations": [{"repo": dataset_repo_path(acft.name, name)}],
          "derived_from": sorted(set(derived_from)), "dataset": meta, "dataset_role": dataset_role}
     if built_against:
         e["built_against"] = built_against

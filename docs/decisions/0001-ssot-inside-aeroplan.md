@@ -1,8 +1,12 @@
+---
+id: "0001"
+title: SSOT lives inside AeroPlan
+date: 2026-10-08
+status: accepted
+kind: data
+applies_to: ["aircraft/**"]
+---
 # 1. SSOT lives inside AeroPlan
-
-Date: 2026-10-08
-
-Status: accepted
 
 ## Context
 
@@ -15,3 +19,7 @@ The SSOT lives in AeroPlan, in `aircraft/<aircraft>/`. The muas-fleet-data repos
 ## Consequences
 
 One repository holds code and data. Tools and people change data only through AeroPlan.
+
+## Rules
+
+- process: The aircraft data lives only in `aircraft/<aircraft>/`. No other repository holds a copy.

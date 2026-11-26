@@ -1,8 +1,13 @@
+---
+id: "0026"
+title: A flat aircraft folder
+date: 2026-10-30
+status: accepted
+kind: data
+amends: ["0002"]
+applies_to: ["aircraft/**", "aeroplan/source_tree.py"]
+---
 # 26. A flat aircraft folder
-
-Date: 2026-10-30
-
-Status: accepted. Amends ADR 2 (the form of the source tree).
 
 ## Context
 
@@ -28,3 +33,7 @@ aircraft/<aircraft>/
 
 The four trees moved by `git mv` and one read and write through `source_tree`. The node files kept their content and their
 history. `source_tree.exists` and `source_tree.list_aircraft` find a tree.
+
+## Rules
+
+- check: `source_tree.read` refuses a file that is not a node file or a dataset.

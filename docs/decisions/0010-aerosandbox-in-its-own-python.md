@@ -1,8 +1,14 @@
+---
+id: "0010"
+title: AeroSandbox runs in its own Python
+date: 2026-10-14
+status: superseded
+kind: architecture
+superseded_by: ["0030"]
+---
 # 10. AeroSandbox runs in its own Python
 
-Date: 2026-10-14
-
-Status: accepted
+Superseded by ADR 0030. The text below is history.
 
 ## Context
 

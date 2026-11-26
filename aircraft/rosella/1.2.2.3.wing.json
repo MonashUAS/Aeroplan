@@ -46,7 +46,7 @@
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "role": "Rosella model file and sizing result H4_12S",
         "note": "copy of aircraft/currawong wing_main"
       }

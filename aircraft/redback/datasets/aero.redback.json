@@ -14,7 +14,7 @@
       "value": "1"
     },
     "description": {
-      "value": "redback multirotor body drag (forces only, body axes FRD, no moments). See spec/multirotor_contract.md."
+      "value": "redback multirotor body drag (forces only, body axes FRD, no moments). See the Aerolink docs/multirotor_contract.md."
     }
   },
   "variable_def": [

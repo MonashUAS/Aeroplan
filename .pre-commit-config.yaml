@@ -1,0 +1,24 @@
+# pre-commit: the fast checks before each commit (ADR 0031). Install once: pre-commit install
+# The hooks run in the active .venv (language: system), so they use the same ruff and pytest as CI.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-json
+        exclude: '^standards/adh/upstream/'
+      - id: check-yaml
+        exclude: '^standards/adh/upstream/'
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: ruff check
+        language: system
+        types: [python]
+      - id: architecture
+        name: architecture rules (tests/architecture)
+        entry: python -m pytest tests/architecture -q -x
+        language: system
+        pass_filenames: false
+        always_run: true

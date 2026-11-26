@@ -50,7 +50,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from aeroplan import adh_doc
+from aeroplan import adh_doc, source_tree
 from aeroplan.frame import flip_array, flip_point
 from aeroplan.geometry import (body_adh, body_frames, distance_to_mesh, foils_of, planform_of, planform_wing, section_points,
                                set_planform)
@@ -568,7 +568,7 @@ def sweep(doc: Dict[str, Any], ctx: Context, name: Optional[str] = None, only: O
     sets = {k: list(v) for k, v in (an.get("sets") or {}).items()}
     runs = [r for r in an["runs"] if not only or r["name"] in only]
     model = ctx.work / "generated" / f"{ctx.aircraft}.vsp3"
-    tree = ctx.root / "aircraft" / ctx.aircraft
+    tree = source_tree.aircraft_dir(ctx.aircraft, ctx.root)
     current = (model.is_file() and tree.is_dir()
                and model.stat().st_mtime > max(f.stat().st_mtime for f in tree.rglob("*") if f.is_file()))
     if not dry_run and not current:         # generate takes minutes (the shape gate): reuse a model newer than the tree

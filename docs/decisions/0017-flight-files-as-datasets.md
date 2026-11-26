@@ -1,8 +1,12 @@
+---
+id: "0017"
+title: Flight files are datasets of the autopilot node
+date: 2026-10-16
+status: accepted
+kind: data
+applies_to: ["aeroplan/ardupilot/**", "aeroplan/flightfiles.py"]
+---
 # 17. Flight files are datasets of the autopilot node
-
-Date: 2026-10-16
-
-Status: accepted
 
 ## Context
 
@@ -15,3 +19,7 @@ The ArduPilot flight files (`.parm`, `.waypoints`, geofence) go into the `.muas`
 ## Consequences
 
 The spoke that reads them is the ArduPilot spoke (ADR 0021).
+
+## Rules
+
+- process: The flight files are datasets of node 1.2.5.10 with the roles `parameters`, `waypoints` and `geofence`.

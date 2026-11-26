@@ -1,8 +1,14 @@
+---
+id: "0013"
+title: The MRP stays the CoG of the flow5 T7 analysis
+date: 2026-10-15
+status: superseded
+kind: data
+superseded_by: ["0033"]
+---
 # 13. The MRP stays the CoG of the flow5 T7 analysis
 
-Date: 2026-10-15
-
-Status: accepted
+Superseded by ADR 0033. The text below is history.
 
 ## Context
 

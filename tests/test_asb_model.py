@@ -1,6 +1,6 @@
 """The AeroSandbox model files (aeroplan/aerosandbox: component.py, mission.py, model.py, optimise.py, result.py). Every number is synthetic.
 
-The sizing runs in the AeroSandbox Python (`python -m aeroplan setup AeroSandbox`). That Python has no pytest. So each check is a plain
+The sizing runs in the AeroSandbox Python (`pip install -e ".[sizing]"`, ADR 0030). That Python has no pytest. So each check is a plain
 function (`check_*`) and each test runs it in one of two ways:
   - the Python that runs pytest has aerosandbox: the test calls the check directly;
   - it has not, but the AeroSandbox Python exists: the test runs this file there (`python tests/test_asb_model.py NAME`);
@@ -338,6 +338,11 @@ def check_mission_segments_and_energy():
     J, tt = mis.energy(power, segs)
     assert rel(J["fw_climb"], 200.0 * t["fw_climb"] + 100.0 * 63.0 / 0.5) and rel(J["reserve"], 380.0 * 300.0)
     assert rel(J["transitions"], 400.0 * 30.0) and tt == t
+    assert [s.condition for s in segs if s.name == "deploy_hover"] == ["H_TO"]          # the cargo is on board until the release
+    # the mission clock: every segment but the reserve, plus the ground time (0 when the mission has none)
+    assert rel(mis.clock_time(segs), sum(t.values()) - 300.0)
+    mis.params["ground_time_s"] = c.P(120.0, "s", "test")
+    assert rel(mis.clock_time(segs), sum(t.values()) - 300.0 + 120.0)
 
 
 @check
@@ -374,6 +379,26 @@ def check_ocv_fit_and_the_pack_discharge():
             assert I_0 < I_r and 0.99 * R_b * I_0 ** 2 * 300.0 < loss_r < 1.01 * R_b * I_r ** 2 * 300.0
     fine = mis.discharge(power, segs, S, cap, 0.02, ocv, n_sub=50)              # N_SUB steps against 50 steps
     assert abs(fine["soc"]["reserve"] - s_end) < 5e-4
+    mis.params["reserve_hover_s"] = c.P(0.0, "s", "test")                         # a segment of 0 s takes no charge
+    pk0 = mis.discharge(power, mis.segments(20.0, 15.0, 40.0, 100.0, 0.5), S, cap, 0.02, ocv)
+    assert pk0["J"]["reserve"] == 0.0 and pk0["soc"]["reserve"] == pk0["soc"]["landing"]
+
+
+@check
+def check_competition_weight_cap_and_mission_clock():
+    c, mi, m, o, r = tool()
+    model = small_model()
+    model.c["limits"].params["uas_mass_kg"] = c.P(19.0, "kg", "test")
+    model.c["mission"].params["mission_clock_s"] = c.P(2700.0, "s", "test")
+    model.c["mission"].params["ground_time_s"] = c.P(100.0, "s", "test")
+    p, res = solve_l0(model)
+    con, n = res.data["constraints"], res.data["names"]
+    cargo = model.c["cargo"]["mass_kg"]
+    assert rel(con["uas_mass_kg"]["value"], n["M"] - cargo, 1e-9) and con["uas_mass_kg"]["hi"] == 19.0
+    t = res.data["time_s"]
+    assert rel(con["mission_clock_s"]["value"], sum(v for k, v in t.items() if k != "reserve") + 100.0, 1e-9)
+    assert con["mission_clock_s"]["hi"] == 2700.0
+    assert con["uas_mass_kg"]["margin"] > -1e-6 and con["mission_clock_s"]["margin"] > -1e-6
 
 
 # ----------------------------------------------------------------------------------------------- a small L0 sizing problem
@@ -525,6 +550,17 @@ def check_energy_chart_stacks_every_segment():
     ax = plot.energy_chart(R()).axes[0]
     assert abs(sum(p.get_height() for p in ax.patches) - 162.0) < 1e-12
     assert "162.0 Wh" in ax.get_title("left") and "81 % of usable" in ax.get_title("left")
+    # the timeline: the transitions split into two halves in flight order, and the energies add up to the mission energy
+    t = {"vtol_takeoff_climb": 12.0, "transitions": 30.0, "fw_climb": 24.0, "survey": 100.0, "deploy_hover": 60.0, "reserve": 300.0}
+    e = {"vtol_takeoff_climb": 8.0, "transitions": 18.0, "fw_climb": 7.0, "survey": 11.0, "deploy_hover": 33.0, "reserve": 160.0}
+    res = {"time_s": t, "energy_Wh": e, "battery": {"usable_Wh": 300.0, "soc_min": 0.1},
+           "constraints": {"mission_clock_s": {"hi": 2700.0}}}
+    segs = plot.timeline_segments(res)
+    assert [s[0] for s in segs] == ["vtol_takeoff_climb", "transition_out", "fw_climb", "survey", "transition_back",
+                                    "deploy_hover", "reserve"]
+    assert abs(sum(s[2] for s in segs) - sum(e.values())) < 1e-12 and abs(sum(s[1] for s in segs) - sum(t.values())) < 1e-12
+    line = plot.energy_timeline(res).axes[0].lines[0]
+    assert abs(line.get_ydata()[-1] - (300.0 - sum(e.values()) + 160.0)) < 1e-9    # the flown line stops before the reserve
 
 
 @check
@@ -624,6 +660,61 @@ def check_jung_check_functions():
     assert all(abs(row[3]) < 1e-9 and abs(row[6]) < 1e-9 for row in out["rows"])
 
 
+# ---------------------------------------------------------------------------------- vortex lattice of the stability job
+def _rect_plane(hinge=0.75, anti=False, dx=0.0):
+    """A rectangular wing (aspect ratio 24, flat NACA 0012 camber) with one full span control surface, moved by dx in x."""
+    import aerosandbox as asb
+    foil = asb.Airfoil("naca0012")
+    xs = [asb.WingXSec(xyz_le=[dx, y, 0.0], chord=0.3, airfoil=foil,
+                       control_surfaces=[asb.ControlSurface(name="flap", symmetric=not anti, hinge_point=hinge)]) for y in (0.0, 3.6)]
+    return asb.Airplane(wings=[asb.Wing(name="w", xsecs=xs, symmetric=True)], xyz_ref=[dx + 0.1, 0.0, 0.0], s_ref=7.2 * 0.3,
+                        b_ref=7.2, c_ref=0.3)
+
+
+@check
+def check_the_vortex_lattice_reads_the_camber_and_not_the_control_surface():
+    import aerosandbox as asb
+    _, _, model, _, _ = tool()
+    op = asb.OperatingPoint(velocity=15.0, alpha=2.0)
+    plane = _rect_plane()
+    base = model.FixedWingModel.vlm(plane, op, 4, 16).run()
+    same = model.FixedWingModel.vlm(plane.with_control_deflections({"flap": 10.0}), op, 4, 16).run()
+    assert float(same["CL"]) == float(base["CL"]) and float(same["Cm"]) == float(base["Cm"])     # AeroSandbox 4.2.9 ignores it
+    bent = model.FixedWingModel.vlm(model.camber_deflected(plane, {"flap": 10.0}), op, 4, 16).run()
+    assert float(bent["CL"]) > float(base["CL"]) + 0.1 and float(bent["Cm"]) < float(base["Cm"]) - 0.03     # trailing edge down
+
+
+@check
+def check_flap_effectiveness_of_the_bent_camber_is_the_thin_airfoil_value():
+    import aerosandbox as asb
+    _, _, model, _, _ = tool()
+    vlm = model.FixedWingModel.vlm
+    for hinge in (0.75, 0.65):
+        theta = math.acos(1.0 - 2.0 * hinge)
+        tau = (math.pi - theta + math.sin(theta)) / math.pi             # thin airfoil theory
+        plane = _rect_plane(hinge)
+        cl = lambda p, a: float(vlm(p, asb.OperatingPoint(velocity=15.0, alpha=a), 4, 24).run()["CL"])
+        d_alpha = (cl(plane, 1.0) - cl(plane, -1.0)) / 2.0
+        d_flap = (cl(model.camber_deflected(plane, {"flap": 2.0}), 0.0) - cl(model.camber_deflected(plane, {"flap": -2.0}), 0.0)) / 4.0
+        assert abs(d_flap / d_alpha - tau) < 0.03 * tau, (hinge, d_flap / d_alpha, tau)
+
+
+@check
+def check_an_antisymmetric_surface_rolls_the_other_way_and_the_rates_turn_about_the_reference():
+    import aerosandbox as asb
+    _, _, model, _, _ = tool()
+    op = asb.OperatingPoint(velocity=15.0, alpha=2.0)
+    plane = _rect_plane(anti=True)
+    r = model.FixedWingModel.vlm(model.camber_deflected(plane, {"flap": 5.0}), op, 4, 16).run()
+    assert float(r["Cl"]) < -0.01 and abs(float(r["CL"]) - float(model.FixedWingModel.vlm(plane, op, 4, 16).run()["CL"])) < 1e-3
+    # the same airplane moved in x gives the same rate derivatives once the reference is at the origin
+    a, b = (model.at_origin(_rect_plane(dx=dx), [dx + 0.1, 0.0, 0.0]) for dx in (0.0, 0.7))
+    da, db = (model.FixedWingModel.vlm(p, op, 4, 12).run_with_stability_derivatives(alpha=False, beta=False, p=False, r=False)
+              for p in (a, b))
+    assert abs(float(da["CLq"]) - float(db["CLq"])) < 1e-9 and abs(float(da["Cmq"]) - float(db["Cmq"])) < 1e-9
+    assert float(da["Cmq"]) < 0.0
+
+
 # --------------------------------------------------------------------------------------------------------- pytest hooks
 def run_check(name):
     if HAS_ASB:
@@ -633,7 +724,7 @@ def run_check(name):
     from aeroplan.spokes import load
     spoke = load("AeroSandbox")
     if not spoke.available():
-        pytest.skip("no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
+        pytest.skip("no AeroSandbox here: run `pip install -e .[sizing]`")
     p = subprocess.run([str(spoke.python()), "-E", "-s", str(Path(__file__).resolve()), name], capture_output=True, text=True, cwd=str(TOOL))
     assert p.returncode == 0, (p.stdout + p.stderr)[-2500:]
 
@@ -650,12 +741,15 @@ if pytest is not None:
                   "check_esc_fit_recovers_the_power_law_and_skips_other_cells", "check_every_survey_row_names_its_page_and_read_date",
                   "check_energy_chart_stacks_every_segment",
                   "check_levels_and_the_rotor_model_kind", "check_mission_segments_and_energy", "check_ocv_fit_and_the_pack_discharge",
-                  "check_l0_solve_and_the_hand_formulas",
+                  "check_competition_weight_cap_and_mission_clock", "check_l0_solve_and_the_hand_formulas",
                   "check_resonance_side_above_flips_the_limit", "check_boom_mode_roots_and_frequencies", "check_weight_chart_stacks_every_item",
                   "check_h8_has_eight_rotors_and_the_coaxial_factor",
                   "check_fixed_params_are_parameters_and_free_ones_are_variables",
                   "check_the_solver_gives_a_snapshot_at_each_iteration_and_the_plotter_reads_it", "check_the_model_file_roundtrip",
-                  "check_evaluate_fixes_every_param_except_the_battery_x", "check_jung_check_functions"):
+                  "check_evaluate_fixes_every_param_except_the_battery_x", "check_jung_check_functions",
+                  "check_the_vortex_lattice_reads_the_camber_and_not_the_control_surface",
+                  "check_flap_effectiveness_of_the_bent_camber_is_the_thin_airfoil_value",
+                  "check_an_antisymmetric_surface_rolls_the_other_way_and_the_rates_turn_about_the_reference"):
         globals()["test_" + _name[len("check_"):]] = _make(_name)
 
 

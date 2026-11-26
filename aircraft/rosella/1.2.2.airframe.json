@@ -20,12 +20,12 @@
             "units": "m",
             "shape": {
               "p0": [
-                0.5210039891279854,
+                0.5210039891271209,
                 -0.55,
                 0.020552
               ],
               "p1": [
-                -0.7989960108720144,
+                -0.798996010872879,
                 -0.55,
                 0.020552
               ],
@@ -68,26 +68,26 @@
               "value": 359000000.0,
               "units": "Pa"
             },
-            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "source": "material component bought_tube of settings/rosella.json: user 2026-11-25: the bought lift boom tube, E = 52 GPa (the old note of 80 GPa was wrong). E_c keeps the ratio E_c / E of the roll-wrapped data",
             "placeholder": true
           },
           "p0": [
-            0.5210039891279854,
+            0.5210039891271209,
             -0.55,
             0.020552
           ],
           "p1": [
-            -0.7989960108720144,
+            -0.798996010872879,
             -0.55,
             0.020552
           ],
-          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-10-21: the lift boom tube is the tail boom tube, 23.4 mm inner diameter (wall 1.0 mm)",
+          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-11-25: the lift boom tube is the tail boom tube, wall 2.0 mm (inner diameter 21.4 mm). The old note of 23.4 mm (wall 1.0 mm) was wrong",
           "placeholder": false
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+            "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
             "role": "Rosella model file and sizing result H4_12S"
           }
         ]
@@ -107,12 +107,12 @@
             "units": "m",
             "shape": {
               "p0": [
-                0.5210039891279854,
+                0.5210039891271209,
                 0.55,
                 0.020552
               ],
               "p1": [
-                -0.7989960108720144,
+                -0.798996010872879,
                 0.55,
                 0.020552
               ],
@@ -155,26 +155,26 @@
               "value": 359000000.0,
               "units": "Pa"
             },
-            "source": "material component bought_tube of settings/rosella.json: user 2026-10-21: the bought lift boom tube, E = 80 GPa. E_c keeps the ratio E_c / E of the roll-wrapped data",
+            "source": "material component bought_tube of settings/rosella.json: user 2026-11-25: the bought lift boom tube, E = 52 GPa (the old note of 80 GPa was wrong). E_c keeps the ratio E_c / E of the roll-wrapped data",
             "placeholder": true
           },
           "p0": [
-            0.5210039891279854,
+            0.5210039891271209,
             0.55,
             0.020552
           ],
           "p1": [
-            -0.7989960108720144,
+            -0.798996010872879,
             0.55,
             0.020552
           ],
-          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-10-21: the lift boom tube is the tail boom tube, 23.4 mm inner diameter (wall 1.0 mm)",
+          "source": "H4_12S sizing, boom component of aeroplan/aerosandbox/settings/rosella.json. Outer radius: user 2026-10-21: the lift boom tube is the tail boom tube, 25.4 mm outer diameter (outer radius 12.7 mm). Wall: user 2026-11-25: the lift boom tube is the tail boom tube, wall 2.0 mm (inner diameter 21.4 mm). The old note of 23.4 mm (wall 1.0 mm) was wrong",
           "placeholder": false
         },
         "sources": [
           {
             "tool": "AeroSandbox",
-            "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+            "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
             "role": "Rosella model file and sizing result H4_12S"
           }
         ]

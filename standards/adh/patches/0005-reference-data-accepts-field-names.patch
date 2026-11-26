@@ -1,0 +1,14 @@
+diff --git a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+--- a/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
++++ b/src/aircraft_data_hierarchy/work_breakdown_structure/airframe/airframe_parameters.py
+@@ -17,6 +17,10 @@
+ # ToDo: Move this class to Behavior?...or is it already redundant with something in DaveML
+ 
+ class ReferenceData(CommonBaseModel):
++    # AeroPlan patch 0005: accept the field name too. With extra="allow", a field name such as reference_area passed the
++    # validation as an unknown key, and the value was lost.
++    model_config = {"populate_by_name": True}
++
+     roughness: Optional[float] = Field(None, alias="RougHgt", ge=0., le=0.02, description="Equivalent Sand Surface roughness height")
+     reference_area: Optional[float] = Field(None, alias="Sref", gt=0., description="Reference area, m^2 (SI: AeroPlan patch 0004)")
+     reference_length: Optional[float] = Field(None, alias="Cbar", gt=0., description="Longitudinal reference length (mean aerodynamic chord), m (SI: AeroPlan patch 0004)")

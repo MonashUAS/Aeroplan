@@ -23,10 +23,11 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 
+from .constants import INCH_M
 from .wing import Wing
 from .frame import flip_array
 
-UNIT_SCALE = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "in": 0.0254}
+UNIT_SCALE = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "in": INCH_M}
 MOVABLE = ("elevator", "rudder", "aileron_l", "aileron_r")
 PIVOT = 0.25                       # flow5 sections twist about the quarter chord
 _STL = np.dtype([("n", "<f4", (3,)), ("v", "<f4", (3, 3)), ("a", "<u2")])
@@ -115,7 +116,7 @@ def lifting_surface(wing: Wing, foils: Dict[str, np.ndarray], x_over_c_max=1.0, 
     xs1 = (1 - np.cos(np.linspace(0, np.pi, n_chord))) / 2
     secs = wing.sections
     sy = np.array([s.y for s in secs])
-    zd = np.concatenate([[0.0], np.cumsum(np.diff(sy) * np.tan(np.radians([s.dihedral_deg for s in secs[:-1]])))])
+    zd = np.array(wing.section_z())
     lo, hi = y_range if y_range is not None else (sy[0], sy[-1])
     ys = np.unique(np.concatenate([np.linspace(max(a, lo), min(b, hi), n_span)
                                    for a, b in zip(sy[:-1], sy[1:]) if min(b, hi) > max(a, lo)]))

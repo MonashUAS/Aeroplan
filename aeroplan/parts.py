@@ -140,7 +140,7 @@ def _hinge_point(wing, h: float, y: float) -> np.ndarray:
     """The point at chord fraction h on the chord line at span station y (twist about the quarter chord)."""
     secs = wing.sections
     sy = np.array([s.y for s in secs])
-    zd = np.concatenate([[0.0], np.cumsum(np.diff(sy) * np.tan(np.radians([s.dihedral_deg for s in secs[:-1]])))])
+    zd = np.array(wing.section_z())
     k = int(min(max(np.searchsorted(sy, y, side="right") - 1, 0), len(secs) - 2))
     t = (y - sy[k]) / (sy[k + 1] - sy[k])
     a, b = secs[k], secs[k + 1]

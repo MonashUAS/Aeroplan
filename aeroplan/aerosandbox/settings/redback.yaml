@@ -22,7 +22,7 @@ multirotor:
     position: rear_left
   # ArduPilot Quad X (AP_MotorsMatrix, FRAME_CLASS 1, FRAME_TYPE 1). spin_ardupilot is the turn direction seen from
   # above. The code stores muas.propeller.spin as seen along the thrust vector from behind (from below for a lift
-  # rotor): ArduPilot ccw becomes cw there. See spec/multirotor_contract.md.
+  # rotor): ArduPilot ccw becomes cw there. See the Aerolink docs/multirotor_contract.md.
   motors:
     1: {position: front_right, spin_ardupilot: ccw}
     2: {position: rear_left, spin_ardupilot: ccw}

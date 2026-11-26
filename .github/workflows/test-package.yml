@@ -1,61 +1,126 @@
-# Mirrors Boeing/aircraft-data-hierarchy .github/workflows/test-package.yml (commit 96179ca):
-# build, install the wheel, install the test extras, run pytest. Same triggers as ADH.
-# AeroPlan adds three steps that ADH has no need for: build the patched ADH copy (brief D01), run the upstream
-# ADH tests against it, so a patch can never break an upstream test, and lint with ruff.
+# The CI of AeroPlan (ADR 0030, ADR 0031). Five jobs:
+#   lint         ruff and the architecture rules (tests/architecture): fast, and the first to fail on a broken rule
+#   test         the full test run in the one-.venv install (pip install -e ".[all]"), Linux and Windows
+#   fresh-clone  the install of docs/tutorials/first-day.md on Linux, exactly as a new user runs it
+#   notebook     runs the Rosella sizing notebook (weekly, by hand, and on a change of aeroplan/aerosandbox/)
+#   duplicates   the duplicate-code report of pylint (report only)
+# The ADH steps mirror Boeing/aircraft-data-hierarchy: build the patched ADH, run the upstream ADH tests on it (ADR 0034).
 
 name: Test Package
+
+env:
+  # A token with read access to the private Proptimiser repository (a repository secret). Empty on a fork.
+  PROPTIMISER_TOKEN: ${{ secrets.PROPTIMISER_TOKEN }}
 
 on:
   push:
     branches:
-      - '*'  # Trigger on push to any branch
+      - '*'
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 18 * * 0'      # Sunday: the notebook job
+  workflow_dispatch:
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # AP016 compares the schema folder with origin/main
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install build dependencies
+      - name: Install
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build
+          python -m pip install -e ".[dev]"
+      - name: Ruff
+        run: ruff check .
+      - name: The architecture rules (each failure names its rule and ADR)
+        run: python -m pytest tests/architecture -q
 
-      - name: Build the package
+  test:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.12']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build the wheel (the package must build)
         run: |
+          python -m pip install --upgrade pip build
           python -m build
-
-      - name: Install the package
+      - name: Install in one environment (AeroPlan, AeroSandbox, the notebooks)
+        run: python -m pip install -e ".[sizing,dev]"
+      - name: Install Proptimiser (private repository, Python 3.12, only with the secret)
+        if: matrix.python-version == '3.12' && env.PROPTIMISER_TOKEN != ''
+        shell: bash
         run: |
-          python -m pip install dist/*.whl
-
-      - name: Install test dependencies
-        run: |
-          python -m pip install .[test]
-
+          git config --global url."https://x-access-token:${PROPTIMISER_TOKEN}@github.com/".insteadOf "https://github.com/"
+          python -m pip install -e ".[prop]"
       - name: Build the patched ADH copy
-        run: |
-          python standards/adh/build_adh.py
-
+        run: python standards/adh/build_adh.py
       - name: Run the upstream ADH tests on the patched copy
-        run: |
-          PYTHONPATH=standards/adh/build/src pytest standards/adh/upstream/tests
+        shell: bash
+        run: PYTHONPATH=standards/adh/build/src python -m pytest standards/adh/upstream/tests -q
+      - name: Run the tests
+        run: python -m pytest -q
 
-      - name: Lint with ruff (syntax errors and pyflakes, settings in pyproject.toml)
+  fresh-clone:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: The install of docs/tutorials/first-day.md
         run: |
-          python -m pip install ruff
-          ruff check .
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -e ".[sizing,dev]"      # the install of a user with no access to Proptimiser
+          python -m aeroplan doctor
+          python -m aeroplan check currawong
 
-      - name: Run tests
+  notebook:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'aeroplan/aerosandbox/')
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install (needs Proptimiser, so the job does nothing without the secret)
+        if: env.PROPTIMISER_TOKEN != ''
         run: |
-          pytest
+          git config --global url."https://x-access-token:${PROPTIMISER_TOKEN}@github.com/".insteadOf "https://github.com/"
+          python -m pip install -e ".[all]"
+      - name: Run the Rosella sizing notebook (the output goes to a scratch folder, the committed file stays)
+        # needs the secret and the blade files in git
+        if: env.PROPTIMISER_TOKEN != '' && hashFiles('aeroplan/aerosandbox/data/proptimiser/*/designs/*.yaml') != ''
+        run: jupyter nbconvert --to notebook --execute aeroplan/aerosandbox/notebooks/rosella_sizing.ipynb --output-dir /tmp/nb --ExecutePreprocessor.timeout=2400
+
+  duplicates:
+    needs: lint
+    runs-on: ubuntu-latest
+    continue-on-error: true       # a report today. It blocks after the clean-up of the roadmap
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Duplicate code (pylint R0801, 8 lines or more)
+        run: |
+          python -m pip install pylint
+          pylint --disable=all --enable=duplicate-code --min-similarity-lines=8 aeroplan --ignore-paths='aeroplan/.*/\.venv/.*'

@@ -1,20 +1,22 @@
-"""The AeroSandbox spoke: the ADH aircraft -> the spec -> the AeroSandbox model. Every number is synthetic.
+"""The AeroSandbox spoke: the ADH aircraft -> the spec -> the AeroSandbox model, and the quadplane ingest. Every number
+is synthetic. The quadplane ingest tests are different: they read the committed model file and base tree, and type no number.
 
-The tests that run the worker need the AeroSandbox Python of this machine (`python -m aeroplan setup AeroSandbox`).
+The tests that run the worker need AeroSandbox in this Python (`pip install -e ".[sizing]"`, ADR 0030).
 Without it they skip (CI has none). The other tests run everywhere.
 """
 import math
 
+import numpy as np
 import pytest
 
-from aeroplan import adh_doc
-from aeroplan.geometry import planform_of, planform_reference
-from aeroplan.spokes import load
+from aeroplan import REPO_ROOT, adh_doc, source_tree
+from aeroplan.geometry import body_frames, planform_of, planform_reference
+from aeroplan.spokes import Context, load
 from test_openvsp import HTAIL, make_doc
 
 asb_spoke = load("AeroSandbox")
 runner = asb_spec = asb_spoke
-needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
+needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox here: run `pip install -e .[sizing]`")
 
 
 
@@ -25,7 +27,7 @@ def _has_proptimiser():
 
 
 needs_prop = pytest.mark.skipif(not _has_proptimiser(), reason="no Proptimiser in the AeroSandbox Python: "
-                                "run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+                                "run `pip install -e .[prop]`")
 
 STAND_IN = {"wings": ["wing_main", "htail", "fin"], "body": "fuselage", "propeller": "prop_cruise",
             "proptimiser_design": "synthetic", "cruise_speed_output": "Cruise speed", "altitude_m": 0.0}
@@ -126,7 +128,7 @@ def test_the_spec_needs_the_chain_constants():
 def test_the_runner_says_what_to_do_without_the_python(monkeypatch, tmp_path):
     monkeypatch.setenv("AEROSANDBOX_PYTHON", str(tmp_path / "missing"))
     assert not runner.available()
-    with pytest.raises(runner.AeroSandboxError, match="setup AeroSandbox"):
+    with pytest.raises(runner.AeroSandboxError, match="pip install"):
         runner.run({"job": "version"})
 
 
@@ -175,19 +177,79 @@ def test_cruise_trim_balances_forces_moment_and_the_chain(tmp_path):
     assert t["p_bat_W"] > t["p_shaft_W"] > 0.0
 
 
-# ---------------------------------------------------------------------------------------------------- the notebooks
-NOTEBOOKS = sorted((runner.HERE / "notebooks").glob("*.ipynb"))
+# The notebook rules are in tests/architecture (AP017).
 
 
-def test_the_notebooks_are_committed_with_outputs_and_stay_small():
-    """A notebook in git holds its outputs, so GitHub shows the study (ADR 0024). A big output (a widget state, a figure) makes the
-    repository grow on every run: each notebook stays below 5 MB. The deprecated notebooks are old files, not checked."""
+def test_the_targets_take_the_mass_limit_that_the_model_file_has(tmp_path):
+    """A model file with the competition cap and no MTOW gives the cap target only (synthetic numbers)."""
     import json
 
-    assert NOTEBOOKS, "aeroplan/aerosandbox/notebooks has no notebook"
-    for nb in NOTEBOOKS:
-        assert nb.stat().st_size < 5_000_000, f"{nb.name} is {nb.stat().st_size / 1e6:.1f} MB: strip the widget state"
-        d = json.loads(nb.read_text(encoding="utf-8"))
-        code = [c for c in d["cells"] if c["cell_type"] == "code"]
-        assert any(c.get("outputs") for c in code), f"{nb.name} has no outputs: run it and save it"
-        assert "widgets" not in d.get("metadata", {}), f"{nb.name} holds a widget state"
+    comps = {}
+    for _, comp, par, _, _ in asb_spoke.TARGETS:
+        if par != "mtow_kg":
+            comps.setdefault(comp, {"params": {}})["params"][par] = {"value": 1.5, "source": "test"}
+    path = tmp_path / "test.json"
+    path.write_text(json.dumps({"format": "aeroplan-asb-model/1", "components": comps}), encoding="utf-8")
+    keys = [r["muas"]["target"]["key"] for r in asb_spoke._targets(asb_spoke.ModelFile(path))]
+    assert "uas_mass_without_cargo" in keys and "mtow" not in keys and len(keys) == len(asb_spoke.TARGETS) - 1
+
+
+# --------------------------------------------------------------------------------------------- the quadplane ingest
+@pytest.fixture(scope="module")
+def quadplane():
+    """The Rosella from its model file and the base tree, on a new aircraft in memory. Nothing is written."""
+    acft = source_tree.new("rosella", consumers=["review"])
+    asb_spoke.ingest(acft.doc, Context("rosella", REPO_ROOT, "AeroSandbox", acft))
+    base = source_tree.read(source_tree.aircraft_dir("currawong", REPO_ROOT)).doc
+    return acft.doc, base
+
+
+def _contacts(doc):
+    return {c["name"]: c for c in adh_doc.node(doc, "1.2.2")["muas"]["ground_contacts"]}
+
+
+def test_the_quadplane_has_two_boom_skids_and_a_tail_skid(quadplane):
+    doc, base = quadplane
+    got = _contacts(doc)
+    assert sorted(got) == ["LEFT_SKID", "RIGHT_SKID", "TAIL_SKID"]
+    tail = _contacts(base)["TAIL_SKID"]
+    for c in got.values():
+        assert c["type"] == "STRUCTURE" and c["placeholder"] is True and c["source"]
+        assert c["spring_N_per_m"] == tail["spring_N_per_m"] and c["damping_N_per_m_s"] == tail["damping_N_per_m_s"]
+    adh_doc.validate_document(doc)
+
+
+def test_the_quadplane_skids_are_symmetric_below_the_fuselage_and_the_nose_propeller(quadplane):
+    """The foot is below the lowest point of the fuselage and of the nose propeller disc, by the rotor tip clearance."""
+    doc, _ = quadplane
+    left, right, tail = (_contacts(doc)[n]["position"]["xyz"] for n in ("LEFT_SKID", "RIGHT_SKID", "TAIL_SKID"))
+    boom_y = abs(adh_doc.find(doc, "boom_right")["muas"]["tube"]["p0"][1])
+    assert right[1] == pytest.approx(boom_y) and left[1] == pytest.approx(-boom_y) and tail[1] == 0.0
+    assert left[0] == right[0]
+    lift_x = [it["muas"]["propeller"]["hub"]["xyz"][0] for _, it, _ in adh_doc.iter_nodes(doc)
+              if ((it.get("muas") or {}).get("propeller") or {}).get("role") == "lift"]
+    assert left[0] == pytest.approx(max(lift_x))                     # FRD: the front lift rotor station
+    fus = max(f[:, 2].max() for f in body_frames(adh_doc.find(doc, "fuselage")["geometry"]["body"]))      # z is down
+    pr = adh_doc.find(doc, "prop_cruise")["muas"]["propeller"]
+    tip = pr["hub"]["xyz"][2] + 0.5 * pr["diameter"]["value"]
+    gap = asb_spoke.ModelFile(asb_spoke.SETTINGS / "rosella.json").param("rotor", "tip_clearance_m")["value"]
+    assert [left[2], right[2], tail[2]] == pytest.approx([max(fus, tip) + gap] * 3)
+    assert tip > fus                                         # Rosella: the nose propeller sets the foot, not the fuselage
+    le = adh_doc.find(doc, "htail")["geometry"]["lifting_surface"]["leading_edge_spline"]["points"][0]
+    assert tail[0] == pytest.approx(le["x"])
+
+
+def test_the_quadplane_cg_is_inside_the_contact_triangle(quadplane):
+    """In plan view each barycentric weight of the CG is positive."""
+    doc, _ = quadplane
+    xy = np.array([c["position"]["xyz"][:2] for c in _contacts(doc).values()])
+    cg = adh_doc.node(doc, "1.2")["muas"]["mass_properties"]["cg"]["xyz"]
+    weights = np.linalg.solve(np.vstack([xy.T, np.ones(3)]), [cg[0], cg[1], 1.0])
+    assert (weights > 0.0).all(), weights
+
+
+def test_the_quadplane_takes_the_stall_values_of_the_base_wing(quadplane):
+    doc, base = quadplane
+    got = dict(adh_doc.node(doc, "1.2")["muas"]["aero_settings"])
+    want = dict(adh_doc.node(base, "1.2")["muas"]["aero_settings"])
+    assert got.pop("source").endswith(want.pop("source")) and got == {**want, "placeholder": True}

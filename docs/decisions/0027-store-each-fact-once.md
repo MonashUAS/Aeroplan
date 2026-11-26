@@ -1,8 +1,13 @@
+---
+id: "0027"
+title: "Store each fact once: ADH fields first"
+date: 2026-10-30
+status: accepted
+kind: data
+amended_by: ["0032"]
+applies_to: ["aeroplan/**", "standards/adh/**"]
+---
 # 27. Store each fact once: ADH fields first
-
-Date: 2026-10-30
-
-Status: accepted.
 
 ## Context
 
@@ -27,8 +32,8 @@ unit conversion. Most `muas` keys fill a real gap. Four did not:
   `geometry.planform_of` gives the tool sections back. The tip section has no outboard panel: it gets the dihedral of the
   last panel.
 - S, b and c go in node 1.2 `parameters.reference_data`, in SI. Patch 0004 changes the upstream field descriptions from ft to
-  m. ADH reads only the aliases (`Sref`, `BLref`, `Cbar`): a field name passes the validation as an unknown key and the value
-  is lost. `adh_doc.set_reference` writes the aliases, and `validate_document` refuses every other key.
+  m. The tree uses the aliases only (`Sref`, `BLref`, `Cbar`). `adh_doc.set_reference` writes the aliases, and
+  `validate_document` refuses every other key. (Patch 0005 of ADR 34 lets ADH read a field name too.)
 - The control-surface span and hinge go in `parameters.asymmetric_control` (a left or right surface) or
   `parameters.symmetric_flap` (a surface on both halves). The chord ratio is 1 - hinge x/c. The ADH `hingeline_chord_ratio`
   has no clear meaning, so AeroPlan does not use it.
@@ -37,7 +42,7 @@ unit conversion. Most `muas` keys fill a real gap. Four did not:
   `corr_coef`) and adds the bound.
 - No `muas` field holds degrees. The take-off pitch of a mission is `pitch_rad`.
 - A stored quantity uses the SI name of its unit when the base units match exactly (W, V, ohm, Pa, N, `rad / V / s`).
-- The MUAS extension version is 0.6.0. The build writes the version into each `muas` block.
+- The build writes the MUAS extension version (`MUAS_SCHEMA_VERSION`) into each `muas` block.
 
 ## Consequences
 
@@ -46,5 +51,13 @@ not change, and the reference and control values are equal. Spoke code reads and
 `adh_doc.reference`, `adh_doc.set_reference`, `adh_doc.control_surface`, `adh_doc.set_control_geometry`,
 `geometry.planform_of` and `geometry.set_planform`.
 
-The Aerolink contract changed to version 2 (`docs/reference/multirotor_contract.md`, section 11). The Aerolink hand copy of
-the package reader must read the new places before it reads a package of extension version 0.6.0.
+The Aerolink contract changed to version 2 (the Aerolink `docs/multirotor_contract.md`, section 11). The Aerolink hand copy
+of the package reader must read the new places before it reads a package of this extension version.
+
+## Rules
+
+- AP007: Each `muas` key has a row in `standards/adh/EXTENSIONS.md`.
+- AP008: Only the helpers in `adh_doc.FACTS` read or write the ADH fact fields.
+- AP016: The committed JSON Schema equals the export. A changed schema needs a new `MUAS_SCHEMA_VERSION`.
+- check: `validate_document` refuses an invented WBS number, an unknown key and a non-alias reference key.
+- process: A fact that ADH has a field for goes in that field, and only there. A `muas` key holds only what ADH has no field for.

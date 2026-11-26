@@ -10,7 +10,8 @@ condition at a time, in the way Proptimiser `PropellerModel` evaluates one prope
 the level functions of component.py (`rotor_model`, `airframe_model`, `motor_model`), so one model runs at every fidelity.
 
   QuadplaneModel    lift rotors on two booms, a cruise propeller, a wing (Rosella). The Opti model of the sizing.
-  FixedWingModel    a fixed-wing aircraft of the ADH tree: geometry, polar, cruise trim, static check (jobs of the spoke).
+  FixedWingModel    a fixed-wing aircraft of the ADH tree: geometry, polar, cruise trim, stability derivatives, static check
+                    (jobs of the spoke).
   MultirotorModel   a multirotor: body drag, and the segment analysis of Bershadsky, Haviland and Johnson (EMST).
 
 `main()` runs a job in the AeroSandbox Python for the spoke: `python model.py job.json result.json`.
@@ -18,6 +19,7 @@ A model is saved with `model.save(path)` in `settings/<aircraft>.json` and read 
 """
 from __future__ import annotations
 
+import copy
 import json
 import math
 import os
@@ -29,7 +31,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .component import (A0, CU_RES, CU_RHO, G0, HERE, RHO0, Component, Tube, airframe_model, build_airplane,
+from aeroplan.constants import G0
+
+from .component import (A0, CU_RES, CU_RHO, HERE, RHO0, Component, Tube, airframe_model, build_airplane,
                        electric_chain, esc_model, motor_model, ocv_model, rotor_model)
 from .mission import FlightCondition, pack_current
 
@@ -168,7 +172,7 @@ class QuadplaneModel(AircraftModel):
         d.V_cell = bat.num("cell_nominal_V")
         d.ocv = ocv_model(bat)
         d.soc_min = 1.0 - bat.num("usable_fraction")                 # the lowest SOC of the mission
-        if d.soc_min < d.ocv.s.min():
+        if d.soc_min < d.ocv.s.min() - 1e-9:                          # 1 - 0.9 is 0.0999..., the 10 % row of the table
             raise ValueError(f"battery.usable_fraction takes the SOC to {d.soc_min:.2f}, under the OCV table ({d.ocv.s.min():.2f})")
         d.V0_min = d.S * float(d.ocv.ocv(d.soc_min))                   # pack OCV at the lowest SOC: the MAX and cruise duty checks
         R_ref = rot.num("reference_radius_m")
@@ -263,8 +267,11 @@ class QuadplaneModel(AircraftModel):
         add("cables", d.m_wire, d.x_c, 0.0, 0.5 * d.z_b)
         d.M = sum(i[1] for i in items)
         d.items = items
-        ctx.limit("mtow_kg", d.M, hi=lim.num("mtow_kg"), group="mass")
-        mx = sum(i[1] * i[2] for i in items)
+        if lim.get("mtow_kg") is not None:                          # the take-off mass, cargo included
+            ctx.limit("mtow_kg", d.M, hi=lim.num("mtow_kg"), group="mass")
+        if lim.get("uas_mass_kg") is not None:                      # a competition weight cap that leaves out the cargo
+            ctx.limit("uas_mass_kg", d.M - cg_.num("mass_kg"), hi=lim.num("uas_mass_kg"), group="mass")
+        mx =sum(i[1] * i[2] for i in items)
         o.subject_to((mx - d.x_cg * d.M) / 0.1 == 0)                 # CG: polynomial form, scaled by 0.1 kg m
         ctx.cons["cg_x_m"], ctx.cgroup["cg_x_m"], ctx.cscale["cg_x_m"] = (mx / d.M, d.x_cg, d.x_cg), "cg", 1e-2
         d.Ixx = sum(i[5] + i[1] * (i[3] ** 2 + i[4] ** 2) for i in items)
@@ -414,6 +421,8 @@ class QuadplaneModel(AircraftModel):
         E_nom = S * d.V_cell * d.cap
         E_usable = S * d.cap * (d.ocv.F(1.0) - d.ocv.F(d.soc_min))
         ctx.limit("energy_Wh", E_total, hi=E_usable, scale=100.0, group="energy")
+        if mis.get("mission_clock_s") is not None:                   # the flight (no reserve) plus the ground work after landing
+            ctx.limit("mission_clock_s", mis.clock_time(segs), hi=mis.num("mission_clock_s"), scale=100.0, group="energy")
 
         # ---- structure: each boom end is a cantilever of length a from the clamp
         m_tip = n_per * d.m_lift_unit
@@ -569,12 +578,70 @@ class QuadplaneModel(AircraftModel):
 
 
 # ======================================================================================================= fixed wing
+#: control surface name of the spec -> sign from the AeroSandbox deflection to the input of aeroplan.aero_buildup.INPUTS.
+#: AeroSandbox 4.2.9: a positive deflection is trailing edge down in the frame of the section. An antisymmetric surface gets
+#: the negative value on the mirrored half. So a positive aileron moves the right trailing edge down (rolls left), and a
+#: positive rudder on a fin that goes up from its root moves the trailing edge right. build_airplane gives the right half
+#: (y >= 0) of each mirrored surface.
+CONTROL_SIGNS = {"elevator": 1.0, "aileron": -1.0, "rudder": -1.0}
+#: the methods of FixedWingModel.stability
+METHODS = ("combined", "aerobuildup")
+#: panels of the vortex lattice: spanwise for each section of the wing (cosine spaced), chordwise (cosine spaced)
+VLM_PANELS = (16, 12)
+#: derivatives that the two methods give (wind axes CYb and body axes Cl, Cn: stability() turns them)
+RAW = ("CLa", "Cma", "CLq", "Cmq", "CYb", "CYp", "CYr", "Clb", "Cnb", "Clp", "Cnp", "Clr", "Cnr")
+
+
+def camber_deflected(plane, deflections: Dict[str, float]):
+    """The airplane with each control deflection (deg, AeroSandbox signs) bent into the camber of the airfoils of its sections.
+    The vortex lattice of AeroSandbox 4.2.9 reads no asb.ControlSurface, but it meshes the camber line of each airfoil, and
+    `Airfoil.add_control_surface` bends that line behind the hinge. A new wing starts and ends at each edge of a control surface, so
+    the camber changes at the edge and not over the next section. An antisymmetric surface gives two wings, the left one with
+    the negative deflection and the sections in the order of rising y. A wing with no deflection keeps its sections."""
+    import aerosandbox as asb
+    out = copy.copy(plane)
+    out.wings = []
+    for w in plane.wings:
+        sections = [tuple((s.name, s.hinge_point, s.symmetric) for s in x.control_surfaces if deflections.get(s.name))
+                    for x in w.xsecs[:-1]]
+        i = 0
+        while i < len(sections):
+            j = i
+            while j + 1 < len(sections) and sections[j + 1] == sections[i]:
+                j += 1
+            ctl = sections[i]
+            anti = w.symmetric and any(not sym for _, _, sym in ctl)
+            for side in (1.0, -1.0) if anti else (1.0,):
+                xsecs = []
+                for x in (w.xsecs[i:j + 2] if side > 0 else w.xsecs[i:j + 2][::-1]):
+                    foil = x.airfoil
+                    for name, hinge, sym in ctl:
+                        foil = foil.add_control_surface(deflection=deflections[name] * (1.0 if sym or side > 0 else -1.0),
+                                                        hinge_point_x=hinge)
+                    xsecs.append(asb.WingXSec(xyz_le=x.xyz_le * np.array([1.0, side, 1.0]), chord=x.chord, twist=x.twist,
+                                              airfoil=foil))
+                out.wings.append(asb.Wing(name=f"{w.name}_{i}_{side:+.0f}", xsecs=xsecs, symmetric=w.symmetric and not anti))
+            i = j + 1
+    return out
+
+
+def at_origin(plane, xyz):
+    """The airplane moved so that the point `xyz` is the origin, with the moment reference there (y stays: a mirrored wing needs
+    the plane y = 0). The vortex lattice turns the air about the origin of the geometry axes and not about `xyz_ref`, so the
+    rate derivatives need this."""
+    out = copy.copy(plane)
+    out.wings = [w.translate(np.array([-xyz[0], 0.0, -xyz[2]])) for w in plane.wings]
+    out.xyz_ref = [0.0, float(xyz[1]), 0.0]
+    return out
+
+
 class FixedWingModel(AircraftModel):
     """
-    A fixed-wing aircraft of the ADH tree, with one propeller. Four jobs, one flight condition each:
+    A fixed-wing aircraft of the ADH tree, with one propeller. The jobs, one flight condition each:
       geometry      three-view and 3D view of the AeroSandbox airplane, area, span and MAC
       polar         AeroBuildup polar over alpha at the cruise speed, against a reference polar (flow5)
       cruise_trim   level flight at the cruise speed: alpha, elevator, shaft speed and duty from one Opti problem
+      stability     stability, rate and control derivatives at the cruise trim (method "combined" or "aerobuildup")
       static_check  full command at zero speed: the BEMT and the chain against the Propalyser table
     The model takes the spec of the spoke (spec_from_doc in spoke.py): surfaces, fuselages, mass, propulsion, flight.
     """
@@ -607,7 +674,7 @@ class FixedWingModel(AircraftModel):
     def _prop_model(self):
         if not _installed("proptimiser"):
             raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
-                               "`python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+                               "`pip install -e .[prop]` (a private repository, Python 3.12)")
         os.environ["PROPTIMISER_HOME"] = self.spec["propulsion"]["proptimiser_home"]
         from proptimiser.casadi_prop import PropellerModel
         from proptimiser.init import Propeller
@@ -714,20 +781,148 @@ class FixedWingModel(AircraftModel):
                   "motor_current_limit_A": spec["propulsion"]["motor"].get("imax_A")}
         return {"cruise_trim": result}
 
+    def stability(self, alpha_deg: float, elevator_deg: float, method: str = "combined", step_deg: float = 2.0,
+                  spanwise: int = VLM_PANELS[0], chordwise: int = VLM_PANELS[1]) -> Dict[str, Any]:
+        """The derivatives for an aero model of aeroplan.aero_buildup, at the cruise speed and altitude, about the CG.
+        `alpha_deg` and `elevator_deg` are the trim of `cruise_trim`. Aileron and rudder are 0. The propeller has no effect.
+
+        method "combined" (default): the vortex lattice (`vlm`) of the lifting surfaces gives the alpha, beta and rate
+        derivatives and the control derivatives. It has the downwash of the wing on the tail. The AeroBuildup body model gives the
+        fuselage and tail boom terms (`surfaces_and_bodies`, as in `neutral_point`). It has no wing-body interference.
+        The vortex lattice reads no asb.ControlSurface: `camber_deflected` bends the camber. `spanwise` and `chordwise` are its panels.
+        method "aerobuildup": AeroBuildup of the whole airplane gives every derivative. It has no downwash.
+        CD and CDde are always from AeroBuildup (drag and stall stay with AeroBuildup). CL and Cm at the trim come from the method
+        itself, so that CL0 = CL - CLa alpha - CLde de and Cm0 = Cm - Cma alpha - Cmde de keep the downwash of the method.
+        "trim_check" gives the alpha and elevator (deg) at which the method has the CL and Cm of the AeroBuildup trim of
+        `cruise_trim` (the weight and the thrust moment): Newton steps with the derivatives. It shows how far the two trims are.
+
+        All derivatives are per rad and already have the signs and axes of aero_buildup: spoke.py does no sign change.
+          - alpha, beta, p, q, r: rates are body rates, p b/(2V), q c/(2V), r b/(2V), about the CG.
+          - controls: central differences at the trim +/- `step_deg`, with the signs of CONTROL_SIGNS.
+          - Cl, Cn: AeroSandbox gives body axes. They are turned into the stability axes at the trim alpha. The rates stay
+            body rates.
+          - CYb: AeroSandbox gives the wind axes side force. The stability axes value is CYb - CD of the same model. The other CY
+            derivatives are equal in the two frames at beta 0.
+          - CDde, the factor of |de|: the mean drag increase of the two sides, (CDp(+) + CDp(-) - 2 CDp(trim)) / (2 step), at
+            least 0. CDp is the profile drag of AeroBuildup. The mean removes the part that is linear in de. The induced drag
+            is not in CDp, because the K CL_linear^2 term of the model holds it.
+        AeroBuildup gives the fuselages no rate effect. Neither method has the propeller slipstream."""
+        import aerosandbox as asb
+        if method not in METHODS:
+            raise ValueError(f"method {method!r} is not one of {METHODS}")
+        spec = self.spec
+        fl = spec["flight"]
+        V, h = float(fl["speed_m_s"]), float(fl["altitude_m"])
+        alpha_deg = float(alpha_deg)
+        have = {c["name"] for s in spec["surfaces"] for sec in s["sections"] for c in sec.get("controls", [])}
+        missing = sorted(set(CONTROL_SIGNS) - have)
+        if missing:
+            raise ValueError(f"the spec has no control surface {', '.join(missing)} (it has {sorted(have)})")
+        cg = spec["mass"]["cg"]
+        plane = self.with_ref(cg)
+        trim = {**dict.fromkeys(CONTROL_SIGNS, 0.0), "elevator": float(elevator_deg)}
+        op = asb.OperatingPoint(atmosphere=asb.Atmosphere(altitude=h), velocity=V, alpha=alpha_deg)
+        rates = dict(alpha=True, beta=True, p=True, q=True, r=True)
+        runs: Dict[Tuple, Any] = {}
+
+        def ab_run(defl):                                       # AeroBuildup of the whole airplane, kept for each deflection set
+            key = tuple(sorted(defl.items()))
+            if key not in runs:
+                runs[key] = asb.AeroBuildup(airplane=plane.with_control_deflections(defl), op_point=op).run()
+            return runs[key]
+
+        base = ab_run(trim)
+        if method == "aerobuildup":
+            ab = asb.AeroBuildup(airplane=plane.with_control_deflections(trim), op_point=op).run_with_stability_derivatives(**rates)
+            raw, cd, forces = {k: _f(ab[k]) for k in RAW}, _f(ab["CD"]), ab_run
+            at_trim, point = {"CL": _f(ab["CL"]), "Cm": _f(ab["Cm"])}, None
+        else:
+            surf, bodies = self.surfaces_and_bodies(cg)
+            surf = at_origin(surf, cg)
+            lat = self.vlm(camber_deflected(surf, trim), op, spanwise, chordwise).run_with_stability_derivatives(**rates)
+            bod = asb.AeroBuildup(airplane=bodies, op_point=op).run_with_stability_derivatives(**rates)
+            raw = {k: _f(lat[k]) + _f(bod[k]) for k in RAW}
+            cd = _f(lat["CD"]) + _f(bod["CD"])
+            at_trim = {k: _f(lat[k]) + _f(bod[k]) for k in ("CL", "Cm")}
+
+            def point(alpha, de):                               # CL and Cm of the combined model at another alpha and elevator
+                o = asb.OperatingPoint(atmosphere=op.atmosphere, velocity=V, alpha=alpha)
+                v = self.vlm(camber_deflected(surf, {**trim, "elevator": de}), o, spanwise, chordwise).run()
+                b = asb.AeroBuildup(airplane=bodies, op_point=o).run()
+                return {k: _f(v[k]) + _f(b[k]) for k in ("CL", "Cm")}
+
+            def forces(defl):                                   # the body terms do not change with a deflection
+                return self.vlm(camber_deflected(surf, defl), op, spanwise, chordwise).run()
+
+        ca, sa = math.cos(math.radians(alpha_deg)), math.sin(math.radians(alpha_deg))
+
+        def to_stability(cl_body: float, cn_body: float) -> Tuple[float, float]:
+            return ca * cl_body + sa * cn_body, -sa * cl_body + ca * cn_body
+
+        d = {k: raw[k] for k in ("CLa", "Cma", "CLq", "Cmq", "CYp", "CYr")}
+        d["CYb"] = raw["CYb"] - cd
+        for x in ("b", "p", "r"):
+            d[f"Cl{x}"], d[f"Cn{x}"] = to_stability(raw[f"Cl{x}"], raw[f"Cn{x}"])
+
+        qS = _f(op.dynamic_pressure()) * plane.s_ref
+        step = math.radians(step_deg)
+        for name, sign in CONTROL_SIGNS.items():
+            lo, hi = (forces({**trim, name: trim[name] + k * step_deg}) for k in (-1.0, 1.0))
+            slope = {k: sign * (_f(hi[k]) - _f(lo[k])) / (2.0 * step) for k in ("CL", "CY", "Cl", "Cm", "Cn")}
+            if name == "elevator":
+                lo, hi = (ab_run({**trim, name: trim[name] + k * step_deg}) for k in (-1.0, 1.0))
+                rise = (_f(hi["D_profile"]) + _f(lo["D_profile"]) - 2.0 * _f(base["D_profile"])) / qS
+                d.update(CLde=slope["CL"], Cmde=slope["Cm"], CDde=max(0.0, rise / (2.0 * step)))
+                continue
+            cl, cn = to_stability(slope["Cl"], slope["Cn"])
+            if name == "aileron":
+                d.update(Clda=cl, Cnda=cn)
+            else:
+                d.update(CYdr=slope["CY"], Cldr=cl, Cndr=cn)
+
+        want = {"CL": _f(base["CL"]), "Cm": _f(base["Cm"])}              # the AeroBuildup trim of cruise_trim
+        x, got = np.array([alpha_deg, float(elevator_deg)]), at_trim
+        jac = np.array([[d["CLa"], d["CLde"]], [d["Cma"], d["Cmde"]]]) * math.pi / 180.0       # per deg
+        for _ in range(4 if point else 0):
+            miss = np.array([want["CL"] - got["CL"], want["Cm"] - got["Cm"]])
+            if np.abs(miss).max() < 1e-6:
+                break
+            x = x + np.linalg.solve(jac, miss)
+            got = point(float(x[0]), float(x[1]))
+
+        return {"stability": {
+            "method": method, "alpha_deg": alpha_deg, "elevator_deg": float(elevator_deg), "speed_m_s": V,
+            "CL": at_trim["CL"], "CD": _f(base["CD"]), "Cm": at_trim["Cm"], "derivatives": d,
+            "trim_check": {"alpha_deg": float(x[0]), "elevator_deg": float(x[1])},
+            "conventions": "per rad; stability axes at the trim alpha; moments about the CG; body rates p b/(2V), q c/(2V), "
+                           "r b/(2V); de positive trailing edge down, da positive rolls right, dr positive trailing edge left; "
+                           "CDde is the factor of |de|"}}
+
+    def surfaces_and_bodies(self, xyz_ref):
+        """The lifting surfaces alone and the fuselages alone (fuselage, tail boom), with one moment reference. The vortex lattice
+        takes the first and the AeroBuildup body model takes the second, so no part counts twice."""
+        ref = dict(self.spec["reference"], xyz_ref=[float(v) for v in xyz_ref])
+        return (build_airplane(dict(self.spec, fuselages=[], reference=ref)),
+                build_airplane(dict(self.spec, surfaces=[], reference=ref)))
+
+    @staticmethod
+    def vlm(plane, op, spanwise: int = VLM_PANELS[0], chordwise: int = VLM_PANELS[1]):
+        """The vortex lattice of the surfaces, with trailing vortices along x (not along the wind)."""
+        import aerosandbox as asb
+        return asb.VortexLatticeMethod(plane, op, spanwise_resolution=spanwise, chordwise_resolution=chordwise,
+                                       align_trailing_vortices_with_wind=False)
+
     def neutral_point(self, spanwise: int = 16, chordwise: int = 12, velocity: float = 17.0, alphas=(0.0, 4.0)) -> Dict[str, Any]:
         """The neutral point by the vortex lattice of the surfaces (wing, htail, fin, no body) plus the body term (fuselage and tail
         boom) of the AeroBuildup body model, at alpha 0 and 4 deg: x_np = x_ref - c_ref dCm/dCL. The VLM has no body, and the body
         moves the NP forward. The SpecSheet spoke reads the file that the AeroSandbox spoke writes from this result."""
         import aerosandbox as asb
         spec = self.spec
-        ref = dict(spec["reference"], xyz_ref=[float(spec["reference"]["xyz_ref"][0]), 0.0, 0.0])      # the pitch reference is x of the MRP
-        plane = build_airplane(dict(spec, fuselages=[], reference=ref))
-        bodies = build_airplane(dict(spec, surfaces=[], reference=ref))
+        plane, bodies = self.surfaces_and_bodies([float(spec["reference"]["xyz_ref"][0]), 0.0, 0.0])    # the pitch reference is x of the MRP
         out = []
         for a in alphas:
             op = asb.OperatingPoint(atmosphere=asb.Atmosphere(altitude=0.0), velocity=velocity, alpha=a)
-            r = asb.VortexLatticeMethod(plane, op, spanwise_resolution=spanwise, chordwise_resolution=chordwise,
-                                        align_trailing_vortices_with_wind=False).run()
+            r = self.vlm(plane, op, spanwise, chordwise).run()
             bd = asb.AeroBuildup(bodies, op).run()
             out.append((_f(r["CL"]) + _f(bd["CL"]), _f(r["Cm"]) + _f(bd["Cm"])))
         d_cl, d_cm = out[1][0] - out[0][0], out[1][1] - out[0][1]
@@ -1074,7 +1269,7 @@ class MultirotorModel(AircraftModel):
         maker check."""
         if not _installed("proptimiser"):
             raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
-                               "`python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+                               "`pip install -e .[prop]` (a private repository, Python 3.12)")
         os.environ["PROPTIMISER_HOME"] = home
         from proptimiser.init import Propeller
         m = self.m
@@ -1250,6 +1445,12 @@ def job_cruise_trim(job):
     return FixedWingModel("fixed_wing", job["spec"]).cruise_trim()
 
 
+def job_stability(job):
+    return FixedWingModel("fixed_wing", job["spec"]).stability(
+        job["alpha_deg"], job["elevator_deg"], job.get("method", "combined"), job.get("step_deg", 2.0),
+        job.get("spanwise", VLM_PANELS[0]), job.get("chordwise", VLM_PANELS[1]))
+
+
 def job_neutral_point(job):
     return FixedWingModel("fixed_wing", job["spec"]).neutral_point()
 
@@ -1298,7 +1499,7 @@ def job_emst_sensitivity(job):
 
 JOBS = {"version": job_version, "chain": job_chain, "library_check": job_library_check,
         "synthetic_design": job_synthetic_design, "geometry": job_geometry, "polar": job_polar,
-        "cruise_trim": job_cruise_trim, "static_check": job_static_check, "neutral_point": job_neutral_point,
+        "cruise_trim": job_cruise_trim, "stability": job_stability, "static_check": job_static_check, "neutral_point": job_neutral_point,
         "multirotor_drag": job_multirotor_drag, "emst_segments": job_emst_segments, "emst_endurance": job_emst_endurance,
         "emst_sensitivity": job_emst_sensitivity, "emst_live": job_emst_live}
 

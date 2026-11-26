@@ -4,7 +4,7 @@ Status: 2026-10-15. AeroSandbox 4.2.9, source tree `aircraft/currawong` version 
 `aeroplan/aerosandbox/notebooks/deprecated/03_gap_study.ipynb`. Run that notebook again after a change of the geometry or the mass model.
 
 Moved from `aeroplan/aerosandbox/docs/methods_report.md` on 2026-11-02. The quadplane sizing model, its motor and ESC fits
-and the flow5 check of 2026-11-02 are in [the quadplane modelling report](../quadplane_model/README.md).
+and the flow5 check of 2026-11-02 are in [the quadplane modelling report](quadplane_model/README.md).
 
 Point of the study: the flow5 T7 point (V 12.0958 m/s, mass 8.28 kg, Re(c) 2.73e5), moments about the flow5 MRP
 (the T7 CoG, x 0.1291 m), elevator 0. Slopes are per radian.

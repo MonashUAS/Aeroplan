@@ -1,6 +1,6 @@
 # CREO spoke settings for the Currawong (tool settings, not aircraft data).
 # The CAD exports in work/creo/currawong/cad/ (STL, units mm) and the transform that puts each part into the design
-# frame (FRD: x forward, y right, z down, m, origin at the wing root leading edge, ADR 0025). Source of the transforms: the
+# frame (FRD: x forward, y right, z down, m, origin at the wing root leading edge, ADR 0029). Source of the transforms: the
 # retired hand config (AeroPlan package 0.1.0, visual.parts), turned to FRD on 2026-10-21 (x and z change sign). They
 # were fitted to the flow5 surfaces:
 #   assembly axes [z, -x, -y], no shift (the CAD assembly frame of this export: z forward, y up): 4 to 7 mm median.

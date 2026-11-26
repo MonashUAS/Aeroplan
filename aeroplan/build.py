@@ -29,7 +29,7 @@ class BuildResult:
 
 
 def aircraft_dir(aircraft: str) -> Path:
-    return repo_root() / "aircraft" / aircraft
+    return source_tree.aircraft_dir(aircraft, repo_root())
 
 
 def load_aircraft(aircraft: str) -> source_tree.Aircraft:

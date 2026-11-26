@@ -37,11 +37,17 @@ faults of upstream.
 
 ## Start
 
+One Python, the repository `.venv`, runs everything but OpenVSP ([ADR 30](docs/decisions/0030-one-python-for-aeroplan-and-aerosandbox.md)):
+
 ```
-pip install -e .[test]
-python -m pytest
-python -m aeroplan check currawong
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e ".[all]"
+python -m aeroplan doctor
 ```
+
+You need Python 3.12 or newer. `.[all]` installs Proptimiser from a private repository, so git needs a sign-in with read
+access. With no access, use `pip install -e ".[sizing,dev]"` ([First day](docs/tutorials/first-day.md)).
 
 Start here: [First day](docs/tutorials/first-day.md). All documents: [docs/](docs/README.md). Reports and notebooks of each
 aircraft: [By aircraft](docs/README.md#by-aircraft). Rosella sizing study:

@@ -13,7 +13,19 @@ requires-python = ">=3.10"
 dependencies = ["pydantic>=2", "pyyaml", "pint", "numpy", "pandas", "pyarrow", "h5py", "lxml", "graphviz", "tabulate", "IPython", "openpyxl"]
 
 [project.optional-dependencies]
+# One Python for AeroPlan, AeroSandbox and the notebooks (ADR 0030). The install: pip install -e ".[all]"
+# sizing: the AeroSandbox model files and the notebooks (public packages).
+sizing = [
+    "aerosandbox==4.2.9", "matplotlib", "plotly", "pandas",
+    "jupyterlab", "ipykernel", "ipywidgets", "anywidget", "nbformat", "nbclient", "nbconvert",
+]
+# prop: Proptimiser, pushed commit 711ef86 (the geometric scale). The repository is private: git needs a sign-in with
+# read access. Proptimiser needs Python 3.12 or newer.
+prop = ["proptimiser @ git+https://github.com/MonashUAS/Propcalc-2_prop-er_faster_stronger.git@711ef86 ; python_version >= '3.12'"]
+# dev: the checks that CI runs (ruff, the tests, the duplicate-code report)
+dev = ["pytest", "ruff", "pylint", "pre-commit"]
 test = ["pytest"]
+all = ["aeroplan[sizing,prop,dev]"]
 
 
 [project.scripts]
@@ -37,4 +49,13 @@ line-length = 130
 extend-exclude = ["aeroplan/*/.venv", "standards/adh/upstream", "standards/adh/build", "*.ipynb", "work", "dist"]
 
 [tool.ruff.lint]
-select = ["E9", "F"]
+# E9 and F: syntax errors and pyflakes. W: warnings. B: bugbear (likely bugs). PT: pytest style.
+# The architecture rules are tests (tests/architecture, ADR 0031), not ruff rules.
+select = ["E9", "F", "W", "B", "PT"]
+# PT018 (split composite asserts), B905 (zip strict) and PT011 (raises without match): many hits of low value today.
+# The test clean-up of the roadmap (Phase 3) removes PT011 from this list.
+ignore = ["PT018", "B905", "PT011"]
+
+[tool.ruff.lint.per-file-ignores]
+# These checks run in the AeroSandbox model with no pytest (plain asserts, try/except)
+"tests/test_asb_model.py" = ["PT", "B008"]

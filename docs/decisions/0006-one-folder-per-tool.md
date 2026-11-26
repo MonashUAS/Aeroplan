@@ -1,8 +1,14 @@
+---
+id: "0006"
+title: One spoke folder for each tool
+date: 2026-10-10
+status: superseded
+kind: architecture
+superseded_by: ["0025"]
+---
 # 6. One spoke folder for each tool
 
-Date: 2026-10-10
-
-Status: accepted. Amended by ADR 25 (the folder is `aeroplan/<tool>/`)
+Superseded by ADR 0025. The text below is history.
 
 ## Context
 

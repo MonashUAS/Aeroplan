@@ -6,13 +6,13 @@
     "instance": "data_repository",
     "assets": [
       {
-        "id": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "id": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "kind": "file",
         "name": "AeroSandbox.rosella.json",
         "role": "Rosella model file and sizing result H4_12S",
         "tool": "AeroSandbox",
         "media_type": "application/json",
-        "size": 54214,
+        "size": 55443,
         "locations": [
           {
             "repo": "aeroplan/aerosandbox/settings/rosella.json"
@@ -34,7 +34,7 @@
           }
         ],
         "derived_from": [],
-        "built_against": "rosella@0.1.11",
+        "built_against": "rosella@0.1.12",
         "dataset": {
           "form": "tables",
           "model_description": {
@@ -66,9 +66,9 @@
           }
         ],
         "derived_from": [
-          "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27"
+          "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944"
         ],
-        "built_against": "rosella@0.1.11",
+        "built_against": "rosella@0.1.12",
         "dataset": {
           "form": "tables",
           "model_description": {

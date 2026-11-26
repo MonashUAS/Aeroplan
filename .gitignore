@@ -19,3 +19,15 @@ aeroplan/aerosandbox/.venv/
 
 # the AeroPlan Python of a checkout (uv venv .venv)
 .venv/
+
+# Claude Code: the state file of the stop hook (.claude/hooks/aeroplan_hook.py) and personal settings
+.claude/hooks/.last_ok
+# The blade files come from the PRIVATE Proptimiser repository, and this repository is public. Git ignores them until the
+# owner decides to publish them. To publish: delete the next two lines.
+aeroplan/aerosandbox/data/proptimiser/*/designs/
+aeroplan/aerosandbox/data/proptimiser/*/propellers/
+.claude/settings.local.json
+
+# remove LLM context files
+.claude/
+CLAUDE.md

@@ -1,8 +1,14 @@
+---
+id: "0020"
+title: Repository layout A
+date: 2026-10-17
+status: superseded
+kind: architecture
+superseded_by: ["0025"]
+---
 # 20. Repository layout A
 
-Date: 2026-10-17
-
-Status: superseded by ADR 25
+Superseded by ADR 0025. The text below is history.
 
 ## Context
 

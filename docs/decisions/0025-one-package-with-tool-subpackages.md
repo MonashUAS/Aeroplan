@@ -1,8 +1,14 @@
+---
+id: "0025"
+title: One package, with a subpackage for each tool
+date: 2026-10-30
+status: accepted
+kind: architecture
+supersedes: ["0006", "0020"]
+amended_by: ["0030"]
+applies_to: ["aeroplan/**"]
+---
 # 25. One package, with a subpackage for each tool
-
-Date: 2026-10-30
-
-Status: accepted. Supersedes ADR 20. Amends ADR 6 (the place of the spoke folder).
 
 ## Context
 
@@ -21,7 +27,7 @@ their folder on `sys.path`. The core imported the flow5 readers, so core and too
 - The core (`aeroplan/*.py`, `aeroplan/muas/`) imports no tool package. A test checks it.
 - `work/<tool>/<aircraft>/` stays at the repository root. Git ignores it.
 - A tool Python stays in its tool folder: `aeroplan/<tool>/.venv`. The AeroSandbox worker runs as the module
-  `aeroplan.aerosandbox.model` in that Python.
+  `aeroplan.aerosandbox.model` in that Python. (ADR 0030 changes this for AeroSandbox: it runs in the repository `.venv`.)
 - Setuptools finds only folders with an `__init__.py` (`namespaces = false`), so the wheel holds no settings, data, notebooks
   or tool Python.
 
@@ -32,3 +38,10 @@ by a one-time migration through `source_tree`. No dataset hash changed. Each too
 `aeroplan setup <tool>` (ADR 10). `aeroplan_dirty` of the build record now checks `aeroplan/` only.
 
 With a flat layout, setuptools writes `aeroplan.egg-info` next to `pyproject.toml` when it builds. Git ignores it.
+
+## Rules
+
+- AP001: The core (`aeroplan/*.py`, `aeroplan/muas/`) imports no tool package.
+- AP002: A tool package imports no other tool package.
+- AP005: Each spoke has `__init__.py`, `spoke.py`, `README.md` and `settings/`, and keeps the spoke contract (`spokes.check_spoke`). Start a new spoke with `python -m aeroplan new-spoke <Name>`.
+- AP006: The repository root is `aeroplan.REPO_ROOT`. Never compute it from `parents[n]` or `.parent.parent`.

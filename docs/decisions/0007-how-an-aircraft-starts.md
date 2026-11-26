@@ -1,8 +1,14 @@
+---
+id: "0007"
+title: How a new aircraft starts
+date: 2026-10-10
+status: superseded
+kind: process
+superseded_by: ["0037"]
+---
 # 7. How a new aircraft starts
 
-Date: 2026-10-10
-
-Status: accepted
+Superseded by ADR 0037. The text below is history.
 
 ## Context
 

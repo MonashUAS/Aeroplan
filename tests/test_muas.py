@@ -350,7 +350,7 @@ def test_propalyser_reads_contract_b(tmp_path):
         load("Propalyser").read_system(tmp_path / "bad.h5")
 
 
-@pytest.mark.parametrize("rx, ry, y0, x0", [(0.0, 0.0, 0.0, 0.0), (0.0, 1.5, 0.0, 0.0), (-90.0, 0.0, 0.0, 0.0),
+@pytest.mark.parametrize(("rx", "ry", "y0", "x0"), [(0.0, 0.0, 0.0, 0.0), (0.0, 1.5, 0.0, 0.0), (-90.0, 0.0, 0.0, 0.0),
                                             (-5.0, -2.0, 0.1, 0.03)])
 def test_the_planform_comes_back_from_the_adh_shape(rx, ry, y0, x0):
     """ADR 0027: the ADH lifting surface is the only stored shape. A wing with dihedral and twist, a fin (rx -90), a

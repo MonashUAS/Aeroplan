@@ -1,8 +1,11 @@
+---
+id: "0019"
+title: The web editor and viewer are shelved
+date: 2026-10-10
+status: accepted
+kind: process
+---
 # 19. The web editor and viewer are shelved
-
-Date: 2026-10-10
-
-Status: accepted
 
 ## Context
 

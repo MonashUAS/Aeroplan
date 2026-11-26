@@ -9,8 +9,8 @@ The mission of a quadplane: the flight conditions the model evaluates, and the s
     pack_current      the current of a pack (V = V_oc - R_b I) at a terminal power
 
 The model (model.py) evaluates each condition once. Mission.discharge takes the pack through the segments in flight order
-(state of charge, voltage sag) and gives the energy of each segment, the objective of the optimiser. The segment rules are
-those of Redback flight 00000171 with 10 endurance laps in place of 1.
+(state of charge, voltage sag) and gives the energy of each segment, the objective of the optimiser. The flight path is
+Redback flight 00000171 with 10 endurance laps in place of 1. The task rules (cargo, mission clock) are those of SUAS 2027.
 """
 from __future__ import annotations
 
@@ -20,7 +20,6 @@ from typing import Any, Dict, List, Tuple
 
 from .component import Component
 
-G0 = 9.80665
 N_SUB = 4                       # midpoint steps per segment in Mission.discharge. Project choice: 0.02 % of the energy against 50 steps
 
 
@@ -61,7 +60,9 @@ class Mission(Component):
       survey_lines, survey_line_length_m, survey_turn_bank_deg
       deployment_hover_s, reserve_hover_s
       vtol_climb_m, vtol_climb_rate_m_s, vtol_descent_rate_m_s, transition_s
-    The payload is the cargo, a point-mass component of the model. It is released at the deployment: gone in the H_L condition.
+      mission_clock_s, ground_time_s          optional: the limit on the clock time (see clock_time)
+    The payload is the cargo, a point-mass component of the model. The deployment hover carries it (H_TO) and releases it at
+    the end, so the landing and the reserve (H_L) fly without it.
     """
     KIND = "mission"
 
@@ -95,10 +96,15 @@ class Mission(Component):
             Segment("fw_climb", "F_LAP", dh / self.num("climb_rate_m_s"), M_g * dh / eta_lap),
             Segment("transit_laps_rtl", "F_LAP", dist / V_lap),
             Segment("survey", "F_MAP", (sv["line_len"] + sv["turn_len"]) / V_map),
-            Segment("deploy_hover", "H_L", self.num("deployment_hover_s")),
+            Segment("deploy_hover", "H_TO", self.num("deployment_hover_s")),     # the cargo is on board until the release
             Segment("landing", "H_L", self.num("vtol_climb_m") / self.num("vtol_descent_rate_m_s")),
             Segment("reserve", "H_L", self.num("reserve_hover_s")),
         ]
+
+    def clock_time(self, segments: List[Segment]) -> Any:
+        """The time on the mission clock (s): every segment but the reserve, plus ground_time_s (the work after the landing
+        that the clock also counts, for example the map and the report). ground_time_s is 0 when the mission has none."""
+        return sum(s.time_s for s in segments if s.name != "reserve") + (self.get("ground_time_s") or 0.0)
 
     def energy(self, power_W: Dict[str, Any], segments: List[Segment]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """(energy in J, time in s) of each segment: the power of its condition times its time, plus its extra energy."""
@@ -126,7 +132,8 @@ class Mission(Component):
 
         s = 1.0
         for seg in segments:
-            P = bus_W[seg.condition] + seg.extra_J / seg.time_s
+            no_extra = isinstance(seg.extra_J, (int, float)) and seg.extra_J == 0.0     # a segment of 0 s (no reserve) is then legal
+            P = bus_W[seg.condition] + (0.0 if no_extra else seg.extra_J / seg.time_s)
             dt, s0 = seg.time_s / n_sub, s
             for _ in range(n_sub):
                 s_mid = s - 0.5 * dt * current(P, s) / Q

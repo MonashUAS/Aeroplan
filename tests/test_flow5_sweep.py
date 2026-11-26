@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from aeroplan.flow5.polar import Polar
+from aeroplan.flow5.polar import Polar, PolarError
 from aeroplan.flow5 import sweep as sw
 
 PLANE_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -125,7 +125,7 @@ def test_control_derivatives_known_slopes():
 def test_control_that_does_nothing_is_refused():
     ctrl = np.linspace(0, 1, 7)
     p = polar(["Ctrl", "CL", "Cm"], np.column_stack([ctrl, np.full(7, 0.3), np.zeros(7)]))
-    with pytest.raises(Exception):
+    with pytest.raises(PolarError, match="The control did nothing"):
         sw.control_derivatives(p, "elevator", -15, 15)
 
 

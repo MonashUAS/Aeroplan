@@ -6,6 +6,7 @@ Static plots (matplotlib, so a notebook shows them on GitHub):
     three_view(model, design)     AeroSandbox three-view with the rotor discs added
     weight_chart(result)          one stacked bar of the take-off mass, by system and item
     energy_chart(result)          one stacked bar of the mission energy by segment, with the usable and nominal battery energy
+    energy_timeline(result)       the usable energy left against the mission time, one dotted line and label for each segment
     fit_chart(model, result)      the motor and ESC mass fits against the maker rows, with the design point
     margin_chart(result)          the limits with the smallest margin, and what one more unit of each costs
     frequency_chart(result)       boom modes f1, f2 against the rotor speed lines (1P, 2P) and the hover band
@@ -287,6 +288,78 @@ def weight_chart(result, size=(7.0, 5.4), groups=WEIGHT_GROUPS):
     return fig
 
 
+TIMELINE_LABELS = {"vtol_takeoff_climb": "VTOL climb", "transition_out": "transition", "fw_climb": "FW climb",
+                   "transit_laps_rtl": "transit, laps, RTL", "survey": "survey", "transition_back": "back transition",
+                   "deploy_hover": "deployment hover", "landing": "VTOL landing", "reserve": "reserve hover (held back)"}
+
+
+def timeline_segments(result) -> List[tuple]:
+    """[(segment, time s, energy Wh), ...] in flight order. The model keeps both transitions in one segment ("transitions",
+    flown at the H_TO power). Here it splits into two halves: the transition out after the VTOL climb and the back transition
+    before the deployment hover. The energies add up to the mission energy."""
+    t, e = result["time_s"], result["energy_Wh"]
+    out = []
+    for k in t:
+        if k == "transitions":
+            continue
+        if k == "deploy_hover" and "transitions" in t:
+            out.append(("transition_back", 0.5 * t["transitions"], 0.5 * e["transitions"]))
+        out.append((k, t[k], e[k]))
+        if k == "vtol_takeoff_climb" and "transitions" in t:
+            out.append(("transition_out", 0.5 * t["transitions"], 0.5 * e["transitions"]))
+    return out
+
+
+def energy_timeline(result, size=(9.0, 4.8), clock_s: Optional[float] = None):
+    """The usable energy left (Wh, above the lowest SOC) against the mission time (min). One dotted vertical line at the start
+    of each segment, with the segment name at the top. The power of a segment is constant in the model, so the line is
+    straight in each segment. The reserve hover is a dashed line: the pack holds it back, the aircraft does not fly it.
+    clock_s: a mission clock (s) to draw as a red dashed line; default: the limit mission_clock_s
+    of the result, if it has one."""
+    import matplotlib.pyplot as plt
+    style()
+    segs = timeline_segments(result)
+    usable = result["battery"]["usable_Wh"]
+    ts, es = [0.0], [usable]
+    for _, dt, de in segs:
+        ts.append(ts[-1] + dt / 60.0)
+        es.append(es[-1] - de)
+    fig, ax = plt.subplots(figsize=size)
+    n_fly = len(segs) - (1 if segs and segs[-1][0] == "reserve" else 0)  # the reserve is held back, not flown: a dashed line
+    ax.plot(ts[:n_fly + 1], es[:n_fly + 1], color=BLUE, marker="o", ms=3.0)
+    ax.plot(ts[n_fly:], es[n_fly:], color=BLUE, ls="--", lw=1.4)
+    ax.fill_between(ts, 0.0, es, color=BLUE, alpha=0.08, lw=0)
+    top = usable * 1.02
+    span = ts[-1]
+    gap = 0.022 * span                                      # the least distance of two labels, so that they do not overlap
+    xs = [0.5 * (a + b) for a, b in zip(ts[:-1], ts[1:])]
+    for i in range(1, len(xs)):
+        xs[i] = max(xs[i], xs[i - 1] + gap)
+    xs[-1] = min(xs[-1], span * 0.995)
+    for i in range(len(xs) - 2, -1, -1):
+        xs[i] = min(xs[i], xs[i + 1] - gap)
+    for (k, dt, de), t0, xl, mid in zip(segs, ts[:-1], xs, (0.5 * (a + b) for a, b in zip(ts[:-1], ts[1:]))):
+        ax.axvline(t0, color=MUTED, ls=":", lw=0.9)
+        ax.plot([mid, xl], [top * 1.005, top * 1.035], color=MUTED, lw=0.6, clip_on=False)
+        ax.text(xl, top * 1.04, f"{TIMELINE_LABELS.get(k, k.replace('_', ' '))}  {de:.0f} Wh, {dt / 60.0:.1f} min",
+                rotation=90, ha="center", va="bottom", fontsize=7.5, color=INK, clip_on=False)
+    ax.axvline(ts[-1], color=MUTED, ls=":", lw=0.9)
+    if clock_s is None:
+        clock_s = (result["constraints"].get("mission_clock_s") or {}).get("hi")
+    if clock_s is not None:
+        ax.axvline(clock_s / 60.0, color=RED, ls="--", lw=1.0)
+        ax.text(clock_s / 60.0, 0.5 * usable, f" mission clock {clock_s / 60.0:.0f} min", color=RED, fontsize=8, rotation=90,
+                ha="right", va="center")
+    ax.set_xlim(0.0, max(span, (clock_s or 0.0) / 60.0) * 1.02)
+    ax.set_ylim(0.0, top)
+    ax.set_xlabel("mission time [min]")
+    ax.set_ylabel("usable energy left [Wh]")
+    soc_min = result["battery"]["soc_min"]
+    ax.set_title(f"Energy through the mission: {usable:.0f} Wh usable from SOC 1.0 to {soc_min:.2f}", pad=150)
+    fig.tight_layout()
+    return fig
+
+
 def energy_chart(result, size=(7.0, 4.6), groups=ENERGY_GROUPS):
     """One stacked bar of the mission energy (Wh), by segment (ENERGY_GROUPS), with the usable and the nominal battery energy
     as lines. Usable: the energy at the OCV from a full charge to the lowest SOC (the limit energy_Wh). Nominal: S V_cell cap."""
@@ -358,7 +431,7 @@ def margin_chart(result, n: int = 14, size=(7.4, 4.8)):
     ax.invert_yaxis()
     ax.grid(axis="y", visible=False)
     span = max(max(vals), 1.0)
-    for yi, (k, c) in zip(y, rows):
+    for yi, (_k, c) in zip(y, rows):
         cost = c.get("cost_Wh_per_unit")
         txt = f" {100.0 * c['margin']:.1f} %" + (f", {cost:.2g} Wh per unit" if cost and c["margin"] < 1e-3 else "")
         ax.text(max(100.0 * c["margin"], 0.0), yi, txt, va="center", ha="left", color=INK, fontsize=8)
@@ -513,7 +586,7 @@ class LiveView:
         try:
             self.fig = go.FigureWidget(fig)
         except ImportError as e:                                   # plotly 7 needs anywidget
-            raise ImportError("LiveView needs anywidget: run `python -m aeroplan setup AeroSandbox` again") from e
+            raise ImportError("LiveView needs anywidget: run `pip install -e .[sizing]`") from e
         self.n_static = len(static)
         self.dyn = list(self.fig.data[self.n_static:self.n_static + len(dyn)])
         self.energy = self.fig.data[-2]

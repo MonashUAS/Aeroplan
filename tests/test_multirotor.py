@@ -2,7 +2,7 @@
 DAVE-ML, the demo shapes, the consumer check by vehicle kind and the datum rows. Every number here is synthetic.
 
 The EMST maths is `MultirotorModel` of `aeroplan/aerosandbox/model.py`. It uses numpy only, so these tests import it as a plain module. The
-tests that run the jobs in the AeroSandbox Python skip without it (`python -m aeroplan setup AeroSandbox`).
+tests that run the jobs in the AeroSandbox Python skip without it (`pip install -e ".[sizing]"`).
 """
 import copy
 import csv
@@ -17,6 +17,7 @@ import yaml
 from aeroplan import adh_doc, assets, checks, consumers, daveml_adh, daveml_eval, gltf, multirotor, multirotor_aero, source_tree
 from aeroplan.datum import datum_checks
 from aeroplan.dml_validate import validate_dml
+from aeroplan import REPO_ROOT
 from aeroplan.muas.aircraft import VisualPart
 from aeroplan.muas.control_system import ServoOutput
 from aeroplan.muas.propulsion import PropellerInstallation
@@ -25,10 +26,10 @@ from aeroplan.spokes import Context, load
 from aeroplan.visual import box, cylinder, disc, tube
 from sources import make_propalyser_h5
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = REPO_ROOT
 asb_spoke = load("AeroSandbox")
 runner = asb_spec = asb_spoke
-needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox Python here: run `python -m aeroplan setup AeroSandbox`")
+needs_asb = pytest.mark.skipif(not runner.available(), reason="no AeroSandbox here: run `pip install -e .[sizing]`")
 
 from aeroplan.aerosandbox import model as asb_model  # noqa: E402
 
@@ -566,7 +567,7 @@ def _has_proptimiser():
 
 
 needs_prop = pytest.mark.skipif(not _has_proptimiser(), reason="no Proptimiser in the AeroSandbox Python: "
-                                "run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`")
+                                "run `pip install -e .[prop]`")
 
 
 @needs_prop
@@ -747,7 +748,7 @@ def test_the_consumer_check_follows_the_vehicle_kind(tmp_path):
     assert set(consumers.FLIGHT_ITEMS_BY_KIND) == {"fixed_wing", "multirotor", "quadplane"} and "control_surface" not in consumers.FLIGHT_ITEMS_MULTIROTOR
 
 
-@pytest.mark.parametrize("edit, word", [
+@pytest.mark.parametrize(("edit", "word"), [
     (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(motor=1), "motor 1 is used by two"),
     (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(system="other"), "is not a muas.propulsion_system"),
     (lambda d: adh_doc.find(d, "prop_lift_2")["muas"]["propeller"].update(thrust_axis=[1.0, 0.0, 0.0]), "must be [0, 0, -1]"),

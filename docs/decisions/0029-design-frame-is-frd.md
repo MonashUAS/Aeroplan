@@ -1,8 +1,13 @@
+---
+id: "0029"
+title: The design frame is FRD
+date: 2026-10-21
+status: accepted
+kind: data
+amends: ["0023"]
+applies_to: ["aeroplan/**", "aircraft/**"]
+---
 # 29. The design frame is FRD
-
-Date: 2026-10-21 (written on 2026-10-30 from commit `f8b60fb` and `aeroplan/frame.py`)
-
-Status: accepted. Amends ADR 0023 (the x axis).
 
 ## Context
 
@@ -21,10 +26,13 @@ z down). Each consumer had to flip the data. Commit `f8b60fb` changed the frame,
 - A spoke flips at the edge of its tool (`aeroplan/frame.py`). The source tree holds FRD only. The planform numbers of a
   tool (x offset, dihedral, twist) describe a shape in a local frame and do not flip.
 - The glTF view is FRD too. Its asset `extras.to_gltf` gives the turn to the glTF frame.
-- The MUAS extension version became 0.5.0.
 
 ## Consequences
 
 A consumer with an x-aft frame inside flips at its reader. Aerolink does this in its package reader, because JSBSim uses
 an x-aft structural frame. The multirotor contract (version 2) gives the FRD values. Old reports in the x-aft frame keep
 their numbers.
+
+## Rules
+
+- process: The source tree holds FRD only. A spoke flips at the edge of its tool with `aeroplan/frame.py`.

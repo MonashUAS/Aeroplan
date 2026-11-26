@@ -13,27 +13,27 @@
     "instance": "rosella_airvehicle",
     "mass_properties": {
       "mass": {
-        "value": 17.2189637318753,
+        "value": 17.1720546862849,
         "units": "kg"
       },
       "cg": {
         "frame": "design",
         "xyz": [
-          -0.13899601087098487,
-          -6.447676189537124e-18,
-          0.002077691588290981
+          -0.13899601087098234,
+          -6.465289360578834e-18,
+          0.00208217928899778
         ],
         "units": "m"
       },
       "inertia": {
         "axes": "parallel_to_design",
         "products_convention": "+integral(xy dm)",
-        "ixx": 3.2352884385249276,
-        "iyy": 4.112113563037215,
-        "izz": 7.31531717849272,
-        "ixy": -4.9797967584961814e-30,
-        "ixz": -0.057507850856511514,
-        "iyz": -1.1529709876413596e-18,
+        "ixx": 3.2340619424955173,
+        "iyy": 4.135033660662183,
+        "izz": 7.338237603817682,
+        "ixy": 2.775557561561974e-17,
+        "ixz": -0.0575078508565318,
+        "iyz": -4.29717590059582e-18,
         "units": "kg*m^2",
         "unverified_products": []
       },
@@ -42,7 +42,7 @@
       "notes": [
         "Roll-up of the 44 point masses of the H4_12S sizing result (mass_model.rollup). The sizing owns the mass model until a SpecSheet exists (ADR 0022).",
         "Own inertia added for tail_boom, fuselage, battery and the two lift booms (the rules of model.QuadplaneModel). Every other item is a point mass.",
-        "The sizing result gives Ixx 3.2354, Iyy 4.1122, Izz 7.3153 kg m^2. Its Ixx is about y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
+        "The sizing result gives Ixx 3.2341, Iyy 4.1351, Izz 7.3382 kg m^2. Its Ixx is about y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
         "The sizing CG x is -0.138996 m (FRD: the static margin target ahead of the neutral point)."
       ]
     },
@@ -54,9 +54,9 @@
       "nominal_cg": {
         "frame": "design",
         "xyz": [
-          -0.13899601087098487,
-          -6.447676189537124e-18,
-          0.002077691588290981
+          -0.13899601087098234,
+          -6.465289360578834e-18,
+          0.00208217928899778
         ],
         "units": "m"
       },
@@ -66,9 +66,9 @@
         "point": {
           "frame": "design",
           "xyz": [
-            -0.13899601087098487,
-            -6.447676189537124e-18,
-            0.002077691588290981
+            -0.13899601087098234,
+            -6.465289360578834e-18,
+            0.00208217928899778
           ],
           "units": "m"
         }
@@ -93,7 +93,7 @@
       "attitude_sequence": "3-2-1",
       "units": "SI",
       "values": {
-        "speed_mps": 18.893463472960697,
+        "speed_mps": 18.844515124809543,
         "altitude_m": 0.0
       },
       "placeholder": true
@@ -570,7 +570,7 @@
       {
         "tag": "avionics_projects_1",
         "mass": {
-          "value": 1.01,
+          "value": 0.75,
           "units": "kg"
         },
         "position": {
@@ -606,7 +606,7 @@
       {
         "tag": "payload_cargo_1",
         "mass": {
-          "value": 0.41,
+          "value": 1.3607771100000001,
           "units": "kg"
         },
         "position": {
@@ -618,7 +618,7 @@
           ],
           "units": "m"
         },
-        "source": "H4_12S sizing, item payload_cargo: component cargo (aircraft/redback 1.2.17 cargo), released at the deployment",
+        "source": "H4_12S sizing, item payload_cargo: component cargo (the delivery object of the mission), released at the end of the deployment hover",
         "placeholder": true
       },
       {
@@ -714,19 +714,19 @@
       {
         "tag": "battery_1",
         "mass": {
-          "value": 3.259700997211964,
+          "value": 2.524,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            0.04131312250760174,
+            0.09387001998622731,
             0.0,
             0.0
           ],
           "units": "m"
         },
-        "source": "H4_12S sizing, item battery: AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack (component battery), cells and capacity from the sizing",
+        "source": "H4_12S sizing, item battery: component battery: the mass of the whole packs (mass_kg) when the settings give it, else AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack. Cells and capacity from the sizing",
         "placeholder": true
       },
       {
@@ -738,7 +738,7 @@
         "position": {
           "frame": "design",
           "xyz": [
-            -0.1389960108720145,
+            -0.13899601087287908,
             -0.55,
             0.020552
           ],
@@ -756,7 +756,7 @@
         "position": {
           "frame": "design",
           "xyz": [
-            -0.1389960108720145,
+            -0.13899601087287908,
             -0.55,
             0.020552
           ],
@@ -768,13 +768,13 @@
       {
         "tag": "lift_front_1",
         "mass": {
-          "value": 0.491276001497411,
+          "value": 0.49127600149711015,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            0.46100398912798546,
+            0.46100398912712093,
             -0.55,
             0.0005520000000000004
           ],
@@ -786,13 +786,13 @@
       {
         "tag": "lift_rear_1",
         "mass": {
-          "value": 0.491276001497411,
+          "value": 0.49127600149711015,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.7389960108720145,
+            -0.738996010872879,
             -0.55,
             0.0005520000000000004
           ],
@@ -810,7 +810,7 @@
         "position": {
           "frame": "design",
           "xyz": [
-            -0.1389960108720145,
+            -0.13899601087287908,
             0.55,
             0.020552
           ],
@@ -828,7 +828,7 @@
         "position": {
           "frame": "design",
           "xyz": [
-            -0.1389960108720145,
+            -0.13899601087287908,
             0.55,
             0.020552
           ],
@@ -840,13 +840,13 @@
       {
         "tag": "lift_front_2",
         "mass": {
-          "value": 0.491276001497411,
+          "value": 0.49127600149711015,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            0.46100398912798546,
+            0.46100398912712093,
             0.55,
             0.0005520000000000004
           ],
@@ -858,13 +858,13 @@
       {
         "tag": "lift_rear_2",
         "mass": {
-          "value": 0.491276001497411,
+          "value": 0.49127600149711015,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.7389960108720145,
+            -0.738996010872879,
             0.55,
             0.0005520000000000004
           ],
@@ -876,13 +876,13 @@
       {
         "tag": "cables_1",
         "mass": {
-          "value": 0.7501205757212799,
+          "value": 0.7481354173440481,
           "units": "kg"
         },
         "position": {
           "frame": "design",
           "xyz": [
-            -0.1389960108720145,
+            -0.13899601087287908,
             0.0,
             0.010276
           ],
@@ -895,7 +895,7 @@
     "sources": [
       {
         "tool": "AeroSandbox",
-        "asset": "asset:sha256:5803422dfeb6e3018c49e48ea3eb104b40fcfbf578d1d8a4ad02a951dced0c27",
+        "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "role": "Rosella model file and sizing result H4_12S"
       }
     ]
@@ -903,7 +903,7 @@
   "performance": [
     {
       "name": "sizing",
-      "description": "Rosella sizing, case H4_12S (H4, 12S), level L4. Minimum mission energy under the limits of the settings. Active constraints: motor_current_front, motor_current_rear, energy_Wh, control_yaw_rad_s2. 44 settings values are stand-ins (the result file lists them).",
+      "description": "Rosella sizing, case H4_12S (H4, 12S), level L4. Minimum mission energy under the limits of the settings. Active constraints: motor_current_front, motor_current_rear, control_yaw_rad_s2. 44 settings values are stand-ins (the result file lists them).",
       "tools": [
         {
           "model_name": "Rosella quadplane propulsion sizing",
@@ -913,11 +913,11 @@
             "model_identifier": "rosella",
             "inputs": [
               {
-                "name": "mtow_kg",
-                "value": 18.0,
+                "name": "uas_mass_kg",
+                "value": 15.875732950000002,
                 "units": "kg",
                 "placeholder": false,
-                "source": "user requirement 2026-10-17"
+                "source": "SUAS 2027 Primer, p. 16 (Task 3): UAS weight 35 lb or less (max weight cap); the weight does not include the delivery object"
               },
               {
                 "name": "thrust_to_weight",
@@ -956,34 +956,34 @@
               },
               {
                 "name": "battery_usable_fraction",
-                "value": 0.8,
+                "value": 0.9,
                 "units": "nd",
-                "placeholder": true,
-                "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)"
+                "placeholder": false,
+                "source": "user decision 2026-11-25: 10 % SOC floor (was 20 %), the lowest row of the OCV table"
               }
             ],
             "outputs": [
               {
                 "name": "take_off_mass",
-                "value": 17.2189637318753,
+                "value": 17.172054686284902,
                 "units": "kg",
                 "units_basis": "SI model output"
               },
               {
                 "name": "energy_total",
-                "value": 430.5258211604837,
+                "value": 365.9778177784056,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
               {
                 "name": "energy_nominal_battery",
-                "value": 516.1097006334203,
+                "value": 399.6,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
               {
                 "name": "energy_vtol_takeoff_climb",
-                "value": 8.114349543515745,
+                "value": 8.140487720331954,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -995,7 +995,7 @@
               },
               {
                 "name": "energy_transitions",
-                "value": 17.00036856351639,
+                "value": 17.03418636561253,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -1007,7 +1007,7 @@
               },
               {
                 "name": "energy_fw_climb",
-                "value": 7.712711710551354,
+                "value": 7.718218405466763,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -1019,31 +1019,31 @@
               },
               {
                 "name": "energy_transit_laps_rtl",
-                "value": 177.8649844674126,
+                "value": 126.3914973713412,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
               {
                 "name": "time_transit_laps_rtl",
-                "value": 1853.3393864027632,
+                "value": 1321.657778671645,
                 "units": "s",
                 "units_basis": "SI model output"
               },
               {
                 "name": "energy_survey",
-                "value": 11.47105332285661,
+                "value": 11.461051008957385,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
               {
                 "name": "time_survey",
-                "value": 112.97048200917769,
+                "value": 113.14632002325841,
                 "units": "s",
                 "units_basis": "SI model output"
               },
               {
                 "name": "energy_deploy_hover",
-                "value": 32.884524357016076,
+                "value": 34.21592869872761,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -1055,7 +1055,7 @@
               },
               {
                 "name": "energy_landing",
-                "value": 10.963124709420882,
+                "value": 10.05403320170372,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -1067,7 +1067,7 @@
               },
               {
                 "name": "energy_reserve",
-                "value": 164.51470448619398,
+                "value": 150.96241500626442,
                 "units": "Wh",
                 "units_basis": "SI model output"
               },
@@ -1085,19 +1085,19 @@
               },
               {
                 "name": "battery_capacity",
-                "value": 11.624092356608564,
+                "value": 9.0,
                 "units": "A*h",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_diameter",
-                "value": 0.6604000065983552,
+                "value": 0.6604000065970297,
                 "units": "m",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_scale_over_reference",
-                "value": 1.181818193626262,
+                "value": 1.18181819362389,
                 "units": "nd",
                 "units_basis": "SI model output"
               },
@@ -1115,13 +1115,13 @@
               },
               {
                 "name": "motor_peak_current",
-                "value": 54.14064968676215,
+                "value": 53.99711475422643,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "thrust_to_weight_at_full_throttle",
-                "value": 2.3020769487512833,
+                "value": 2.3021310849205565,
                 "units": "nd",
                 "units_basis": "SI model output"
               },
@@ -1151,55 +1151,55 @@
               },
               {
                 "name": "boom_clamp_x",
-                "value": -0.1389960108720145,
+                "value": -0.13899601087287908,
                 "units": "m",
                 "units_basis": "SI model output"
               },
               {
                 "name": "boom_dx",
-                "value": 0.05627597586417665,
+                "value": 0.05627597586331206,
                 "units": "m",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_cant",
-                "value": 0.04248157671369568,
+                "value": 0.04303123982697409,
                 "units": "rad",
                 "units_basis": "SI model output"
               },
               {
                 "name": "boom_f1",
-                "value": 18.83083382046852,
+                "value": 18.830833820473934,
                 "units": "Hz",
                 "units_basis": "SI model output"
               },
               {
                 "name": "boom_f2",
-                "value": 211.39324822744751,
+                "value": 211.393248227977,
                 "units": "Hz",
                 "units_basis": "SI model output"
               },
               {
                 "name": "hover_1P",
-                "value": 53.51446410825293,
+                "value": 53.44291645027837,
                 "units": "Hz",
                 "units_basis": "SI model output"
               },
               {
                 "name": "control_roll",
-                "value": 24.42183645788721,
+                "value": 24.36511331190148,
                 "units": "rad/s^2",
                 "units_basis": "SI model output"
               },
               {
                 "name": "control_pitch",
-                "value": 20.961237218261026,
+                "value": 20.788753954455437,
                 "units": "rad/s^2",
                 "units_basis": "SI model output"
               },
               {
                 "name": "control_yaw",
-                "value": 1.4999999007900435,
+                "value": 1.4999999010402068,
                 "units": "rad/s^2",
                 "units_basis": "SI model output"
               },
@@ -1223,247 +1223,247 @@
               },
               {
                 "name": "cruise_speed_laps",
-                "value": 18.893463472960697,
+                "value": 18.844515124809543,
                 "units": "m/s",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_speed_survey",
-                "value": 19.317599534900346,
+                "value": 19.287578511341422,
                 "units": "m/s",
                 "units_basis": "SI model output"
               },
               {
                 "name": "stall_speed",
-                "value": 14.3806219109219,
+                "value": 14.361020228701124,
                 "units": "m/s",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_f_rpm",
-                "value": 3210.8678464951754,
+                "value": 3206.574987016702,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_f_thrust",
-                "value": 42.253208789337556,
+                "value": 42.13909071854173,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_f_shaft_power",
-                "value": 410.83548854468114,
+                "value": 409.176453527205,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_f_current",
-                "value": 24.13127735972167,
+                "value": 24.068981524870004,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_r_rpm",
-                "value": 3210.8678464897093,
+                "value": 3206.574987006673,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_r_thrust",
-                "value": 42.253208789192165,
+                "value": 42.13909071827532,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_r_shaft_power",
-                "value": 410.83548854256617,
+                "value": 409.1764535233346,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_TO_r_current",
-                "value": 24.131277359642315,
+                "value": 24.068981524724578,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_f_rpm",
-                "value": 3436.1347120979103,
+                "value": 3431.814392862231,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_f_thrust",
-                "value": 42.25320878933751,
+                "value": 42.139090718541745,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_f_shaft_power",
-                "value": 489.5339296910492,
+                "value": 487.66768244727933,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_f_current",
-                "value": 26.743961813880727,
+                "value": 26.678359663938327,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_r_rpm",
-                "value": 3436.1347120924106,
+                "value": 3431.814392852137,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_r_thrust",
-                "value": 42.25320878919216,
+                "value": 42.13909071827534,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_r_shaft_power",
-                "value": 489.5339296886707,
+                "value": 487.6676824429252,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_C_TO_r_current",
-                "value": 26.743961813797178,
+                "value": 26.678359663785184,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_f_rpm",
-                "value": 3172.8194111465477,
+                "value": 3078.2903028802016,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_f_thrust",
-                "value": 41.247119464022404,
+                "value": 38.79983335338768,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_f_shaft_power",
-                "value": 396.28635616870247,
+                "value": 361.63377522728797,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_f_current",
-                "value": 23.58206874295114,
+                "value": 22.24617957897167,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_r_rpm",
-                "value": 3172.8194111411503,
+                "value": 3078.29030287058,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_r_thrust",
-                "value": 41.247119463880495,
+                "value": 38.79983335314238,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_r_shaft_power",
-                "value": 396.2863561666629,
+                "value": 361.6337752238677,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_H_L_r_current",
-                "value": 23.582068742873677,
+                "value": 22.24617957883777,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_f_rpm",
-                "value": 4849.094342449294,
+                "value": 4842.624606406551,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_f_thrust",
-                "value": 97.1823802154764,
+                "value": 96.91990865264597,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_f_shaft_power",
-                "value": 1428.883981782259,
+                "value": 1423.1159550614398,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_f_current",
-                "value": 54.14065018270906,
+                "value": 53.99711524865485,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_r_rpm",
-                "value": 4849.094342441058,
+                "value": 4842.624606391437,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_r_thrust",
-                "value": 97.18238021514198,
+                "value": 96.91990865203321,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_r_shaft_power",
-                "value": 1428.8839817749054,
+                "value": 1423.1159550479827,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "rotor_MAX_r_current",
-                "value": 54.14065018252618,
+                "value": 53.99711524831975,
                 "units": "A",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_laps_rpm",
-                "value": 5168.481661222949,
+                "value": 5158.057122824663,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_laps_thrust",
-                "value": 10.139312572192805,
+                "value": 10.110484631937629,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_laps_shaft_power",
-                "value": 264.24027688938963,
+                "value": 262.82843435579775,
                 "units": "W",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_survey_rpm",
-                "value": 5277.824043395632,
+                "value": 5270.489232855248,
                 "units": "rpm",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_survey_thrust",
-                "value": 10.613969998784402,
+                "value": 10.584860200479012,
                 "units": "N",
                 "units_basis": "SI model output"
               },
               {
                 "name": "cruise_survey_shaft_power",
-                "value": 282.09213795518224,
+                "value": 280.91738683865077,
                 "units": "W",
                 "units_basis": "SI model output"
               }
@@ -1475,24 +1475,24 @@
   ],
   "requirements": [
     {
-      "name": "sizing:mtow",
-      "description": "Sizing limit mtow of the rosella model (limits.mtow_kg).",
+      "name": "sizing:uas_mass_without_cargo",
+      "description": "Sizing limit uas_mass_without_cargo of the rosella model (limits.uas_mass_kg).",
       "category": "sizing",
       "priority": "medium",
       "verification_method": "analysis",
       "status": "draft",
-      "acceptance_criteria": "mtow is at most 18 kg.",
+      "acceptance_criteria": "uas_mass_without_cargo is at most 15.8757 kg.",
       "muas": {
         "target": {
-          "key": "mtow",
-          "value": 18.0,
+          "key": "uas_mass_without_cargo",
+          "value": 15.875732950000002,
           "bound": "max",
           "units": "kg",
-          "source": "user requirement 2026-10-17",
+          "source": "SUAS 2027 Primer, p. 16 (Task 3): UAS weight 35 lb or less (max weight cap); the weight does not include the delivery object",
           "placeholder": false
         }
       },
-      "source": "user requirement 2026-10-17"
+      "source": "SUAS 2027 Primer, p. 16 (Task 3): UAS weight 35 lb or less (max weight cap); the weight does not include the delivery object"
     },
     {
       "name": "sizing:thrust_to_weight_full_throttle",
@@ -1601,18 +1601,18 @@
       "priority": "medium",
       "verification_method": "analysis",
       "status": "draft",
-      "acceptance_criteria": "battery_usable_fraction is at most 0.8 nd.",
+      "acceptance_criteria": "battery_usable_fraction is at most 0.9 nd.",
       "muas": {
         "target": {
           "key": "battery_usable_fraction",
-          "value": 0.8,
+          "value": 0.9,
           "bound": "max",
           "units": "nd",
-          "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)",
-          "placeholder": true
+          "source": "user decision 2026-11-25: 10 % SOC floor (was 20 %), the lowest row of the OCV table",
+          "placeholder": false
         }
       },
-      "source": "stand-in: share of the charge the mission may use (the lowest SOC is 1 - this)"
+      "source": "user decision 2026-11-25: 10 % SOC floor (was 20 %), the lowest row of the OCV table"
     },
     {
       "name": "sizing:battery_c_rate",

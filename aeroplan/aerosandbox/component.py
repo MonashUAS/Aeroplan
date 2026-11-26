@@ -35,10 +35,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 
 from aeroplan import REPO_ROOT
+from aeroplan.constants import INCH_M
 
 HERE = Path(__file__).resolve().parent
 ROOT = REPO_ROOT
-G0 = 9.80665
 RHO0 = 1.225                                            # kg/m3, ISA sea level (the air of the Proptimiser tables)
 MU0 = 1.789e-5                                          # Pa s
 A0 = 340.3                                              # m/s, speed of sound used for the tip Mach number
@@ -55,7 +55,7 @@ def base_document(name: str, root: Path = ROOT) -> Dict[str, Any]:
     source tree (ADR 0028): a split of the model files into their own repository reads a .muas package here."""
     from aeroplan import source_tree
 
-    return source_tree.read(root / "aircraft" / name).doc
+    return source_tree.read(source_tree.aircraft_dir(name, root)).doc
 
 
 # ================================================================================================== 1. param and component
@@ -299,7 +299,7 @@ class Rotor(Component):
         """Propeller mass: the bought propeller, or the carbon fit of AIAA 2016-0581 Eq. 5."""
         if self.get("mass_kg") is not None:
             return float(self["mass_kg"])
-        d_in = D_m / 0.0254
+        d_in = D_m / INCH_M
         return (self.num("prop_g_a_in2") * d_in ** 2 + self.num("prop_g_b_in") * d_in) / 1000.0
 
 
@@ -622,14 +622,18 @@ _CONST: Dict[str, Any] = {}
 
 
 def proptimiser_home(aircraft: str, designs: Iterable[Tuple[str, str]]) -> Path:
-    """work/aerosandbox/<aircraft>/proptimiser: the design file and the state file of each (design, source aircraft) copied by
-    hand from the work folder of the source aircraft (Proptimiser reads one home folder). A copy that differs from its source
-    (sha256) is replaced, so a changed design reaches the aircraft folder."""
+    """work/aerosandbox/<aircraft>/proptimiser: the design file and the state file of each (design, source aircraft) copied
+    from the work folder of the source aircraft (Proptimiser reads one home folder). When the work folder of the source has
+    no copy (a new clone), the committed copy in data/proptimiser/<source>/ is the source (data/proptimiser/SOURCE.md). A
+    copy that differs from its source (sha256) is replaced, so a changed design reaches the aircraft folder."""
     import shutil
     home = work_dir(aircraft) / "proptimiser"
     for name, src in designs:
         for sub, ext in (("designs", ".yaml"), ("propellers", ".state.json")):
             dst, org = home / sub / (name + ext), work_dir(src) / "proptimiser" / sub / (name + ext)
+            committed = HERE / "data" / "proptimiser" / src / sub / (name + ext)
+            if not org.is_file() and committed.is_file():
+                org = committed
             if not org.is_file() and not dst.is_file():
                 raise FileNotFoundError(f"the Proptimiser file {org.relative_to(ROOT)} is missing: copy it by hand from the "
                                         f"Proptimiser checkout (git ignores work/)")

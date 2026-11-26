@@ -171,7 +171,7 @@ class Problem:
         opts.update(options or {})
         cb = (lambda i: callback(self.snapshot(i))) if callback else None
         t0, iters = time.time(), 0
-        for k in range(attempts):
+        for _k in range(attempts):
             try:
                 self.sol = self.opti.solve(verbose=verbose, max_iter=max_iter, max_runtime=max_runtime, options=opts, callback=cb)
                 self.error = ""

@@ -21,12 +21,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List
 
-from . import adh_doc, assets
+from . import REPO_ROOT, adh_doc, assets
 from .muas.node import PackageInfo
 
 KINDS = ("aircraft", "flight-record")
 ROOT_FILE = "1.0.aircraft_system.json"
 DATASETS = "datasets"
+AIRCRAFT = "aircraft"
+
+
+def aircraft_dir(name: str, root: Path = REPO_ROOT) -> Path:
+    """The source tree folder of an aircraft: `<root>/aircraft/<name>/`. The only place that makes this path (AP009)."""
+    return Path(root) / AIRCRAFT / name
+
+
+def dataset_repo_path(aircraft: str, name: str) -> str:
+    """The repository path of a dataset file, as the asset register names it."""
+    return f"{AIRCRAFT}/{aircraft}/{DATASETS}/{name}.json"
 
 
 class SourceTreeError(ValueError):

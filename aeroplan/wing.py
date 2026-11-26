@@ -10,6 +10,7 @@ This is a tool shape in memory. The source tree stores the ADH `geometry.lifting
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -41,3 +42,11 @@ class Wing:
     def mirrored(self) -> bool:
         """True when a left half exists. A single fin has none."""
         return self.symmetric and (self.kind != "FIN" or self.two_sided)
+
+    def section_z(self) -> Tuple[float, ...]:
+        """The height of each section from the dihedral of the panels inboard of it (root at 0), wing frame. The only
+        copy of this sum: geometry, parts and visual use it."""
+        z = [0.0]
+        for a, b in zip(self.sections, self.sections[1:]):
+            z.append(z[-1] + (b.y - a.y) * math.tan(math.radians(a.dihedral_deg)))
+        return tuple(z)

@@ -16,7 +16,7 @@ Units: the printout has none. `UNITS` below gives each output a unit and says wh
   - "consistency": a relation between the outputs confirms the unit (for example b^2 / S = AR, or the mass sum).
   - "magnitude":   the value fits only one plausible unit for this aircraft. Not proven.
   - "unknown":     no unit can be given. The value is kept with units "unknown".
-What generate does (after `python -m aeroplan setup AeroSandbox`, once for each computer): the spoke builds a tool-neutral spec
+What generate does (after `pip install -e ".[sizing]"`, once for each computer): the spoke builds a tool-neutral spec
 from the ADH document (wing, tail, fuselage, mass model, propeller installation, motor, ESC, battery). The spec goes to
 aeroplan/aerosandbox/model.py in aeroplan/aerosandbox/.venv. Jobs: geometry (three-view, 3D view), polar (AeroBuildup against the
 flow5 aero model), cruise_trim (one Opti problem: airframe, Proptimiser BEMT and the Propalyser motor and ESC chain) and
@@ -51,7 +51,6 @@ import json
 import math
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -61,7 +60,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from aeroplan import adh_doc, assets, mass_model, multirotor, multirotor_aero, source_tree
+from aeroplan.constants import G0, INCH_M
+from aeroplan import REPO_ROOT, adh_doc, assets, mass_model, multirotor, multirotor_aero, source_tree
 from aeroplan.daveml_adh import from_xml
 from aeroplan.dml_validate import validate_dml
 from aeroplan.frame import flip_array, flip_doc, flip_point, planform_le_x
@@ -74,22 +74,18 @@ from . import component
 NAME = "AeroSandbox"
 FILE = "athena_outputs.txt"
 RESULTS = "multirotor_results.json"
-G0 = 9.80665                  # m/s^2, standard gravity (weight of the mass model)
 
 
 
 
 # ===================================================================================================== the AeroSandbox Python
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]
+REPO = REPO_ROOT
 VENV = HERE / ".venv"
 SETTINGS = HERE / "settings"
 WORKER = HERE / "model.py"
 WORKER_MODULE = "aeroplan.aerosandbox.model"
-PYTHON = "3.12"
-WORKER_NEEDS = ("aerosandbox==4.2.9", "matplotlib", "plotly", "h5py", "PyYAML")
-NOTEBOOK_NEEDS = ("jupyterlab", "ipykernel", "ipywidgets", "anywidget", "nbformat", "nbclient", "nbconvert", "pandas")
-KERNEL = "aeroplan-asb"
+INSTALL = 'pip install -e ".[sizing]"'      # the packages are the `sizing` extra of pyproject.toml (ADR 0030)
 
 
 class AeroSandboxError(RuntimeError):
@@ -97,10 +93,15 @@ class AeroSandboxError(RuntimeError):
 
 
 def python() -> Path:
-    """The AeroSandbox Python: AEROSANDBOX_PYTHON, else aeroplan/aerosandbox/.venv."""
+    """The Python that runs the model files (ADR 0030): AEROSANDBOX_PYTHON, else this Python when aerosandbox imports
+    (the repository .venv with the `sizing` extra), else an old aeroplan/aerosandbox/.venv."""
     env = os.environ.get("AEROSANDBOX_PYTHON")
     if env:
         return Path(env)
+    import importlib.util
+
+    if importlib.util.find_spec("aerosandbox") is not None:
+        return Path(sys.executable)
     return VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
@@ -108,16 +109,24 @@ def available() -> bool:
     return python().is_file() and WORKER.is_file()
 
 
+#: Start the worker module with the repository first on sys.path, so a Python that has no install of AeroPlan (a test run with
+#: pytest's pythonpath) runs the code of this checkout
+_BOOT = ("import runpy, sys; sys.path.insert(0, sys.argv[1]); del sys.argv[1]; "
+         f"runpy.run_module({WORKER_MODULE!r}, run_name='__main__', alter_sys=True)")
+
+
 def run(job: Dict[str, Any], timeout: float = 1800) -> Dict[str, Any]:
-    """Run one job of model.py in the AeroSandbox Python. Raises AeroSandboxError with the error text of the job. The Python runs
-    with -E and -s (no PYTHON variables, no user site) and runs the module aeroplan.aerosandbox.model (the AeroSandbox Python has
-    AeroPlan as an editable install)."""
+    """Run one job of model.py in the AeroSandbox Python (see python()). Raises AeroSandboxError with the error text of the job.
+    The Python runs with -E (no PYTHON variables), and with -s (no user site) when it is another Python. It runs the module
+    aeroplan.aerosandbox.model of this checkout."""
     if not available():
-        raise AeroSandboxError("the AeroSandbox Python is not set up: run `python -m aeroplan setup AeroSandbox`")
+        raise AeroSandboxError(f"AeroSandbox is not installed in this Python: run `{INSTALL}`")
     with tempfile.TemporaryDirectory(prefix="aeroplan_asb_") as tmp:
         jf, rf = Path(tmp) / "job.json", Path(tmp) / "result.json"
         jf.write_text(json.dumps(job), encoding="utf-8")
-        p = subprocess.run([str(python()), "-E", "-s", "-m", WORKER_MODULE, str(jf), str(rf)], capture_output=True, text=True,
+        py = python()
+        flags = ["-E"] if py == Path(sys.executable) else ["-E", "-s"]      # this Python may hold its packages in the user site
+        p = subprocess.run([str(py), *flags, "-c", _BOOT, str(REPO), str(jf), str(rf)], capture_output=True, text=True,
                            timeout=timeout, cwd=tmp)
         if not rf.is_file():
             raise AeroSandboxError(f"the AeroSandbox worker stopped (exit {p.returncode}): {(p.stderr or p.stdout)[-2000:]}")
@@ -127,57 +136,10 @@ def run(job: Dict[str, Any], timeout: float = 1800) -> Dict[str, Any]:
     return res
 
 
-def _uv() -> List[str]:
-    """The uv command: the `uv` program on the PATH, else the uv module of this Python (installed when it is missing)."""
-    found = shutil.which("uv")
-    if found:
-        return [found]
-    try:
-        subprocess.run([sys.executable, "-m", "uv", "--version"], check=True, capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "uv"], check=True)
-    return [sys.executable, "-m", "uv"]
-
-
-def setup_venv(proptimiser: Optional[str] = None, git: Optional[Dict[str, str]] = None,
-               log=lambda m: print(m, flush=True)) -> Dict[str, str]:
-    """Make aeroplan/aerosandbox/.venv with the packages of WORKER_NEEDS and NOTEBOOK_NEEDS (JupyterLab, the widgets of the window),
-    AeroPlan itself (editable, so a notebook reads the source tree live) and Proptimiser. `proptimiser` is a checkout folder.
-    Without it, `git` ({url, rev}) names the source. A Proptimiser that cannot be installed is a warning: the airframe jobs and
-    the notebooks still work. Returns {folder, python, version}."""
-    src = None
-    if proptimiser:
-        src = str(Path(proptimiser).resolve())
-        if not (Path(src) / "pyproject.toml").is_file():
-            raise AeroSandboxError(f"{src} is not a Proptimiser folder (no pyproject.toml)")
-    elif git and git.get("url") and git.get("rev"):
-        src = f"git+{git['url']}@{git['rev']}"
-    uv = _uv()
-    log(f"Make {VENV} with Python {PYTHON}")
-    subprocess.run(uv + ["venv", "--clear", "--python", PYTHON, str(VENV)], check=True)
-    vpy = VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    subprocess.run(uv + ["pip", "install", "--quiet", "--python", str(vpy), *WORKER_NEEDS, *NOTEBOOK_NEEDS], check=True)
-    log(f"Install AeroPlan from {REPO} (editable, for the notebooks)")
-    subprocess.run(uv + ["pip", "install", "--quiet", "--python", str(vpy), "-e", str(REPO)], check=True)
-    subprocess.run([str(vpy), "-m", "ipykernel", "install", "--user", "--name", KERNEL,
-                    "--display-name", "AeroPlan AeroSandbox"], check=True, capture_output=True)
-    if src is None:
-        log("WARNING: no Proptimiser source (--proptimiser <folder>, or url and rev in the settings): "
-            "the propeller jobs (cruise_trim, static_check) and the sizing do not work")
-    else:
-        log(f"Install Proptimiser from {src} (no JAX)")
-        r = subprocess.run(uv + ["pip", "install", "--quiet", "--python", str(vpy), src], capture_output=True, text=True)
-        if r.returncode:
-            log(f"WARNING: Proptimiser did not install, the propeller jobs do not work:\n{r.stderr[-800:]}")
-    version = run({"job": "version"}, timeout=300)["version"]
-    log(f"Check: {version}")
-    return {"folder": str(VENV), "python": str(vpy), "version": version}
-
-
 def describe_venv() -> str:
     """One line for `aeroplan spokes`: the versions of the AeroSandbox Python, or the setup command."""
     if not available():
-        return "AeroSandbox Python not set up: run `python -m aeroplan setup AeroSandbox`"
+        return f"AeroSandbox is not installed: run `{INSTALL}`"
     try:
         return run({"job": "version"}, timeout=120)["version"]
     except AeroSandboxError as e:
@@ -305,7 +267,7 @@ def _ingest_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]):
         coefs, name=f"{ctx.aircraft.capitalize()} body drag model", author="AeroPlan AeroSandbox spoke", org="MUAS",
         created=str(res["inputs"]["date"]),
         description=f"{ctx.aircraft} multirotor body drag (forces only, body axes FRD, no moments). "
-                    "See spec/multirotor_contract.md.")
+                    "See the Aerolink docs/multirotor_contract.md.")
     errors = validate_dml(xml)
     if errors:
         raise ValueError(f"the body-drag model fails the DAVE-ML 2.0 DTD: {errors[:3]}")
@@ -676,13 +638,14 @@ ORIGIN = {
     "avionics_flight": "kept from the Currawong avionics (AVIONICS-REST point mass: servos, PDB, BMS, Cube, Herelink, Here4, wires)",
     "avionics_projects": "component avionics, projects_mass_kg (stand-in for the project equipment)",
     "fuselage": "shell area of the new fuselage times the Currawong mass per area (FUSELAGE-REST, weighed, over the area of the same body rule at the Currawong length)",
-    "payload_cargo": "component cargo (aircraft/redback 1.2.17 cargo), released at the deployment",
+    "payload_cargo": "component cargo (the delivery object of the mission), released at the end of the deployment hover",
     "landing_gear": "component landing_gear (stand-in for VTOL skids)",
     "cruise_motor": "kept from the Currawong nose motor (X5220), moved with the nose propeller hub",
     "cruise_esc": "kept from the Currawong cruise ESC, moved with the nose propeller hub",
     "cruise_prop": "kept from the Currawong cruise propeller, moved with the nose propeller hub",
     "cruise_rest": "kept from the Currawong propulsion rest mass, moved with the nose propeller hub",
-    "battery": "AIAA 2016-0581 Eq. 4 scaled to the NXE 6S 4500 pack (component battery), cells and capacity from the sizing",
+    "battery": "component battery: the mass of the whole packs (mass_kg) when the settings give it, else AIAA 2016-0581 Eq. 4 "
+               "scaled to the NXE 6S 4500 pack. Cells and capacity from the sizing",
     "boom": "carbon tube: density times the tube section times the boom length (component boom_material)",
     "boom_clamp": "component boom, clamp_kg (stand-in)",
     "lift_front": "motor (fit on data/motor_survey.csv), carbon propeller (Eq. 5), ESC (fit on data/esc_survey.csv) and mount, at the front end of a boom",
@@ -731,15 +694,20 @@ def quad_settings(mf: ModelFile) -> Dict[str, Any]:
                       "esc_continuous_A": mf.c["esc"]["params"].get("current_cont_A", {}).get("value"),
                       "esc_peak_A": mf.c["esc"]["params"].get("current_A", {}).get("value")},
             "electrical": {"cell_nominal_V": mf.e("battery", "cell_nominal_V")},
-            "limits": {"mtow_kg": mf.e("limits", "mtow_kg"), "thrust_to_weight": mf.e("limits", "thrust_to_weight"),
+            "limits": {**{k: mf.e("limits", k) for k in MASS_LIMITS if k in mf.c["limits"]["params"]},
+                       "thrust_to_weight": mf.e("limits", "thrust_to_weight"),
                        "reserve_hover_s": mf.e("mission", "reserve_hover_s"), "load_factor": mf.e("limits", "load_factor"),
                        "safety_factor": mf.e("limits", "safety_factor"),
                        "static_margin_target": mf.e("airframe", "static_margin_target"),
                        "battery_usable_fraction": mf.e("battery", "usable_fraction")}}
 
 
-#: the limits that become `muas.target` requirements of node 1.2: key, component, param, bound, units (angles in rad)
-TARGETS = (("mtow", "limits", "mtow_kg", "max", "kg"), ("thrust_to_weight_full_throttle", "limits", "thrust_to_weight", "min", "nd"),
+#: the mass limits a model file can have: the take-off mass (cargo included), the competition cap (cargo left out)
+MASS_LIMITS = ("mtow_kg", "uas_mass_kg")
+#: the limits that become `muas.target` requirements of node 1.2: key, component, param, bound, units (angles in rad).
+#: A param that the model file does not have gives no target.
+TARGETS = (("mtow", "limits", "mtow_kg", "max", "kg"), ("uas_mass_without_cargo", "limits", "uas_mass_kg", "max", "kg"),
+           ("thrust_to_weight_full_throttle", "limits", "thrust_to_weight", "min", "nd"),
            ("load_factor_boom", "limits", "load_factor", "target", "nd"), ("safety_factor_boom", "limits", "safety_factor", "min", "nd"),
            ("reserve_hover", "mission", "reserve_hover_s", "min", "s"), ("static_margin", "airframe", "static_margin_target", "target", "nd"),
            ("battery_usable_fraction", "battery", "usable_fraction", "max", "nd"), ("battery_c_rate", "battery", "c_rate_max", "max", "1/hour"),
@@ -753,6 +721,8 @@ def _targets(mf: ModelFile) -> List[Dict[str, Any]]:
     """The ADH requirements (category sizing, `muas.target`) of the limits of the model."""
     out = []
     for key, comp, par, bound, units in TARGETS:
+        if par not in mf.c[comp]["params"]:
+            continue
         p = mf.param(comp, par)
         value = float(p["value"])
         if units == "deg":
@@ -911,7 +881,7 @@ def _sizing_discipline(rep: Dict[str, Any], case: str, st: Dict[str, Any], tw: f
         out(f"time_{k}", rep["time_s"][k], "s")
     out("cells_s", rep["cells_s"], "nd")
     out("battery_capacity", d["cap_Ah"], "A*h")
-    out("rotor_diameter", rep["D_m"] if "D_m" in rep else rep["D_in"] * 0.0254, "m")   # old result files hold D_in
+    out("rotor_diameter", rep["D_m"] if "D_m" in rep else rep["D_in"] * INCH_M, "m")   # old result files hold D_in
     out("rotor_scale_over_reference", d["scale"], "nd")
     out("motor_kv", d["kv"], "rpm/V")
     out("motor_peak_torque", d["q_cap"], "N*m")
@@ -947,8 +917,10 @@ def _sizing_discipline(rep: Dict[str, Any], case: str, st: Dict[str, Any], tw: f
         out(f"cruise_{tag}_thrust", c["thrust"], "N")
         out(f"cruise_{tag}_shaft_power", c["Q"] * c["omega"], "W")
     ins = []
-    for key, units in (("mtow_kg", "kg"), ("thrust_to_weight", "nd"), ("reserve_hover_s", "s"), ("load_factor", "nd"),
-                       ("safety_factor", "nd"), ("static_margin_target", "nd"), ("battery_usable_fraction", "nd")):
+    for key, units in (("mtow_kg", "kg"), ("uas_mass_kg", "kg"), ("thrust_to_weight", "nd"), ("reserve_hover_s", "s"),
+                       ("load_factor", "nd"), ("safety_factor", "nd"), ("static_margin_target", "nd"), ("battery_usable_fraction", "nd")):
+        if key not in st["limits"]:
+            continue
         e = st["limits"][key]
         ins.append({"name": key, "value": float(e["value"]), "units": units,
                     "placeholder": bool(e.get("placeholder", False)), "source": e["source"]})
@@ -968,14 +940,15 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     """Write the Rosella quadplane from the sizing result and the Currawong base (ADR 0022).
 
     Writes: copies of the Currawong wing, ailerons and empennage (stabilizer, tail boom). The new fuselage 1.2.2.2 (body
-    from the rule of component.Fuselage). Two lift booms as subcomponents of 1.2.2 (`muas.tube`). 1.2.3.9: the cruise propeller and
-    the lift rotors (`muas.propeller` role lift, motor 5 and up). 1.2.3: the lift propulsion system and its BEMT table.
-    1.2: point masses, mass properties (roll-up with the own inertia of the long parts), `reference` (kind quadplane, MRP =
-    the sized CG), initial conditions and the `sizing` record. 1.2.5.10: the autopilot (surface outputs of the base, motor
-    outputs 5 and up). Every estimate has `placeholder: true` and names its source."""
+    from the rule of component.Fuselage). Two lift booms as subcomponents of 1.2.2 (`muas.tube`). 1.2.2: three ground
+    contacts (a skid at each lift boom station and a tail skid). 1.2.3.9: the cruise propeller and the lift rotors
+    (`muas.propeller` role lift, motor 5 and up). 1.2.3: the lift propulsion system and its BEMT table. 1.2: point masses,
+    mass properties (roll-up with the own inertia of the long parts), `reference` (kind quadplane, MRP = the sized CG),
+    `aero_settings` (copy of the base), initial conditions and the `sizing` record. 1.2.5.10: the autopilot (surface outputs
+    of the base, motor outputs 5 and up). Every estimate has `placeholder: true` and names its source."""
     res_path, rep, case, mf = _quad_result(ctx)
     st = quad_settings(mf)
-    base = source_tree.read(ctx.root / "aircraft" / st["base"])
+    base = source_tree.read(source_tree.aircraft_dir(st["base"], ctx.root))
     ref = ctx.source_ref(res_path, f"Rosella model file and sizing result {case}")
     n, d, changes = rep["names"], rep["design"], []
     cfg = rep["config"]
@@ -1044,6 +1017,37 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
         adh_doc.put_subcomponent(frame, item)
     changes.append(f"booms: 2 tubes, OD {2000 * r_o:.2f} mm, wall {1000 * t:.2f} mm, length {1000 * n['L_boom']:.0f} mm, "
                    f"y +/-{d['y_b']:.3f} m")
+
+    # ---- ground contacts on 1.2.2: a skid under each lift boom at the front rotor and a tail skid (design frame, FRD)
+    skid = next(c for c in adh_doc.node(base.doc, "1.2.2")["muas"]["ground_contacts"] if c["name"] == "TAIL_SKID")
+    # The skid foot is below the lowest point of the fuselage and of the nose propeller disc (a stopped blade can point
+    # down), by the rotor tip clearance of the model file. z is down: the lowest point has the largest z.
+    z_fus = float(max(f[:, 2].max() for f in frames))
+    cr = adh_doc.find(base.doc, "prop_cruise")["muas"]["propeller"]                # the hub z of the copy stays the base z
+    z_prop = float(cr["hub"]["xyz"][2]) + 0.5 * float(cr["diameter"]["value"])
+    gap = mf.param("rotor", "tip_clearance_m")
+    z_low = max(z_fus, z_prop) + float(gap["value"])
+    # the front lift rotor hubs: a forward skid gives a larger nose-over angle. n is in the sizing frame (x aft): flip it
+    x_front = float(flip_point([n["x_f"], 0.0, 0.0])[0])
+    tail = planform_of(adh_doc.find(doc, "htail"))
+    x_tail = float(planform_le_x(tail["position"]["xyz"][0], tail["sections"][0]["x_offset"]))
+    at_boom = "x: the front lift rotor hub (x_f). y: {}boom_y. Both of the " + case + " sizing result"
+    contacts = [{"name": name, "type": "STRUCTURE", "position": _pos([x, y, z_low]),
+                 "spring_N_per_m": skid["spring_N_per_m"], "damping_N_per_m_s": skid["damping_N_per_m_s"],
+                 "source": f"Estimate: the sizing has no landing gear geometry. {where}. z: the lowest point of the fuselage "
+                           f"frames (1.2.2.2, z {z_fus:.4f} m) and of the prop_cruise disc (hub z + D/2, z {z_prop:.4f} m), plus "
+                           f"rotor.tip_clearance_m of settings/{ctx.aircraft}.json ({gap['value']} m, "
+                           f"{gap.get('source') or 'no source'}). Spring and damping: copy of the TAIL_SKID of "
+                           f"aircraft/{st['base']}.",
+                 "placeholder": True}
+                for name, x, y, where in (
+                    ("LEFT_SKID", x_front, -d["y_b"], at_boom.format("-")),
+                    ("RIGHT_SKID", x_front, d["y_b"], at_boom.format("+")),
+                    ("TAIL_SKID", x_tail, 0.0, "x: the htail root leading edge. y: the plane of symmetry"))]
+    frame["muas"]["ground_contacts"] = contacts
+    set_sources(frame, NAME, [ref])
+    changes.append(f"ground contacts: 2 skids at x {x_front:.4f} m, y +/-{d['y_b']:.3f} m, tail skid at x {x_tail:.4f} m, "
+                   f"all at z {z_low:.4f} m (placeholder)")
 
     # ---- 1.2.3.9: the cruise propeller (copy) and the lift rotors
     prop_node = adh_doc.node(doc, "1.2.3.9", create=True)
@@ -1181,6 +1185,9 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     cg = roll["cg"]
     rin = rep["inertia_kg_m2"]
     am["point_masses"] = pms
+    base_aero = copy.deepcopy(adh_doc.node(base.doc, "1.2")["muas"]["aero_settings"])
+    base_aero["source"] = f"Copy of aircraft/{st['base']} (the same wing). There: {base_aero.get('source')}"
+    am["aero_settings"] = {**base_aero, "placeholder": True}
     am["mass_properties"] = {
         "mass": _q(roll["mass_kg"], "kg"), "cg": _pos(cg),
         "inertia": {"axes": "parallel_to_design", "products_convention": "+integral(xy dm)", "units": "kg*m^2", **roll["inertia"]},
@@ -1215,6 +1222,8 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     set_sources(air, NAME, [ref])
     changes.append(f"mass: {roll['mass_kg']:.3f} kg, CG x {cg[0]:.4f} m (MRP), Ixx {roll['inertia']['ixx']:.3f} Iyy "
                    f"{roll['inertia']['iyy']:.3f} Izz {roll['inertia']['izz']:.3f} kg m^2 (placeholder)")
+    changes.append(f"aero settings: CL_max {am['aero_settings']['cl_max']:g}, CL_min {am['aero_settings']['cl_min']:g} "
+                   f"(copy of {st['base']}, the same wing, placeholder)")
     changes.append(f"sizing: {len(sizing['tools'][0]['data_exchange']['outputs'])} outputs, energy "
                    f"{rep['energy_total_Wh']:.0f} Wh, T/W {tw:.2f}")
 
@@ -1400,7 +1409,7 @@ def _write_neutral_point(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any], 
     wing_le_x = float(planform_le_x(wing["position"]["xyz"][0], wing["sections"][0]["x_offset"]))
     path = ctx.work / "neutral_point.json"
     path.write_text(json.dumps({"aircraft": ctx.aircraft, **res, "wing_root_le_x_m": wing_le_x,
-                                "tree_sha256": _tree_hash(ctx.root / "aircraft" / ctx.aircraft), "date": date.today().isoformat()},
+                                "tree_sha256": _tree_hash(source_tree.aircraft_dir(ctx.aircraft, ctx.root)), "date": date.today().isoformat()},
                                indent=2) + chr(10), encoding="utf-8")
     print(f"AeroSandbox: wing root leading edge x = {wing_le_x:+.4f} m (must be 0, ADR 0023)")
     print(f"AeroSandbox: neutral point x_np = {res['x_np_m']:+.4f} m, mac = {res['mac_m']:.4f} m -> {path.relative_to(ctx.root).as_posix()}")
@@ -1408,8 +1417,10 @@ def _write_neutral_point(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any], 
 
 
 def setup(ctx: Context, proptimiser: Optional[str] = None) -> Dict[str, str]:
-    """Make the AeroSandbox Python for this machine (see setup_venv)."""
-    return setup_venv(proptimiser, ctx.settings().get("proptimiser_git"))
+    """AeroSandbox runs in the repository Python (ADR 0030): give the install line. A Proptimiser checkout goes in with pip."""
+    line = INSTALL if not proptimiser else f"{INSTALL} && pip install {Path(proptimiser).resolve()}"
+    print(f"AeroSandbox runs in the repository .venv (ADR 0030). Run: {line}")
+    return {"install": line, "python": str(python()), "available": str(available())}
 
 
 def describe() -> str:

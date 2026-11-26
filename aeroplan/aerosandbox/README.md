@@ -1,6 +1,6 @@
 # AeroSandbox spoke
 
-Two jobs in the AeroPlan Python (`spoke.py`): the initial sizing and the sized quadplane go into the source tree (`ingest`). The AeroSandbox model of an aircraft with its propulsion chain runs from the tree (`generate`). The models, the solver and the plots run in the AeroSandbox Python ([ADR 10](../../docs/decisions/0010-aerosandbox-in-its-own-python.md), [ADR 24](../../docs/decisions/0024-aircraft-models-in-code.md)).
+Two jobs in the AeroPlan Python (`spoke.py`): the initial sizing and the sized quadplane go into the source tree (`ingest`). The AeroSandbox model of an aircraft with its propulsion chain runs from the tree (`generate`). The models, the solver and the plots run in the repository Python ([ADR 30](../../docs/decisions/0030-one-python-for-aeroplan-and-aerosandbox.md), [ADR 24](../../docs/decisions/0024-aircraft-models-in-code.md)).
 
 ## Where to start
 
@@ -10,7 +10,7 @@ Two jobs in the AeroPlan Python (`spoke.py`): the initial sizing and the sized q
 | Change a few params and watch the design | the last cell of that notebook (`window.Window`) |
 | See how the quadplane model works (methods, data, limits) | [Quadplane modelling report](../../docs/reports/quadplane_model/README.md) |
 | Read the saved model of the Rosella | [settings/rosella.json](settings/rosella.json) |
-| Read the Currawong gap study (old) | [notebooks/deprecated/](notebooks/deprecated/README.md) |
+| Read the Currawong gap study (old) | git history: the notebooks `notebooks/deprecated/01` to `04` before their removal (they run on commit 3851d80) |
 
 ## The files
 
@@ -54,18 +54,16 @@ The model file `settings/<aircraft>.json` holds the components and the last resu
 
 ## Set up (once for each computer)
 
-```
-python -m aeroplan setup AeroSandbox --proptimiser <Proptimiser checkout>
-python -m aeroplan setup AeroSandbox            # installs Proptimiser from proptimiser_git in the settings
-```
+AeroSandbox runs in the repository `.venv` ([ADR 30](../../docs/decisions/0030-one-python-for-aeroplan-and-aerosandbox.md)).
+Do the install of [First day](../../docs/tutorials/first-day.md): `pip install -e ".[all]"`. The `sizing` extra holds
+aerosandbox, casadi, JupyterLab, ipywidgets and anywidget. The `prop` extra holds Proptimiser (no JAX, a private
+repository). Select the `.venv` Python as the notebook
+kernel. `python -m aeroplan setup AeroSandbox` prints the install line and does nothing else.
 
-<<<<<<< HEAD:aeroplan/aerosandbox/README.md
-This makes `aeroplan/aerosandbox/.venv` (Python 3.12, uv). It holds aerosandbox, casadi, Proptimiser (no JAX), JupyterLab, ipywidgets and anywidget. The kernel is "AeroPlan AeroSandbox". Reload the VS Code window after the setup. If the kernel is still missing, use **Python: Select Interpreter** and choose `.venv\Scripts\python.exe`.
-=======
-This makes `tools/aerosandbox/.venv` (Python 3.12, uv). It holds aerosandbox, casadi, Proptimiser (no JAX), JupyterLab, ipywidgets and anywidget. The kernel is "AeroPlan AeroSandbox". Reload the VS Code window after the setup. If the kernel is still missing, use **Python: Select Interpreter** and choose `.venv\Scripts\python.exe` (Windows) or `.venv/bin/python` (Linux and macOS).
->>>>>>> b31b0d65b77b3a5c09863475a94377eaacd237c6:tools/aerosandbox/README.md
+To use a local Proptimiser checkout instead of the pinned commit, run `pip install <checkout>` in the `.venv`.
 
-Copy the Proptimiser design and state file of each blade by hand into `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/`. The Rosella notebook copies them from the work folders of Redback (lift blade) and Currawong (cruise blade).
+The model reads a blade file from `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/` first, then from
+`data/proptimiser/<aircraft>/` (`data/proptimiser/SOURCE.md`). Git ignores both places today.
 
 ## Load a custom propeller
 

@@ -1,8 +1,13 @@
+---
+id: "0028"
+title: The AeroSandbox model stays in AeroPlan, with one seam
+date: 2026-10-30
+status: accepted
+kind: architecture
+amends: ["0024"]
+applies_to: ["aeroplan/aerosandbox/**"]
+---
 # 28. The AeroSandbox model stays in AeroPlan, with one seam
-
-Date: 2026-10-30
-
-Status: accepted. Amends ADR 24 (the place of the model files).
 
 ## Context
 
@@ -31,3 +36,7 @@ Make the split when one of these is true:
 
 The split stays cheap: change `base_document`, move the seven files and the notebooks, and give the spoke a dependency on the
 new package. Until then one test run covers the model and the source tree together.
+
+## Rules
+
+- AP004: The AeroSandbox model files read the source tree only in `component.base_document` and never import `aeroplan.spokes`.

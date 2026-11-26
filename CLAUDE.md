@@ -1,143 +1,138 @@
 # AeroPlan
 
 AeroPlan is the ADH-based single source of truth (SSOT) for aircraft data. Each aircraft is a source tree in git,
-`aircraft/<aircraft>/`: one JSON file for each ADH node and each dataset. `aeroplan pack` makes a `.muas` package
-from it: a ZIP archive that holds one immutable, hashed snapshot (format muas 2.0.0). Tool spokes in `aeroplan/<tool>/`
-move data between their tool and the source tree. Aerolink reads the `aerolink` package.
+`aircraft/<aircraft>/`: one JSON file for each ADH node and each dataset. Tool spokes in `aeroplan/<tool>/` move data between
+their tool and the source tree. `aeroplan pack` makes a `.muas` package (a ZIP archive) from a tree. Aerolink reads it.
 
-Read README.md first, then `docs/README.md`. The decisions are in `docs/decisions/` (one Nygard ADR for each decision,
-numbered, with date). Read the ADR before you change a thing that it covers.
+The rules live in the ADRs (`docs/decisions/`), one rule for each line of a `## Rules` section. Checks enforce most of them.
+This file holds only what you need to find the rules, and the rules that no check can see.
 
-## Layout (ADR 0025, ADR 0026)
+## Before you write code
+
+1. Find the module for the job in the code map below (`python -m aeroplan codemap`). Extend it. Do not write a second copy.
+2. Read the rules for each file you change: `python -m aeroplan rules <path>`. The agent hook shows them before an edit.
+3. Read the facts that live in ADH fields only through their helpers: `adh_doc.FACTS` names them.
+4. A new tool: `python -m aeroplan new-spoke <Name>`, then add the name to `spokes.SPOKES`.
+
+## After you write code
 
 ```
-aircraft/<aircraft>/   source trees: <wbs>.<key>.json for each node, datasets/<name>.json
-aeroplan/              core code (*.py, muas/) and one subpackage for each tool: aeroplan/<tool>/
-standards/             adh/ (upstream, patches, EXTENSIONS.md)  schema/  spec/
-docs/                  tutorials howto reference explanation decisions
-tests/                 synthetic tests
-work/<tool>/<aircraft>/   raw tool files (git ignores work/)        dist/   packages (git ignores it)
+ruff check .
+python -m pytest tests/architecture      # the rules: each failure names its rule (APnnn) and its ADR
+python -m pytest
 ```
 
-- A new tool gets a subpackage `aeroplan/<tool>/` with `__init__.py`, `spoke.py`, `README.md` and `settings/`, and a name in
-  `spokes.SPOKES`. The spoke loader imports `aeroplan.<tool>.spoke`.
-- The core (`aeroplan/*.py`, `aeroplan/muas/`) never imports a tool package. A tool-neutral form goes in the core (for example
-  `aeroplan/wing.py`). A test checks it.
-- A tool Python lives in `aeroplan/<tool>/.venv` (AeroSandbox, OpenVSP). After a folder move, run `aeroplan setup <tool>`.
-- The root node file `1.0.aircraft_system.json` holds `muas.package` (kind, consumers). The reader moves it to
-  `Aircraft.info`. There is no `aircraft.yaml`.
-- The ArduPilot spoke holds the flight events and the flight files (ADR 0021). The multirotor contract is the Aerolink
-  note `docs/multirotor_contract.md`. AeroPlan keeps no copy.
-- The repository root is `aeroplan.REPO_ROOT` (`spokes.repo_root()` checks it). Never compute it from `parents[n]`.
+Fix the code when a rule fails. Add an entry to `tests/architecture/allowlist.py` only when the user agrees.
 
-## ADH rules (ADR 0027)
+## Rules that no check can see
 
-- ADH decides the design. Store each fact once: when ADH has the field, the value goes there, and only there.
-- Add a MUAS extension only where ADH is silent or broken, under the `muas` key, with `extra="forbid"`. Before you add a
-  key, read `standards/adh/EXTENSIONS.md` and add its row (what ADH has, why MUAS adds it). A test stops the build when a
-  key has no row.
-- A part with no WBS number of its own is a `subcomponent` of its ADH node. Never invent a WBS number.
-- Read and write the facts that live in ADH fields through the helpers:
-
-  | Fact | ADH field | Read | Write |
-  |---|---|---|---|
-  | S, b, c | node 1.2 `parameters.reference_data` (`Sref`, `BLref`, `Cbar`) | `adh_doc.reference` | `adh_doc.set_reference` |
-  | Control surface span and hinge | `parameters.asymmetric_control` or `symmetric_flap` | `adh_doc.control_surface` | `adh_doc.set_control_geometry` |
-  | Lifting surface shape | `geometry.lifting_surface` | `geometry.planform_of` | `geometry.set_planform` |
-
-- ADH parameter classes read only their aliases (`Sref`, not `reference_area`). A field name passes the ADH validation as an
-  unknown extra key, and the value is lost.
-- Use the ADH class when it fits (`behavior.UncertaintyEffect` checks `effect`). Do not copy an ADH class into `muas`. Import
-  upstream ADH inside a function, not at module level, so the MUAS models load without it.
-- `standards/adh/upstream/` stays pristine. Fixes go in `standards/adh/patches/`. A patch must not break an upstream ADH test
-  (CI runs them). `standards/adh/upstream_commit.txt` names the upstream commit. `standards/README.md` lists the patches and
-  the known faults of upstream.
-- After a change of a MUAS model, raise `MUAS_SCHEMA_VERSION` and run `aeroplan schema --out standards/schema`.
-
-## Data rules
-
-- Store SI. Angles are radians in the ADH data. No field holds degrees. Every quantity carries units: a `{value, units}`
-  quantity, a field name with a unit suffix (`_m`, `_s`, `_rad`, `_mps`), or an ADH float whose patched description names the
-  SI unit. Exception: a published reference model (DAVE-ML) keeps its own units (`units_system: as-source`), because its
-  check cases use them.
-- The design frame is FRD: x forward, y right, z down, metres (ADR 0029). A spoke flips at the edge of its tool with
-  `aeroplan/frame.py`. The source tree holds FRD only.
-- MRP = the nominal-configuration CG (today the T7 CoG of the flow5 analysis), a fixed point in the design frame.
-- Never type an unsourced number. A stand-in value carries `placeholder: true` and names its source.
-- Only ADH data goes into the source tree. Nobody edits the source tree by hand: only spokes (and code) write it. A one-time
-  migration is a script that reads and writes the tree through `source_tree`. Do not keep it.
-- Copy data by hand between repos. No symlinks. No hard-coded cross-repo paths. AeroPlan imports no sibling repo.
-  Aerolink has a hand copy of the package reader (src/aerolink/muas.py) and the glTF reader (visual/cad.py).
-- DAVE-ML must pass the vendored 2.0 DTD (`standards/spec/dave-ml/2p0`).
-
-## Work rules
-
-- Tests use synthetic numbers only. `tests/test_aircraft_files.py` runs every check, the pack and the unpack on each
-  committed source tree.
-- `ruff check .` must pass (CI runs it, the rules are in `pyproject.toml`).
+- ADH decides the design. A fact that ADH has a field for goes in that field, and only there (ADR 0027).
+- Ask the user before you add a `muas` key. Then add its row to `standards/adh/EXTENSIONS.md`.
+- Never invent a WBS number. A part with no WBS number of its own is a `subcomponent` of its ADH node.
+- Never type an unsourced number. A stand-in value has `placeholder: true` and names its source (ADR 0032).
+- Nobody edits `aircraft/` by hand. Only spokes and code write it (ADR 0008).
+- Never edit `standards/adh/upstream/`. A fix is a patch in `standards/adh/patches/` (ADR 0034).
 - Write prose in ASD-STE100 style.
 - Move tracked files with `git mv`. Never `git add -A`. Do not commit unless the user asks.
-- Commits and builds: author "Liam M.", git identity lmca0007.
+
+## Install and commands
+
+`docs/tutorials/first-day.md` gives the install. `python -m aeroplan --help` gives every command. The common ones:
+
+```
+python -m aeroplan doctor                    # what is missing on this computer, with the fix for each item
+python -m aeroplan check currawong
+python -m aeroplan build currawong           # author: git config user.name
+python -m aeroplan pack currawong --profile aerolink review archive
+python -m aeroplan show currawong --md docs/reference/aircraft/currawong.md
+python -m aeroplan schema --out standards/schema   # after a model change, with a new MUAS_SCHEMA_VERSION
+python -m aeroplan rules --index --write     # after a change of an ADR front matter
+python -m aeroplan codemap --write           # after a new module or a changed module docstring
+python -m aeroplan setup OpenVSP             # once per computer: OpenVSP has its own Python (ADR 0011)
+```
 
 ## Code map
 
-Core (`aeroplan/`):
+Made from the first line of each module docstring. Do not edit it by hand: run `python -m aeroplan codemap --write`.
 
+<!-- codemap:start -->
 | Module | Job |
 |---|---|
-| `source_tree.py` | The source tree `aircraft/<aircraft>/` <-> the `Aircraft` in memory (ADH doc, datasets, info) |
-| `assets.py` | The asset register: IDs (content hashes), file and dataset entries, references, fetch with hash check |
-| `flightfiles.py` | The flight files: parse and write `.parm`, QGC WPL `.waypoints`, fence polygons, and the fence parameter check |
-| `package.py` | `.muas` ZIP package: pack (profiles, deterministic bytes), open (every hash), unpack |
-| `consumers.py` | Packing profiles, storage tiers, what Aerolink needs (`missing_for_flight`) |
-| `h5json.py` | JSON <-> HDF5 of the data files `data/<name>.h5` (no time stamps) |
-| `gltf.py` | glTF 2.0 binary writer and reader of the part view |
-| `adh_doc.py` | The nested ADH document: WBS tree from upstream, node access, validation, normalisation, the reference and control-surface helpers |
-| `checks.py` | `aeroplan check`: ADH, datasets, DAVE-ML (DTD, round trip, checkData), datums, consumers |
-| `daveml_adh.py` | DAVE-ML XML <-> ADH `DAVEfunc` form, `compare` (lossless round trip) |
-| `daveml_eval.py` | DAVE-ML evaluator (MathML, n-D tables) and the checkData runner |
-| `spokes.py` | Spoke loader and the spoke `Context` (work folder `work/<tool>/<aircraft>/`, settings, `source_ref`, `add_dataset`) |
-| `build.py` | `aeroplan build`, placeholder list |
-| `summary.py` | One-page Markdown summary of an aircraft (`aeroplan show <aircraft> --md <file>`) |
-| `datum.py` | Datum checks (planforms, reference, CAD meshes when present, stale assets) |
-| `frame.py` | The FRD design frame: the flip between x aft, z up (the tools) and FRD (ADR 0029) |
-| `wing.py` | The tool-neutral wing form (`Section`, `Wing`: flow5 convention, in memory only) |
-| `geometry.py` | ADH shapes <-> tool shapes: `planform_of`, `set_planform`, `lifting_surface_adh`, bodies |
-| `parts.py`, `visual.py` | Part meshes and the view (lifting surfaces, bodies, demo shapes) |
-| `step_mesh.py` | Triangles of a faceted STEP file (the Creo shrinkwrap skin), no CAD kernel |
-| `aero_buildup.py` | The aero build-up model and its DAVE-ML writer (the flow5 sources are in `flow5/buildup.py`) |
-| `skin_body.py` | Body frames from a closed skin mesh (slices, wing panel cut, fit report), mesh repair for VSPAERO |
-| `multirotor.py` | The multirotor seed: hubs from a CAD arm, rotors, motor outputs, reference, gear, demo shapes |
-| `multirotor_aero.py` | The multirotor body-drag DAVE-ML (forces only) |
-| `mass_model.py` | Point masses to mass, CG and inertia (parallel axis). Strip distribution of a mass over a planform |
-| `muas/` | The MUAS extension models (one row each in `standards/adh/EXTENSIONS.md`) |
-
-Tools (`aeroplan/<tool>/`, each with `spoke.py`, `README.md`, `settings/`): `aerosandbox`, `flow5` (`files.py` and `polar.py`
-read the flow5 files, `buildup.py`, `sweep.py`, `plane_xml.py`), `specsheet` (`sheets/`), `propalyser`, `creo`, `openvsp`
-(`runner.py`, `vsp_worker.py`), `daveml`, `ardupilot`, `aerolink`.
-
-AeroSandbox model files (ADR 0024, ADR 0028, they run in the AeroSandbox Python as `aeroplan.aerosandbox.*`):
-`component.py` (components, level functions, `base_document`: the only read of the source tree), `model.py`
-(`QuadplaneModel`, `FixedWingModel`, `MultirotorModel`, the spoke jobs), `mission.py`, `optimise.py` (solver driver,
-fidelity ladder), `result.py`, `plot.py` and `window.py`. One model file for each aircraft:
-`aeroplan/aerosandbox/settings/<aircraft>.json`. The Rosella sizing is `aeroplan/aerosandbox/notebooks/rosella_sizing.ipynb`,
-committed with its outputs. `aeroplan/aerosandbox/data/motor_survey.csv` and `esc_survey.csv` are the sourced maker tables for the mass fits
-(`data/vendor_survey_SOURCE.md` gives the rules). The quadplane model is described in `docs/reports/quadplane_model/`.
-
-## Commands
-
-`python -m aeroplan --help` gives the full list. The common ones:
-
-```
-pip install -e .[test]
-python -m pytest
-ruff check .
-python -m aeroplan check currawong
-python -m aeroplan show currawong --md docs/reference/aircraft/currawong.md
-python -m aeroplan build currawong --author "Liam M."
-python -m aeroplan pack currawong --profile aerolink review archive
-python -m aeroplan setup OpenVSP         # once per computer, and after a folder move
-python -m aeroplan setup AeroSandbox     # once per computer, and after a folder move
-python -m aeroplan schema --out standards/schema   # after a model change
-python standards/adh/build_adh.py        # after a change of standards/adh/patches/
-```
+| `__init__.py` | AeroPlan: the ADH-based single source of truth for aircraft data (the .muas file). |
+| `__main__.py` | `python -m aeroplan`: the command line (cli.py). |
+| `adh_doc.py` | The nested ADH document: one `AircraftSystem` tree, as upstream ADH defines it. |
+| `aero_buildup.py` | The aero build-up of contract C (`dml/aero.dml`): coefficients from flow5, written as DAVE-ML 2.0. |
+| `aerolink/spoke.py` | Aerolink spoke: the `.muas` package that Aerolink flies. |
+| `aerosandbox/component.py` | Components of an aircraft model, and the functions that give a component at a chosen fidelity level. |
+| `aerosandbox/mission.py` | The mission of a quadplane: the flight conditions the model evaluates, and the segments that add up to the energy. |
+| `aerosandbox/model.py` | Aircraft models. One class for each class of aircraft. A model holds components (component.py) and evaluates one flight |
+| `aerosandbox/optimise.py` | The solver driver. It turns a model (model.py) into one `asb.Opti` problem, solves it, and gives a `Result` (result.py). |
+| `aerosandbox/plot.py` | Plots of a model, a `Result` or a `Snapshot`. Nothing here calls the solver: the plotter only reads numbers. |
+| `aerosandbox/result.py` | The result of a solve, and a snapshot of one iterate. |
+| `aerosandbox/spoke.py` | AeroSandbox spoke: the initial sizing -> ADH performance record of the air vehicle, the ADH aircraft -> an AeroSandbox model |
+| `aerosandbox/window.py` | The window: change a few params of a model, see the design and the limits change, and optimise the free ones in front of you. |
+| `ardupilot/spoke.py` | ArduPilot spoke: flight events and flight files of the autopilot. |
+| `assets.py` | The asset register (1.10.2 DataRepository `muas.assets`) and the datasets it names. |
+| `build.py` | `aeroplan build <aircraft>`: run the spokes, check the ADH document, write the source tree `aircraft/<aircraft>/`. |
+| `checks.py` | `aeroplan check <aircraft>`: every check of the source tree of one aircraft. |
+| `cli.py` | aeroplan command line. |
+| `codemap.py` | The code map: one row for each module of the package, made from the first line of its docstring (rule AP015). |
+| `constants.py` | Physical constants and unit factors, written once (rule AP011). Import them from here: never type the number again. |
+| `consumers.py` | Packing profiles and what each consumer of a `.muas` package needs. |
+| `creo/spoke.py` | CREO spoke: the CAD part exports -> `muas.visual` of their ADH items (pointer, pose and hinge of each mesh). |
+| `datum.py` | Datum checks of the ADH document: every geometry source must agree in the one design frame. |
+| `daveml/spoke.py` | DAVEML spoke: published DAVE-ML 2.0 models (for example the NASA F-16 check-case model) -> datasets of the ADH items. |
+| `daveml_adh.py` | DAVE-ML 2.0 (ANSI/AIAA S-119) XML <-> the ADH `DAVEfunc` form (upstream behavior.py). |
+| `daveml_eval.py` | Evaluate a DAVE-ML model in its ADH `DAVEfunc` form, and run its checkData static shots. |
+| `dml_validate.py` | Validate DAVE-ML bytes against the vendored DAVE-ML 2.0 DTD (spec/dave-ml/2p0). |
+| `doctor.py` | `aeroplan doctor`: what this computer has and lacks for AeroPlan, with one fix line for each missing item. |
+| `flightfiles.py` | The flight files of an aircraft: ArduPilot parameters, the waypoint plan and the geofence. |
+| `flow5/buildup.py` | The flow5 sources of the aero build-up (aeroplan.aero_buildup): the T7 stability point, the viscous polar and the |
+| `flow5/files.py` | Flow5 geometry and stability files: the plane XML, the foil .dat files and a T7 operating point. |
+| `flow5/plane_xml.py` | flow5 plane XML: read the body frames and point masses, and write a plane XML from the ADH document. |
+| `flow5/polar.py` | flow5 polar reader: one flow5 7.57 polar text file (`*.csv`, fixed-width text, no commas). |
+| `flow5/spoke.py` | flow5 spoke: the flow5 sweep -> ADH geometry, reference, mass model, aero model and trim. The ADH document -> a |
+| `flow5/sweep.py` | flow5 sweep runner: write the flow5 script and the polar XML files, run flow5 headless in two passes, check the runs |
+| `frame.py` | The design frame: FRD (x forward, y right, z down, metres) with its origin at the wing root leading edge (ADR 0029). |
+| `geometry.py` | Shape helpers between the ADH geometry classes and the tool shapes (flow5 wings and bodies, meshes). |
+| `gltf.py` | glTF 2.0 binary (GLB): the 3D view of the aircraft in a `.muas` package (`preview/aircraft.glb`). |
+| `h5json.py` | JSON <-> HDF5: the data files of a `.muas` package (`data/<name>.h5`). |
+| `mass_model.py` | The mass model: point masses -> mass, CG and inertia. Design frame (FRD: x forward, y right, z down), SI. |
+| `muas/aircraft.py` | MUAS extension types of the aircraft ADH document. |
+| `muas/assets.py` | The asset register: one entry for each large file or dataset, under the `muas` key of 1.10.2 DataRepository. |
+| `muas/base.py` | Base model for all MUAS extension types (brief D03: extra="forbid"). |
+| `muas/control_surface.py` | Control-surface extension (brief D13). A control surface is a subcomponent of the surface that carries it |
+| `muas/control_system.py` | Control-system extensions (user answers 3 and 4, 2026-10-08). Group for a later control-systems analysis. |
+| `muas/dataset.py` | Dataset metadata: what every dataset in the asset register carries (source tool, version, fidelity, role, sigma, |
+| `muas/flight.py` | Flight events (1.8.1.4 FlightTests) and firmware releases (1.2.9 AirVehicleSoftwareRelease). |
+| `muas/ground.py` | Ground contacts (user answer 3, 2026-10-08). Group for a later structural and landing-loads analysis. |
+| `muas/ic.py` | Initial-condition spec (brief D17). Rate frame, latitude type and attitude sequence are mandatory. |
+| `muas/mass.py` | Mass properties (brief D11). |
+| `muas/mission.py` | Missions as ADH requirements (user decision 2026-10-08: "standardise missions inside the ADH"). |
+| `muas/node.py` | MUAS extension of an ADH node (rule D03). |
+| `muas/propulsion.py` | Electric propulsion extension (brief D12; user answers 3, 4). |
+| `muas/provenance.py` | Provenance (brief D09). Hash fields live here. ADH ModelDescription and DAVE-ML Provenance stay as upstream. |
+| `muas/reference.py` | Reference data: frames, MRP and signs (brief D05; user answer 7). The reference values (S, b, c) are ADH data: the |
+| `muas/requirement.py` | MUAS extensions of an ADH `Requirement` (user answer 5, 2026-10-08: handling targets and analysis speeds are |
+| `muas/uncertainty.py` | Uncertainty schema. |
+| `muas/units.py` | Quantities with explicit units, normalised to SI at load (brief D04). |
+| `multirotor.py` | The multirotor seed: the ADH items of a quadcopter from the numbers of a settings file. |
+| `multirotor_aero.py` | The aero model of a multirotor: the body drag, written as DAVE-ML 2.0 (forces only, no moments). |
+| `openvsp/runner.py` | Run OpenVSP jobs in the OpenVSP Python, and make that Python (`aeroplan setup OpenVSP`). |
+| `openvsp/spoke.py` | OpenVSP spoke: the ADH geometry -> an OpenVSP model (.vsp3), and a changed OpenVSP model -> the ADH geometry. |
+| `openvsp/vsp_worker.py` | OpenVSP worker: runs in the OpenVSP Python (aeroplan/openvsp/.venv, made by `aeroplan setup OpenVSP`), not in AeroPlan. |
+| `package.py` | The `.muas` package: a ZIP archive that holds one immutable, hashed snapshot of an aircraft or a flight record. |
+| `parts.py` | Part meshes of the aircraft in the design frame, made from the `muas.visual` entries of the ADH document. |
+| `propalyser/spoke.py` | Propalyser spoke: a contract B file (`propulsion-system` schema version 2) -> the propulsion system of the |
+| `propulsion_sizing.py` | First sizing of a quadplane propulsion system from the maximum take-off mass (MTOW). Pure functions, SI units. |
+| `rules.py` | The rules of the repository, read from the ADRs in docs/decisions/ (ADR 0031): front matter, `## Rules`, the index. |
+| `schema_export.py` | Export one JSON Schema file per MUAS type, committed per version (brief D15). |
+| `skin_body.py` | Flow5-style body frames from a closed outer skin mesh (the Creo shrinkwrap of the fuselage). |
+| `source_tree.py` | The source tree of an aircraft: `aircraft/<name>/`, committed to git. It is the single source of truth. |
+| `specsheet/spoke.py` | SpecSheet spoke: the Master Specification Sheet (weight log and CG sheet) -> the ADH mass model. |
+| `spokes.py` | Spokes: one subpackage for each tool, `aeroplan/<tool>/`. A spoke moves data between its tool and the source tree |
+| `step_mesh.py` | Triangles of a faceted STEP file (for example a Creo shrinkwrap), with no CAD kernel. |
+| `summary.py` | One-page summary of an aircraft as Markdown (`aeroplan show <aircraft> --md <out>`). |
+| `visual.py` | Visual parts: CAD meshes in the design frame, for the glTF view of a `.muas` package (aeroplan.gltf). |
+| `wing.py` | A lifting surface in the section form of the tools (flow5, OpenVSP, AeroSandbox): the right half, root first. |
+<!-- codemap:end -->

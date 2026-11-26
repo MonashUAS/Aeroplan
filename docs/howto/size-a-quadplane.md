@@ -1,18 +1,25 @@
 # Size a quadplane (the Rosella)
 
-The notebook [rosella_sizing.ipynb](../../tools/aerosandbox/notebooks/rosella_sizing.ipynb) gives every number that you need to order the lift booms and the lift propulsion. It builds the model from components, runs the fidelity ladder and saves the model to `tools/aerosandbox/settings/rosella.json`. The decisions are [ADR 22](../decisions/0022-quadplane-path.md) and [ADR 24](../decisions/0024-aircraft-models-in-code.md).
+The notebook [rosella_sizing.ipynb](../../aeroplan/aerosandbox/notebooks/rosella_sizing.ipynb) gives every number that you need to order the lift booms and the lift propulsion. It builds the model from components, runs the fidelity ladder and saves the model to `aeroplan/aerosandbox/settings/rosella.json`. The decisions are [ADR 22](../decisions/0022-quadplane-path.md) and [ADR 24](../decisions/0024-aircraft-models-in-code.md).
 
 ## Before you start
 
-1. Run `python -m aeroplan setup AeroSandbox --proptimiser <checkout>`. The checkout must have the geometric scale (Proptimiser 711ef86).
-2. Copy these 4 files by hand from the Proptimiser checkout. Git ignores `work/`, so a new clone does not have them:
-   ```
-   work/aerosandbox/redback/proptimiser/designs/MAD_FLUXER_22x6_6_jung.yaml
-   work/aerosandbox/redback/proptimiser/propellers/MAD_FLUXER_22x6_6_jung.state.json
-   work/aerosandbox/currawong/proptimiser/designs/Currawong_V1.yaml
-   work/aerosandbox/currawong/proptimiser/propellers/Currawong_V1.state.json
-   ```
-3. Open `tools/aerosandbox/notebooks/rosella_sizing.ipynb` in the kernel "AeroPlan AeroSandbox". If the kernel is missing, select the interpreter `tools/aerosandbox/.venv/bin/python` (Linux and macOS) or `tools\aerosandbox\.venv\Scripts\python.exe` (Windows).
+1. Do the install of [First day](../tutorials/first-day.md): one `.venv` with `pip install -e ".[all]"`. It installs
+   AeroSandbox, Jupyter and Proptimiser 711ef86 (the commit with the geometric scale). Proptimiser needs read access to
+   its private repository.
+2. Open `aeroplan/aerosandbox/notebooks/rosella_sizing.ipynb`. Select the `.venv` Python as the kernel.
+
+The notebook needs 4 blade files: the lift blade `MAD_FLUXER_22x6_6_jung` and the cruise blade `Currawong_V1`. It reads
+each one from `work/aerosandbox/<aircraft>/proptimiser/{designs,propellers}/` first, then from
+`aeroplan/aerosandbox/data/proptimiser/<aircraft>/`. Git ignores both places today, so copy the files by hand
+(`aeroplan/aerosandbox/data/proptimiser/SOURCE.md` names the source of each one):
+
+```
+work/aerosandbox/redback/proptimiser/designs/MAD_FLUXER_22x6_6_jung.yaml
+work/aerosandbox/redback/proptimiser/propellers/MAD_FLUXER_22x6_6_jung.state.json
+work/aerosandbox/currawong/proptimiser/designs/Currawong_V1.yaml
+work/aerosandbox/currawong/proptimiser/propellers/Currawong_V1.state.json
+```
 
 The notebook writes to `work/aerosandbox/rosella/` and to `settings/rosella.json`. It never writes the source tree. The first run on a computer makes the CT and CP tables of the blades from Proptimiser solves (`work/aerosandbox/rosella/.../tables`), so it takes longer than the later runs.
 

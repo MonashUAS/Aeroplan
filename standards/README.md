@@ -8,7 +8,7 @@ The standards that AeroPlan builds on. Nothing in this folder is aircraft data.
 | `adh/patches/` | The AeroPlan patch series, applied in name order |
 | `adh/build_adh.py` | Copies `upstream/src` to `adh/build/src` and applies the patches (git ignores `adh/build/`). `import aeroplan` runs it when the build is missing |
 | `adh/EXTENSIONS.md` | The extension register: each `muas` key, what ADH has, and why MUAS adds the key |
-| `schema/v<version>/` | The JSON Schema of the MUAS extension types, one folder for each version (`aeroplan schema --out standards/schema`) |
+| `schema/v<version>/` | The JSON Schema of the MUAS extension types of the current `MUAS_SCHEMA_VERSION` (`aeroplan schema --out standards/schema`). Git history holds the old versions |
 | `spec/dave-ml/2p0/`, `spec/mathml/2p0/` | The DAVE-ML 2.0 DTD and the MathML 2.0 DTD, so the DTD check needs no network |
 
 ## The ADH
@@ -32,9 +32,11 @@ The standards that AeroPlan builds on. Nothing in this folder is aircraft data.
 | Extend by subclass of the Pydantic classes. Validate the data | Each MUAS model is Pydantic with `extra="forbid"`, under the single key `muas`. `adh_doc.validate_document` checks every node against the upstream `Component` |
 | A log of design decisions (the digital thread) | `docs/decisions/` (one Nygard ADR for each decision). The build record and the asset register link each value to its source file |
 | Units conversion (planned in ADH) | pint, in `aeroplan/muas/units.py`. Every quantity is stored in SI |
-| Code-quality tools | `ruff check` in CI (`pyproject.toml` has the rules) |
+| Code-quality tools | `ruff check` and the architecture rules (`tests/architecture`, ADR 31) in CI |
 
 ## Patch policy
+
+ADR 34 holds the rules.
 
 - `adh/upstream/` stays pristine. Never edit it.
 - A fix goes in a new file `adh/patches/NNNN-<name>.patch` (a `git apply` patch against `upstream/`).
@@ -49,14 +51,15 @@ The standards that AeroPlan builds on. Nothing in this folder is aircraft data.
 | 0002 | The point count check of a spline runs after the degree is known | Upstream always checked for degree 3, so it refused a polyline of 2 points (degree 1) |
 | 0003 | `Reference.date` takes DAVE-ML date text | DAVE-ML 2.0 declares the date as text (`1992`, `2013-08-00`) |
 | 0004 | The descriptions of `ReferenceData` say m^2 and m, not ft^2 and ft | AeroPlan stores SI (ADR 27). The values and the aliases do not change |
+| 0005 | `ReferenceData` accepts its field names too (`populate_by_name`) | Upstream took the aliases only. A field name passed the validation as an unknown key, and the value was lost |
 
 ## Known faults of upstream
 
 - `behavior.py` has its own `CommonBaseModel` and `Metadata`, which differ from the ones in `common_base_model.py`. Check which
   one a class imports.
-- `ReferenceData` and the other parameter classes take their aliases only (`Sref`, not `reference_area`). With
-  `extra="allow"`, a field name passes the validation and the value is lost. `adh_doc.validate_document` refuses it for
-  `reference_data`.
+- The ADH classes have `extra="allow"`, so a misspelled key passes the validation as an unknown key.
+  `adh_doc.validate_document` refuses every key of `reference_data` but the aliases (`Sref`, `BLref`, `Cbar`), so
+  each fact has one spelling in the tree. (Patch 0005 removes the loss of a field name.)
 - The parameter classes of `airframe_parameters.py` are DATCOM inputs. The upstream file says that they need a refactor.
   `hingeline_chord_ratio` has no clear meaning, so AeroPlan does not use it.
 
