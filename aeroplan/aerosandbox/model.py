@@ -586,8 +586,16 @@ class QuadplaneModel(AircraftModel):
 CONTROL_SIGNS = {"elevator": 1.0, "aileron": -1.0, "rudder": -1.0}
 #: the methods of FixedWingModel.stability
 METHODS = ("combined", "aerobuildup")
-#: panels of the vortex lattice: spanwise for each section of the wing (cosine spaced), chordwise (cosine spaced)
+#: panels of the vortex lattice: spanwise for each section of the wing, chordwise (both with equal spacing: see `vlm`)
 VLM_PANELS = (16, 12)
+#: core radius (m) of the vortex filaments of the vortex lattice. The library default of 1e-8 m leaves a point that is 1e-4 m from a
+#: filament with a 1/d velocity: see `vlm`.
+VLM_CORE_M = 1e-4
+#: guard of `stability` (method "combined"): the vortex lattice runs again at coarser panels. A derivative may differ by
+#: max(relative x |value|, absolute floor), else the job raises. From the convergence data: the smooth results of the
+#: Rosella and the Navion differ by at most 0.03 (Cma), 0.08 (CYb), 0.05 (Cnb) and 0.01 (CLa) between 12 and 16 spanwise
+#: panels. A failed solve differs by 4 or more in CLa and by 0.5 or more in the others.
+GUARD = {"CLa": (0.05, 0.3), "Cma": (0.15, 0.2), "CYb": (0.2, 0.15), "Cnb": (0.2, 0.08)}
 #: derivatives that the two methods give (wind axes CYb and body axes Cl, Cn: stability() turns them)
 RAW = ("CLa", "Cma", "CLq", "Cmq", "CYb", "CYp", "CYr", "Clb", "Cnb", "Clp", "Cnp", "Clr", "Cnr")
 
@@ -622,6 +630,16 @@ def camber_deflected(plane, deflections: Dict[str, float]):
                                               airfoil=foil))
                 out.wings.append(asb.Wing(name=f"{w.name}_{i}_{side:+.0f}", xsecs=xsecs, symmetric=w.symmetric and not anti))
             i = j + 1
+    return out
+
+
+def panel_mismatch(fine: Dict[str, Any], coarse: Dict[str, Any]) -> List[str]:
+    """The derivatives of GUARD for which two vortex lattice solutions differ by more than the tolerance (empty: they agree)."""
+    out = []
+    for k, (rel, floor) in GUARD.items():
+        a, b = float(fine[k]), float(coarse[k])
+        if not (abs(a - b) <= max(rel * max(abs(a), abs(b)), floor)):          # a nan fails here
+            out.append(f"{k} {a:.4g} against {b:.4g}")
     return out
 
 
@@ -674,7 +692,7 @@ class FixedWingModel(AircraftModel):
     def _prop_model(self):
         if not _installed("proptimiser"):
             raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
-                               "`pip install -e .[prop]` (a private repository, Python 3.12)")
+                               "`pip install -e .[prop]` (Python 3.12 or newer)")
         os.environ["PROPTIMISER_HOME"] = self.spec["propulsion"]["proptimiser_home"]
         from proptimiser.casadi_prop import PropellerModel
         from proptimiser.init import Propeller
@@ -790,6 +808,7 @@ class FixedWingModel(AircraftModel):
         derivatives and the control derivatives. It has the downwash of the wing on the tail. The AeroBuildup body model gives the
         fuselage and tail boom terms (`surfaces_and_bodies`, as in `neutral_point`). It has no wing-body interference.
         The vortex lattice reads no asb.ControlSurface: `camber_deflected` bends the camber. `spanwise` and `chordwise` are its panels.
+        It runs again at 3/4 of the spanwise and 2/3 of the chordwise panels. ValueError if CLa, Cma, CYb or Cnb differ more than `GUARD`.
         method "aerobuildup": AeroBuildup of the whole airplane gives every derivative. It has no downwash.
         CD and CDde are always from AeroBuildup (drag and stall stay with AeroBuildup). CL and Cm at the trim come from the method
         itself, so that CL0 = CL - CLa alpha - CLde de and Cm0 = Cm - Cma alpha - Cmde de keep the downwash of the method.
@@ -840,6 +859,12 @@ class FixedWingModel(AircraftModel):
             surf, bodies = self.surfaces_and_bodies(cg)
             surf = at_origin(surf, cg)
             lat = self.vlm(camber_deflected(surf, trim), op, spanwise, chordwise).run_with_stability_derivatives(**rates)
+            coarse = self.vlm(camber_deflected(surf, trim), op, max(4, spanwise * 3 // 4), max(4, chordwise * 2 // 3)
+                              ).run_with_stability_derivatives(alpha=True, beta=True, p=False, q=False, r=False)
+            bad = panel_mismatch(lat, coarse)
+            if bad:
+                raise ValueError(f"the vortex lattice is not converged at {spanwise} x {chordwise} panels: " + "; ".join(bad)
+                                 + ". Change `spanwise` and `chordwise`")
             bod = asb.AeroBuildup(airplane=bodies, op_point=op).run_with_stability_derivatives(**rates)
             raw = {k: _f(lat[k]) + _f(bod[k]) for k in RAW}
             cd = _f(lat["CD"]) + _f(bod["CD"])
@@ -907,9 +932,29 @@ class FixedWingModel(AircraftModel):
 
     @staticmethod
     def vlm(plane, op, spanwise: int = VLM_PANELS[0], chordwise: int = VLM_PANELS[1]):
-        """The vortex lattice of the surfaces, with trailing vortices along x (not along the wind)."""
+        """The vortex lattice of the surfaces, with trailing vortices along x (not along the wind).
+
+        Two arguments differ from the library defaults, because AeroSandbox 4.2.9 gives a wrong lift (slope of 10 to 2500 per rad
+        for 4.6) with no error at some panel counts. The solve of the lift is near singular (condition number 1e4 to 1e6, smallest
+        singular value 100 times below normal). Found causes:
+          - A cambered wing with dihedral: the mesh moves each vertex along the normal of the dihedral plane. At the root this
+            puts the vertices of the right half at y < 0 (-0.011 m for NACA 4415, 7.5 deg, chord 2.1 m). The two halves overlap,
+            and a collocation point of one half lies 2 to 4 mm from a trailing filament of the other half. A symmetric
+            airfoil, or no dihedral, gives y = 0 and no fault.
+          - Cosine spacing along the span: a section gives edge strips of 0.01 times its width (1.8 mm for a 0.19 m section) beside
+            a chord of 0.2 m. Neighbouring strips then have trailing filaments 2 mm apart and cancel nearly.
+        `spanwise_spacing_function` is linspace: the strips of a section have equal width, so no strip is thin and the root strip is
+        wider than the overlap. `chordwise_spacing_function` is linspace too: with cosine spacing the panels at the leading and
+        trailing edges follow the camber line of the airfoil coordinates closely, and on Rosella CL at alpha 0 went 0.59, 0.69,
+        0.94 for 8, 12, 16 chordwise panels (spanwise 12). With linspace: 0.50, 0.54, 0.56, and Cma -0.68 to -0.70. CL0 still
+        rises by about 5 % for each doubling of the chordwise panels. `vortex_core_radius` is `VLM_CORE_M`, which removes a hit of a filament that remains
+        (a fin wake that passes in line with the tail). A larger core (1e-3 to 1e-2) made the solve worse. `stability` also runs
+        the lattice at coarser panels and raises when the results differ (`panel_mismatch`)."""
         import aerosandbox as asb
+        import aerosandbox.numpy as anp
         return asb.VortexLatticeMethod(plane, op, spanwise_resolution=spanwise, chordwise_resolution=chordwise,
+                                       spanwise_spacing_function=anp.linspace, chordwise_spacing_function=anp.linspace,
+                                       vortex_core_radius=VLM_CORE_M,
                                        align_trailing_vortices_with_wind=False)
 
     def neutral_point(self, spanwise: int = 16, chordwise: int = 12, velocity: float = 17.0, alphas=(0.0, 4.0)) -> Dict[str, Any]:
@@ -1269,7 +1314,7 @@ class MultirotorModel(AircraftModel):
         maker check."""
         if not _installed("proptimiser"):
             raise RuntimeError("Proptimiser is not installed in the AeroSandbox Python: run "
-                               "`pip install -e .[prop]` (a private repository, Python 3.12)")
+                               "`pip install -e .[prop]` (Python 3.12 or newer)")
         os.environ["PROPTIMISER_HOME"] = home
         from proptimiser.init import Propeller
         m = self.m

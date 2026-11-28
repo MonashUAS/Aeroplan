@@ -3,7 +3,67 @@
   "name": "Airframe",
   "muas": {
     "ext_version": "0.6.0",
-    "instance": "airframe"
+    "instance": "airframe",
+    "ground_contacts": [
+      {
+        "name": "LEFT_SKID",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.46100398912712093,
+            -0.55,
+            0.30900000000000005
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "Estimate: the sizing has no landing gear geometry. x: the front lift rotor hub (x_f). y: -boom_y. Both of the H4_12S sizing result. z: the lowest point of the fuselage frames (1.2.2.2, z 0.0700 m) and of the prop_cruise disc (hub z + D/2, z 0.2890 m), plus rotor.tip_clearance_m of settings/rosella.json (0.02 m, stand-in: gap between prop discs and the nearest structure). Spring and damping: copy of the TAIL_SKID of aircraft/currawong.",
+        "placeholder": true
+      },
+      {
+        "name": "RIGHT_SKID",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            0.46100398912712093,
+            0.55,
+            0.30900000000000005
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "Estimate: the sizing has no landing gear geometry. x: the front lift rotor hub (x_f). y: +boom_y. Both of the H4_12S sizing result. z: the lowest point of the fuselage frames (1.2.2.2, z 0.0700 m) and of the prop_cruise disc (hub z + D/2, z 0.2890 m), plus rotor.tip_clearance_m of settings/rosella.json (0.02 m, stand-in: gap between prop discs and the nearest structure). Spring and damping: copy of the TAIL_SKID of aircraft/currawong.",
+        "placeholder": true
+      },
+      {
+        "name": "TAIL_SKID",
+        "type": "STRUCTURE",
+        "position": {
+          "frame": "design",
+          "xyz": [
+            -1.422,
+            0.0,
+            0.30900000000000005
+          ],
+          "units": "m"
+        },
+        "spring_N_per_m": 9000.0,
+        "damping_N_per_m_s": 450.0,
+        "source": "Estimate: the sizing has no landing gear geometry. x: the htail root leading edge. y: the plane of symmetry. z: the lowest point of the fuselage frames (1.2.2.2, z 0.0700 m) and of the prop_cruise disc (hub z + D/2, z 0.2890 m), plus rotor.tip_clearance_m of settings/rosella.json (0.02 m, stand-in: gap between prop discs and the nearest structure). Spring and damping: copy of the TAIL_SKID of aircraft/currawong.",
+        "placeholder": true
+      }
+    ],
+    "sources": [
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
+        "role": "Rosella model file and sizing result H4_12S"
+      }
+    ]
   },
   "subcomponents": [
     {

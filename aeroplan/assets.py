@@ -192,6 +192,19 @@ def set_item_dataset(item: Dict[str, Any], role: str, aid: str) -> None:
     item["muas"]["datasets"] = refs + [{"role": role, "ref": aid}]
 
 
+def drop_item_dataset(doc: Dict[str, Any], item: Dict[str, Any], role: str) -> Optional[str]:
+    """Remove the dataset reference of `role` from an item and its entry from the register. Gives the asset ID, or None when the
+    item had none. Call `Aircraft.prune()` after it to forget the content."""
+    ref = item_dataset(item, role)
+    if ref is None:
+        return None
+    item["muas"]["datasets"] = [d for d in item["muas"]["datasets"] if d["role"] != role]
+    aid = split_ref(ref["ref"])[0]
+    reg = register(doc, create=False)
+    reg[:] = [e for e in reg if e["id"] != aid]
+    return aid
+
+
 def referenced(doc: Dict[str, Any]) -> List[str]:
     """Every asset ID that an item of the document names (sources, datasets, meshes, flight records)."""
     out: List[str] = []

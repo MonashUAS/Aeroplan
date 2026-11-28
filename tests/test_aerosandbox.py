@@ -4,6 +4,7 @@ is synthetic. The quadplane ingest tests are different: they read the committed 
 The tests that run the worker need AeroSandbox in this Python (`pip install -e ".[sizing]"`, ADR 0030).
 Without it they skip (CI has none). The other tests run everywhere.
 """
+import json
 import math
 
 import numpy as np
@@ -253,3 +254,146 @@ def test_the_quadplane_takes_the_stall_values_of_the_base_wing(quadplane):
     got = dict(adh_doc.node(doc, "1.2")["muas"]["aero_settings"])
     want = dict(adh_doc.node(base, "1.2")["muas"]["aero_settings"])
     assert got.pop("source").endswith(want.pop("source")) and got == {**want, "placeholder": True}
+
+
+# ------------------------------------------------------------------------------------------- the aero dataset (from_aerosandbox)
+SYN_KEYS = ("CLa", "Cma", "CLq", "Cmq", "CYb", "CYp", "CYr", "Clb", "Cnb", "Clp", "Cnp", "Clr", "Cnr",
+            "CLde", "Cmde", "CDde", "Clda", "Cnda", "CYdr", "Cldr", "Cndr")
+SYN_CDA = {"boom": 0.001, "nacelles": 0.004, "stopped_props": 0.005}
+SYN_S = 1.0
+SYN_STALL = {"CL_max": 1.2, "CL_min": -0.5, "placeholder": True}
+
+
+def _synthetic_stability():
+    """A stability block with test numbers (no worker): trim alpha 2 deg and elevator -3 deg."""
+    return {"method": "combined", "alpha_deg": 2.0, "elevator_deg": -3.0, "speed_m_s": 20.0, "CL": 0.6, "CD": 0.03, "Cm": 0.02,
+            "derivatives": {**{k: 0.1 * (i + 1) for i, k in enumerate(SYN_KEYS)}, "CLa": 5.0, "Cma": -0.5, "CLde": 0.4, "Cmde": -1.6},
+            "trim_check": {"alpha_deg": 2.5, "elevator_deg": -2.0}}
+
+
+def _synthetic_polar():
+    """CD = 0.01 + 0.05 CL^2 inside the stall range, and one row above CL_max with a stall drag that the fit must not use."""
+    rows = [{"alpha_deg": a, "CL": cl, "CD": 0.01 + 0.05 * cl ** 2, "Cm": 0.0} for a, cl in ((-2, 0.1), (0, 0.4), (4, 0.8), (8, 1.1))]
+    return rows + [{"alpha_deg": 14, "CL": 1.4, "CD": 0.5, "Cm": 0.0}]
+
+
+def _synthetic_buildup():
+    return asb_spoke.from_aerosandbox(_synthetic_polar(), _synthetic_stability(), SYN_CDA, SYN_S, SYN_STALL, 10.0,
+                                      [0.1, 0.0, 0.0], "test/asb/results.json")
+
+
+def test_the_converter_gives_cl0_and_cm0_at_the_trim_in_radians():
+    bu = _synthetic_buildup()
+    s, d = _synthetic_stability(), _synthetic_stability()["derivatives"]
+    a0, de0 = math.radians(2.0), math.radians(-3.0)
+    assert bu.coefs["CL0"].value == pytest.approx(s["CL"] - d["CLa"] * a0 - d["CLde"] * de0, abs=1e-12)
+    assert bu.coefs["Cm0"].value == pytest.approx(s["Cm"] - d["Cma"] * a0 - d["Cmde"] * de0, abs=1e-12)
+    for k in SYN_KEYS:                                                   # no sign change and no unit change
+        assert bu.coefs[k].value == d[k] and bu.coefs[k].units == "1_per_rad"
+    assert bu.trim["alpha_rad"] == pytest.approx(a0) and bu.trim["elevator_rad"] == pytest.approx(de0)
+
+
+def test_the_converter_fits_cd_inside_the_stall_range_and_adds_the_drag_areas():
+    bu = _synthetic_buildup()
+    assert bu.coefs["K"].value == pytest.approx(0.05, abs=1e-12)          # the row above CL_max (CD 0.5) is not in the fit
+    assert bu.coefs["CD0"].value == pytest.approx(0.01 + sum(SYN_CDA.values()) / SYN_S, abs=1e-12)
+    assert bu.coefs["CD0"].placeholder is True and "stopped_props" in bu.coefs["CD0"].source
+    assert "4 rows with CL from 0.100 to 1.100" in bu.coefs["K"].source
+    assert bu.coefs["CD0"].units == bu.coefs["K"].units == bu.coefs["CL0"].units == "nd"
+
+
+def test_every_converted_coefficient_names_its_run_and_method():
+    bu = _synthetic_buildup()
+    assert len(bu.coefs) == 25
+    for k, c in bu.coefs.items():
+        assert c.source and "test/asb/results.json" in c.source and ("method combined" in c.source or "job polar" in c.source), k
+    assert any("no propeller slipstream" in n for n in bu.notes) and any("Trim check" in n for n in bu.notes)
+
+
+def test_the_build_up_gives_the_job_cl_and_cm_at_the_trim():
+    from aeroplan.aero_buildup import evaluate
+
+    bu, s = _synthetic_buildup(), _synthetic_stability()
+    x = dict.fromkeys(("alpha", "beta", "phat", "qhat", "rhat", "de", "da", "dr"), 0.0)
+    x.update(alpha=bu.trim["alpha_rad"], de=bu.trim["elevator_rad"])
+    out = evaluate(bu, x)
+    assert out["CL"] == pytest.approx(s["CL"], abs=1e-9) and out["Cm"] == pytest.approx(s["Cm"], abs=1e-9)
+
+
+def test_the_converted_dml_passes_the_dtd():
+    from aeroplan.aero_buildup import to_daveml
+    from aeroplan.dml_validate import validate_dml
+
+    xml = to_daveml(_synthetic_buildup(), name="Test aerodynamic model", author="test", org="MUAS", created="2026-01-01",
+                    description="synthetic")
+    assert validate_dml(xml) == []
+
+
+def _fake_context(tmp_path):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(work=tmp_path / "work", root=tmp_path, aircraft="rosella", acft=source_tree.new("rosella"))
+
+
+def _write_results(tmp_path, **doc):
+    f = tmp_path / "work" / "asb" / "results.json"
+    f.parent.mkdir(parents=True)
+    f.write_text(json.dumps(doc), encoding="utf-8")
+
+
+def test_a_missing_or_stale_results_file_gives_one_line_and_no_dataset(tmp_path):
+    mf = asb_spoke.ModelFile(asb_spoke.SETTINGS / "rosella.json")
+    ctx = _fake_context(tmp_path)
+    line, ref = asb_spoke._aero_dataset({"muas": {}}, {}, ctx, mf)
+    assert ref is None and "missing" in line
+    _write_results(tmp_path, polar={"rows": []}, inputs={"model_file_sha256": "0" * 64})
+    line, ref = asb_spoke._aero_dataset({"muas": {}}, {}, ctx, mf)
+    assert ref is None and "no stability block" in line
+    (tmp_path / "work" / "asb" / "results.json").write_text(
+        json.dumps({"stability": {"stability": {}}, "polar": {"rows": []},
+                    "inputs": {"model_file_sha256": "0" * 64, "cg_frd_m": [0, 0, 0]}}), encoding="utf-8")
+    line, ref = asb_spoke._aero_dataset({"muas": {}}, {}, ctx, mf)
+    assert ref is None and "stale" in line
+
+
+def test_a_stale_results_file_removes_the_old_aero_dataset(tmp_path):
+    from aeroplan import assets
+
+    mf = asb_spoke.ModelFile(asb_spoke.SETTINGS / "rosella.json")
+    ctx = _fake_context(tmp_path)
+    air = adh_doc.node(ctx.acft.doc, "1.2", create=True)
+    adh_doc.muas(air, "rosella_airvehicle")
+    aid = "asset:sha256:" + "a" * 64
+    assets.register(ctx.acft.doc).append({"id": aid, "kind": "dataset", "name": "aero.rosella", "role": "aero model",
+                                          "tool": "AeroSandbox", "media_type": "application/json", "size": 2})
+    ctx.acft.datasets[aid] = {"a": 1}
+    assets.set_item_dataset(air, "aero", aid)
+    _write_results(tmp_path, stability={"stability": {}}, polar={"rows": []},
+                   inputs={"model_file_sha256": "0" * 64, "cg_frd_m": [0, 0, 0]})
+    line, ref = asb_spoke._aero_dataset(air, ctx.acft.doc, ctx, mf)
+    assert ref is None and "stale" in line and "is removed" in line
+    assert assets.item_dataset(air, "aero") is None and not assets.register(ctx.acft.doc) and not ctx.acft.datasets
+
+
+def test_a_job_cg_that_is_not_the_tree_cg_gives_no_dataset(tmp_path):
+    from aeroplan.consumers import MRP_CG_TOL_M
+
+    mf = asb_spoke.ModelFile(asb_spoke.SETTINGS / "rosella.json")
+    cg = [0.1, 0.0, 0.0]
+    air = {"muas": {"mass_properties": {"cg": {"xyz": cg}}, "reference": {"mrp": {"point": {"xyz": cg}}}}}
+    ctx = _fake_context(tmp_path)
+    off = [cg[0] + 2 * MRP_CG_TOL_M, 0.0, 0.0]
+    _write_results(tmp_path, stability={"stability": {}}, polar={"rows": []},
+                   inputs={"model_file_sha256": asb_spoke._sha(mf.path), "cg_frd_m": off})
+    line, ref = asb_spoke._aero_dataset(air, {}, ctx, mf)
+    assert ref is None and "CG" in line
+
+
+def test_the_quadplane_view_draws_the_control_surfaces_with_their_hinges(quadplane):
+    """The copy drops the Currawong CAD views. The surfaces come from the ADH planform, so Aerolink can move them."""
+    from aeroplan import parts
+
+    doc, _ = quadplane
+    got = parts.part_meshes(doc, REPO_ROOT).parts
+    for name in ("aileron_l", "aileron_r", "elevator", "rudder"):
+        assert len(got[name].tri) > 0 and got[name].hinge is not None, name

@@ -715,6 +715,49 @@ def check_an_antisymmetric_surface_rolls_the_other_way_and_the_rates_turn_about_
     assert float(da["Cmq"]) < 0.0
 
 
+def _dihedral_wing(foil="naca4415", dihedral=7.5):
+    """Taper 0.53, aspect ratio 6.1, cambered airfoil, dihedral: the wing of the Navion (a published size)."""
+    import aerosandbox as asb
+    b, s, lam = 10.17, 16.72, 0.53
+    cr = 2.0 * s / (b * (1.0 + lam))
+    f = asb.Airfoil(foil)
+    xs = [asb.WingXSec(xyz_le=[0.0, 0.0, 0.0], chord=cr, airfoil=f),
+          asb.WingXSec(xyz_le=[0.2, b / 2.0, b / 2.0 * math.tan(math.radians(dihedral))], chord=lam * cr, airfoil=f)]
+    return asb.Airplane(wings=[asb.Wing(name="w", xsecs=xs, symmetric=True)], xyz_ref=[0.5, 0.0, 0.0], s_ref=s, b_ref=b, c_ref=s / b)
+
+
+@check
+def check_the_vortex_lattice_keeps_its_lift_slope_at_the_panel_counts_that_broke_the_library_default():
+    """AeroSandbox 4.2.9 with its default spacing and core gives a lift slope of 9.9, 2500, 78, 92 per rad (true value near 4.6) at
+    14x12, 16x12, 16x8 and 14x14 for this cambered wing with dihedral. The cause: the vertices of the root strip move across y = 0."""
+    import aerosandbox as asb
+    _, _, model, _, _ = tool()
+    plane = _dihedral_wing()
+    cla = lambda sp, cw: float(model.FixedWingModel.vlm(plane, asb.OperatingPoint(velocity=50.0, alpha=0.5), sp, cw).run()["CL"]
+                               - model.FixedWingModel.vlm(plane, asb.OperatingPoint(velocity=50.0, alpha=-0.5), sp, cw).run()["CL"]
+                               ) / math.radians(1.0)
+    values = [cla(sp, cw) for sp, cw in ((14, 12), (16, 12), (16, 8), (14, 14), (12, 12), (18, 12), (6, 4))]
+    assert all(4.3 < v < 5.0 for v in values), values
+    assert max(values) - min(values) < 0.5, values
+    v = asb.VortexLatticeMethod(plane, asb.OperatingPoint(velocity=50.0, alpha=0.5), spanwise_resolution=16, chordwise_resolution=12)
+    v.run()                                                        # the cause is in the library mesh: camber and dihedral
+    assert v.left_vortex_vertices[:16 * 12, 1].min() < -0.005
+    flat = _dihedral_wing("naca0012")
+    w = asb.VortexLatticeMethod(flat, asb.OperatingPoint(velocity=50.0, alpha=0.5), spanwise_resolution=16, chordwise_resolution=12)
+    w.run()
+    assert w.left_vortex_vertices[:16 * 12, 1].min() > -1e-9
+
+
+@check
+def check_the_panel_guard_names_the_derivative_that_differs():
+    _, _, model, _, _ = tool()
+    good = {"CLa": 4.60, "Cma": -0.50, "CYb": -0.25, "Cnb": 0.09}
+    assert model.panel_mismatch(good, dict(good, CLa=4.62, Cma=-0.52, CYb=-0.30, Cnb=0.10)) == []
+    assert [m.split()[0] for m in model.panel_mismatch(good, dict(good, CLa=9.7))] == ["CLa"]
+    assert [m.split()[0] for m in model.panel_mismatch(good, dict(good, Cnb=-19.0, CYb=3.0))] == ["CYb", "Cnb"]
+    assert [m.split()[0] for m in model.panel_mismatch(good, dict(good, Cma=float("nan")))] == ["Cma"]
+
+
 # --------------------------------------------------------------------------------------------------------- pytest hooks
 def run_check(name):
     if HAS_ASB:
@@ -749,7 +792,9 @@ if pytest is not None:
                   "check_evaluate_fixes_every_param_except_the_battery_x", "check_jung_check_functions",
                   "check_the_vortex_lattice_reads_the_camber_and_not_the_control_surface",
                   "check_flap_effectiveness_of_the_bent_camber_is_the_thin_airfoil_value",
-                  "check_an_antisymmetric_surface_rolls_the_other_way_and_the_rates_turn_about_the_reference"):
+                  "check_an_antisymmetric_surface_rolls_the_other_way_and_the_rates_turn_about_the_reference",
+                  "check_the_vortex_lattice_keeps_its_lift_slope_at_the_panel_counts_that_broke_the_library_default",
+                  "check_the_panel_guard_names_the_derivative_that_differs"):
         globals()["test_" + _name[len("check_"):]] = _make(_name)
 
 

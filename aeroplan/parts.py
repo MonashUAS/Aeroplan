@@ -108,8 +108,15 @@ def part_meshes(doc: Dict[str, Any], root: Path) -> PartSet:
                 out.notes.append(f"{v['part']}: CAD mesh not on this machine, {fb[1]}")
         else:
             generated.append((item, v))
+    # control surfaces first: a fin stops at the rudder hinge (_planform_part), so the rudder part must exist before the fin
+    generated.sort(key=lambda e: adh_doc.control_surface(e[0]) is None)
     for item, v in generated:
         inst = item["muas"]["instance"]
+        cs = adh_doc.control_surface(item)
+        if v["generator"] == "planform" and cs is not None:       # a control surface: its span of the parent planform
+            tri, _, hinge = _control_surface(doc, cs)
+            out.parts[v["part"]] = Part(v["part"], inst, tri, hinge, v.get("material"), v["source"], v.get("placeholder", False))
+            continue
         if v["generator"] == "planform":
             tri = _planform_part(item, out)
         elif v["generator"] == "body":

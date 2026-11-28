@@ -323,7 +323,7 @@ def _skin_checks(rep: DatumReport, doc: Dict, root) -> None:
 
 
 def _geometry_age(rep: DatumReport, doc: Dict, air: Dict) -> None:
-    """A warn row for each item whose geometry comes from another spoke than the aero model (flow5)."""
+    """A warn row for each item whose geometry comes from another spoke than the aero model (the tool of the aero entry)."""
     from . import adh_doc, assets
 
     aero = assets.item_dataset(air, "aero") if air else None
@@ -332,15 +332,18 @@ def _geometry_age(rep: DatumReport, doc: Dict, air: Dict) -> None:
     try:
         e = assets.entry(doc, aero["ref"].partition("#")[0])
         built = e.get("built_against") or e["name"]
+        aero_tool = e.get("tool") or "flow5"
     except assets.AssetError:
-        built = "?"
+        built, aero_tool = "?", "flow5"
+    rerun = {"flow5": "Run a new flow5 sweep", "AeroSandbox": "Run `aeroplan generate AeroSandbox <aircraft>`, then build"}.get(
+        aero_tool, f"Run the {aero_tool} spoke again")
     for _, item, _ in adh_doc.iter_nodes(doc):
         m = item.get("muas") or {}
         tool = m.get("geometry_tool")
-        if tool and tool != "flow5":
+        if tool and tool != aero_tool:
             rep.warn(f"{m['instance']}: aero model is older than the geometry",
-                     f"the aero model ({built}) comes from flow5, the geometry of {m['instance']} comes from "
-                     f"{tool}. Run a new flow5 sweep")
+                     f"the aero model ({built}) comes from {aero_tool}, the geometry of {m['instance']} comes from "
+                     f"{tool}. {rerun}")
 
 
 def _stale_assets(rep: DatumReport, doc: Dict) -> None:

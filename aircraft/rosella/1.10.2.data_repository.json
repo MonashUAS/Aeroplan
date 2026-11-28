@@ -6,6 +6,21 @@
     "instance": "data_repository",
     "assets": [
       {
+        "id": "asset:sha256:008270de9a264578479d3c6f84bcd3c2bfcc8abadc4f1ca6cbc176aa2fa199a0",
+        "kind": "file",
+        "name": "AeroSandbox.results.json",
+        "role": "AeroSandbox jobs: stability derivatives, AeroBuildup polar and cruise trim",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 5959,
+        "locations": [
+          {
+            "repo": "work/aerosandbox/rosella/asb/results.json"
+          }
+        ],
+        "derived_from": []
+      },
+      {
         "id": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "kind": "file",
         "name": "AeroSandbox.rosella.json",
@@ -21,6 +36,88 @@
         "derived_from": []
       },
       {
+        "id": "asset:sha256:796759ac53c1bf90f01ba56833980b6bbb66610a341a54cf8d04deffb3302f40",
+        "kind": "dataset",
+        "name": "aero.rosella",
+        "role": "aero model (DAVE-ML in ADH form)",
+        "tool": "AeroSandbox",
+        "media_type": "application/json",
+        "size": 18621,
+        "locations": [
+          {
+            "repo": "aircraft/rosella/datasets/aero.rosella.json"
+          }
+        ],
+        "derived_from": [
+          "asset:sha256:008270de9a264578479d3c6f84bcd3c2bfcc8abadc4f1ca6cbc176aa2fa199a0"
+        ],
+        "built_against": "rosella@0.1.16",
+        "dataset": {
+          "form": "daveml-adh",
+          "model_description": {
+            "generation_tool": "AeroSandbox + AeroPlan aero build-up",
+            "model_name": "rosella aero build-up",
+            "description": "AeroSandbox combined stability job (2026-11-27), model file sha256 a0ce7b226b6f"
+          },
+          "fidelity": "L1",
+          "mrp": {
+            "frame": "design",
+            "xyz": [
+              -0.13899601087098234,
+              -6.465289360578834e-18,
+              0.00208217928899778
+            ],
+            "units": "m"
+          },
+          "analysis_mass_model": {
+            "mass": {
+              "value": 17.1720546862849,
+              "units": "kg"
+            },
+            "cg": {
+              "frame": "design",
+              "xyz": [
+                -0.13899601087098234,
+                -6.465289360578834e-18,
+                0.00208217928899778
+              ],
+              "units": "m"
+            },
+            "inertia": {
+              "axes": "parallel_to_design",
+              "products_convention": "+integral(xy dm)",
+              "ixx": 3.2340619424955173,
+              "iyy": 4.135033660662183,
+              "izz": 7.338237603817682,
+              "ixy": 2.775557561561974e-17,
+              "ixz": -0.0575078508565318,
+              "iyz": -4.29717590059582e-18,
+              "units": "kg*m^2",
+              "unverified_products": []
+            },
+            "source": "estimate",
+            "placeholder": true,
+            "notes": [
+              "Roll-up of the 44 point masses of the H4_12S sizing result (mass_model.rollup). The sizing owns the mass model until a SpecSheet exists (ADR 0022).",
+              "Own inertia added for tail_boom, fuselage, battery and the two lift booms (the rules of model.QuadplaneModel). Every other item is a point mass.",
+              "The sizing result gives Ixx 3.2341, Iyy 4.1351, Izz 7.3382 kg m^2. Its Ixx is about y = 0 and z = 0, not about the CG height. This roll-up is about the CG.",
+              "The sizing CG x is -0.138996 m (FRD: the static margin target ahead of the neutral point)."
+            ]
+          },
+          "units_system": "SI",
+          "placeholder": true,
+          "notes": [
+            "No uncertainty estimate exists in the source (sigma not given).",
+            "Placeholder: the stall values, the nacelle and stopped-propeller drag areas and the mass model are stand-ins.",
+            "Method combined. Trim point of the cruise_trim job (AeroBuildup of the tree): V 18.8445 m/s, alpha 0.0526 deg, elevator 2.1999 deg.",
+            "Trim check: the method has the CL and Cm of that trim at alpha 1.4373 deg and elevator 6.7144 deg. The difference is the gap between the two methods.",
+            "Limits: no propeller slipstream. AeroBuildup gives the bodies no rate effect. The combined method has the inviscid lifting-surface CL0 of the vortex lattice (no viscous lift loss). Aileron and rudder are 0 at the trim.",
+            "CD0 and K come from the AeroBuildup polar, not from the method of the derivatives."
+          ]
+        },
+        "dataset_role": "aero"
+      },
+      {
         "id": "asset:sha256:1e479488c5d07cdb25b7cf77eb673172e027f4da5cb0d56065f589bce74fbb4c",
         "kind": "dataset",
         "name": "propulsion.currawongcustom",
@@ -34,7 +131,7 @@
           }
         ],
         "derived_from": [],
-        "built_against": "rosella@0.1.12",
+        "built_against": "rosella@0.1.16",
         "dataset": {
           "form": "tables",
           "model_description": {
@@ -68,7 +165,7 @@
         "derived_from": [
           "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944"
         ],
-        "built_against": "rosella@0.1.12",
+        "built_against": "rosella@0.1.16",
         "dataset": {
           "form": "tables",
           "model_description": {

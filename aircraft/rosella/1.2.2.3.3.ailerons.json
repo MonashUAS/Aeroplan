@@ -36,7 +36,16 @@
           "rate_limit_rad_s": 5.235987755982989,
           "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (aileron_l control surface, from the retired hand config). Was: hand config actuators (servo_tau_s, servo_rate_dps). Origin: old Aerolink hand config",
           "placeholder": true
-        }
+        },
+        "visual": [
+          {
+            "part": "aileron_l",
+            "generator": "planform",
+            "units": "m",
+            "source": "control surface from the ADH planform of its parent and muas.control_surface (span and hinge), copied from aircraft/currawong, no CAD in Rosella",
+            "placeholder": true
+          }
+        ]
       }
     },
     {
@@ -69,7 +78,16 @@
           "rate_limit_rad_s": 5.235987755982989,
           "source": "AeroPlan package aeroplan.currawong.nominal.0.1.0 (aileron_r control surface, from the retired hand config). Was: hand config actuators (servo_tau_s, servo_rate_dps). Origin: old Aerolink hand config",
           "placeholder": true
-        }
+        },
+        "visual": [
+          {
+            "part": "aileron_r",
+            "generator": "planform",
+            "units": "m",
+            "source": "control surface from the ADH planform of its parent and muas.control_surface (span and hinge), copied from aircraft/currawong, no CAD in Rosella",
+            "placeholder": true
+          }
+        ]
       }
     }
   ]

@@ -98,6 +98,18 @@
       },
       "placeholder": true
     },
+    "datasets": [
+      {
+        "role": "aero",
+        "ref": "asset:sha256:796759ac53c1bf90f01ba56833980b6bbb66610a341a54cf8d04deffb3302f40"
+      }
+    ],
+    "aero_settings": {
+      "cl_max": 1.3,
+      "cl_min": -0.6,
+      "source": "Copy of aircraft/currawong (the same wing). There: AeroPlan package aeroplan.currawong.nominal.0.1.0 (dml/aero.dml, description of the CL table: hand config stall, from the retired hand config)",
+      "placeholder": true
+    },
     "point_masses": [
       {
         "tag": "wing_1",
@@ -897,6 +909,11 @@
         "tool": "AeroSandbox",
         "asset": "asset:sha256:a0ce7b226b6fe3f3f5aea63868adf78ff2f2735eb2b265bf632dde22a1f79944",
         "role": "Rosella model file and sizing result H4_12S"
+      },
+      {
+        "tool": "AeroSandbox",
+        "asset": "asset:sha256:008270de9a264578479d3c6f84bcd3c2bfcc8abadc4f1ca6cbc176aa2fa199a0",
+        "role": "AeroSandbox jobs: stability derivatives, AeroBuildup polar and cruise trim"
       }
     ]
   },

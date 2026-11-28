@@ -54,8 +54,7 @@ def items() -> List[Item]:
     for module, what in (("aerosandbox", "the AeroSandbox model files"), ("ipykernel", "the notebooks (the .venv kernel)"),
                          ("matplotlib", "the plots")):
         out.append(Item(module, _has(module), what, INSTALL_ALL))
-    out.append(Item("proptimiser", _has("proptimiser"), "the propeller models (the sizing notebook needs it)",
-                    'get read access to the private Proptimiser repository, run `gh auth login`, then '
+    out.append(Item("proptimiser", _has("proptimiser"), "the propeller models (the sizing notebook and cruise_trim need it)",
                     'pip install -e ".[prop]" (Python 3.12 or newer)', needed=False))
     vsp = REPO_ROOT / "aeroplan" / "openvsp" / ".venv"
     out.append(Item("OpenVSP Python", vsp.is_dir(), str(vsp), "download OpenVSP, then python -m aeroplan setup OpenVSP",

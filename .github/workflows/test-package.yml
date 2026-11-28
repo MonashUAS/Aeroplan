@@ -8,10 +8,6 @@
 
 name: Test Package
 
-env:
-  # A token with read access to the private Proptimiser repository (a repository secret). Empty on a fork.
-  PROPTIMISER_TOKEN: ${{ secrets.PROPTIMISER_TOKEN }}
-
 on:
   push:
     branches:
@@ -61,12 +57,9 @@ jobs:
           python -m build
       - name: Install in one environment (AeroPlan, AeroSandbox, the notebooks)
         run: python -m pip install -e ".[sizing,dev]"
-      - name: Install Proptimiser (private repository, Python 3.12, only with the secret)
-        if: matrix.python-version == '3.12' && env.PROPTIMISER_TOKEN != ''
-        shell: bash
-        run: |
-          git config --global url."https://x-access-token:${PROPTIMISER_TOKEN}@github.com/".insteadOf "https://github.com/"
-          python -m pip install -e ".[prop]"
+      - name: Install Proptimiser (Python 3.12 or newer)
+        if: matrix.python-version == '3.12'
+        run: python -m pip install -e ".[prop]"
       - name: Build the patched ADH copy
         run: python standards/adh/build_adh.py
       - name: Run the upstream ADH tests on the patched copy
@@ -87,7 +80,7 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          pip install -e ".[sizing,dev]"      # the install of a user with no access to Proptimiser
+          pip install -e ".[all]"
           python -m aeroplan doctor
           python -m aeroplan check currawong
 
@@ -101,14 +94,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install (needs Proptimiser, so the job does nothing without the secret)
-        if: env.PROPTIMISER_TOKEN != ''
-        run: |
-          git config --global url."https://x-access-token:${PROPTIMISER_TOKEN}@github.com/".insteadOf "https://github.com/"
-          python -m pip install -e ".[all]"
+      - name: Install
+        run: python -m pip install -e ".[all]"
       - name: Run the Rosella sizing notebook (the output goes to a scratch folder, the committed file stays)
-        # needs the secret and the blade files in git
-        if: env.PROPTIMISER_TOKEN != '' && hashFiles('aeroplan/aerosandbox/data/proptimiser/*/designs/*.yaml') != ''
+        # needs the blade files in git
+        if: hashFiles('aeroplan/aerosandbox/data/proptimiser/*/designs/*.yaml') != ''
         run: jupyter nbconvert --to notebook --execute aeroplan/aerosandbox/notebooks/rosella_sizing.ipynb --output-dir /tmp/nb --ExecutePreprocessor.timeout=2400
 
   duplicates:

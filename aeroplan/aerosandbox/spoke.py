@@ -31,7 +31,10 @@ Quadplane (Rosella): the aircraft has a model file `settings/<aircraft>.json`, w
 wing, ailerons, empennage and tail boom. It adds the new fuselage, the lift booms (with their material), the cruise propeller and the
 lift rotors, the lift propulsion system, the point masses, the roll-up (mass, CG, inertia), the quadplane reference (MRP = the sized
 CG), the `sizing` record, the limits as `muas.target` requirements, and the motor outputs 5 and up. See `_ingest_quadplane`. The sizing
-runs in the notebook, not in this spoke.
+runs in the notebook, not in this spoke. `generate` runs the fixed-wing jobs on the built tree and the job `stability` (settings key
+`aero_method`: combined or aerobuildup) at the cruise trim. It writes `asb/results.json` with the sha256 of the model file.
+`from_aerosandbox` turns that file into the aero build-up. The next `ingest` writes the aero dataset (DAVE-ML in ADH form) only when
+the sha256 and the CG of the file match the model file and the tree. Else it gives one change line and no dataset.
 
 Multirotor (settings `kind: multirotor`): there is no Athena printout. `ingest` seeds the aircraft from the `multirotor`
 block of the settings (aeroplan.multirotor.seed: reference, four lift rotors, motor outputs, ground contacts, demo
@@ -60,6 +63,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from aeroplan.aero_buildup import CONTROL, T7_LATERAL, AeroBuildUp, Coefficient, _cl_table, to_daveml
+from aeroplan.consumers import MRP_CG_TOL_M
 from aeroplan.constants import G0, INCH_M
 from aeroplan import REPO_ROOT, adh_doc, assets, mass_model, multirotor, multirotor_aero, source_tree
 from aeroplan.daveml_adh import from_xml
@@ -936,6 +941,127 @@ def _sizing_discipline(rep: Dict[str, Any], case: str, st: Dict[str, Any], tw: f
                        "data_exchange": {"model_identifier": "rosella", "inputs": ins, "outputs": o}}]}
 
 
+#: the methods of the job `stability` (settings key `aero_method`; the first is the default)
+AERO_METHODS = ("combined", "aerobuildup")
+
+
+def from_aerosandbox(polar_rows: List[Dict[str, float]], stab: Dict[str, Any], cda_m2: Dict[str, float], s_ref_m2: float,
+                     stall: Dict[str, Any], mass_kg: float, cog: List[float], run_name: str) -> AeroBuildUp:
+    """The coefficients of the AeroBuildUp of contract C from the jobs of this spoke (the twin of flow5 `from_flow5`).
+
+    `stab` is the `stability` block of the job (derivatives already in the signs of aeroplan.aero_buildup: no sign change here).
+    CL0 = CL - CLa alpha - CLde de and Cm0 = Cm - Cma alpha - Cmde de, with alpha and de at the cruise trim (rad). CL and Cm are
+    those of the method itself, so CL0 keeps the downwash of the method.
+    CD0 and K: least squares of CD on CL^2 over the rows of the AeroBuildup polar job with CL_min <= CL <= CL_max (the stall
+    values: the range where the CL table is linear, so no stall drag rise is in the rows). CD0 also holds the drag areas of the
+    parts that the tree airplane does not have (`cda_m2`: lift booms, nacelles, stopped lift propellers) over the reference area.
+    `stall` has CL_max, CL_min and placeholder. `cog` is the mass CG (FRD). `run_name` names the results file."""
+    d = stab["derivatives"]
+    a0, de0 = math.radians(stab["alpha_deg"]), math.radians(stab["elevator_deg"])
+    run = (f"AeroSandbox {run_name} job stability, method {stab['method']}, alpha {stab['alpha_deg']:.4f} deg, elevator "
+           f"{stab['elevator_deg']:.4f} deg, {stab['speed_m_s']:g} m/s")
+    co: Dict[str, Coefficient] = {}
+
+    def add(k, v, units, src, ph=False):
+        co[k] = Coefficient(float(v), units, src, ph)
+
+    for k in ("CLa", "CLq", "Cma", "Cmq", *T7_LATERAL.values(), *CONTROL):
+        add(k, d[k], "1_per_rad", f"{run} ({k})")
+    add("CL0", stab["CL"] - d["CLa"] * a0 - d["CLde"] * de0, "nd", f"{run} (CL - CLa alpha - CLde de)")
+    add("Cm0", stab["Cm"] - d["Cma"] * a0 - d["Cmde"] * de0, "nd", f"{run} (Cm - Cma alpha - Cmde de)")
+
+    lo, hi = float(stall["CL_min"]), float(stall["CL_max"])
+    pts = [r for r in polar_rows if lo <= r["CL"] <= hi]
+    if len(pts) < 3:
+        raise ValueError(f"the polar has {len(pts)} rows with CL from {lo} to {hi}: the drag fit needs 3")
+    k_fit, cd_fit = np.polyfit([r["CL"] ** 2 for r in pts], [r["CD"] for r in pts], 1)
+    d_cd = sum(cda_m2.values()) / s_ref_m2
+    fit = (f"AeroSandbox {run_name} job polar, AeroBuildup, {len(pts)} rows with CL from {min(r['CL'] for r in pts):.3f} to "
+           f"{max(r['CL'] for r in pts):.3f} (inside CL_min {lo:g} to CL_max {hi:g}), least squares CD on CL^2")
+    areas = " + ".join(f"{k} {v:.6g}" for k, v in cda_m2.items())
+    add("CD0", cd_fit + d_cd, "nd", f"{fit}, plus {d_cd:.6f} = ({areas}) m^2 / {s_ref_m2:.6g} m^2 (the sizing drag areas of the "
+        "model file result, placeholder: the nacelle and stopped-propeller values are stand-ins)", True)
+    add("K", k_fit, "nd", fit)
+
+    ph = bool(stall.get("placeholder", True))
+    table = _cl_table(co["CL0"].value, d["CLa"], hi, lo)
+    table_src = (f"linear CL0 + CLa alpha inside CL_min {lo:g} to CL_max {hi:g} (stall settings, placeholder {str(ph).lower()}), "
+                 "post-stall shape of Aerolink 6f7edb7 jsbsim_xml.cl_alpha_table (placeholder)")
+    trim = {"speed_mps": float(stab["speed_m_s"]), "alpha_rad": a0, "elevator_rad": de0, "mass_kg": float(mass_kg),
+            "cog": [float(c) for c in cog]}
+    tc = stab["trim_check"]
+    notes = [f"Method {stab['method']}. Trim point of the cruise_trim job (AeroBuildup of the tree): V {stab['speed_m_s']:g} m/s, "
+             f"alpha {stab['alpha_deg']:.4f} deg, elevator {stab['elevator_deg']:.4f} deg.",
+             f"Trim check: the method has the CL and Cm of that trim at alpha {tc['alpha_deg']:.4f} deg and elevator "
+             f"{tc['elevator_deg']:.4f} deg. The difference is the gap between the two methods.",
+             "Limits: no propeller slipstream. AeroBuildup gives the bodies no rate effect. The combined method has the inviscid "
+             "lifting-surface CL0 of the vortex lattice (no viscous lift loss). Aileron and rudder are 0 at the trim.",
+             "CD0 and K come from the AeroBuildup polar, not from the method of the derivatives."]
+    return AeroBuildUp(co, table, table_src, trim, notes)
+
+
+def _aero_dataset(air: Dict[str, Any], doc: Dict[str, Any], ctx: Context, mf: ModelFile):
+    """The aero dataset of the quadplane from work/<aircraft>/asb/results.json (`generate`). Returns (change line, source ref or
+    None). The dataset needs a stability block, the same sha256 of the model file and the mass CG of the job (MRP_CG_TOL_M)."""
+    am = air["muas"]
+    path = ctx.work / "asb" / "results.json"
+    rel = path.relative_to(ctx.root).as_posix()
+
+    def none(why: str):
+        """No dataset: an old aero dataset of the tree goes too, so the tree does not keep a model of an older design."""
+        old = assets.drop_item_dataset(ctx.acft.doc, air, "aero")
+        if old:
+            ctx.acft.prune()
+        return f"aero model: no dataset ({why})" + (f"; the old aero dataset {old[:20]} is removed" if old else ""), None
+
+    try:
+        res = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+    except ValueError:
+        return none(f"{rel} is not valid JSON: run generate again")
+    if res is None:
+        return none(f"{rel} is missing: run `aeroplan generate AeroSandbox {ctx.aircraft}`")
+    inp = res.get("inputs") or {}
+    if "stability" not in res or "polar" not in res or "cg_frd_m" not in inp:
+        return none(f"{rel} has no stability block or no inputs: run generate again")
+    if inp.get("model_file_sha256") != _sha(mf.path):
+        return none(f"{rel} is stale: its model file sha256 is not that of settings/{mf.path.name}. "
+                    f"Run `aeroplan generate AeroSandbox {ctx.aircraft}`")
+    mp = am["mass_properties"]
+    cg_job = np.array(inp["cg_frd_m"], float)
+    gap = max(float(np.linalg.norm(cg_job - np.array(mp["cg"]["xyz"], float))),
+              float(np.linalg.norm(cg_job - np.array(am["reference"]["mrp"]["point"]["xyz"], float))))
+    if gap > MRP_CG_TOL_M:
+        return none(f"the job used a CG {1000 * gap:.1f} mm from the tree CG and MRP: run generate again")
+    stab = res["stability"]["stability"]
+    stall = {"CL_max": am["aero_settings"]["cl_max"], "CL_min": am["aero_settings"]["cl_min"],
+             "placeholder": am["aero_settings"].get("placeholder", True)}
+    bu = from_aerosandbox(res["polar"]["rows"], stab, mf.result["cda_m2"], adh_doc.reference(doc)["s_ref"]["value"], stall,
+                          mp["mass"]["value"], mp["cg"]["xyz"], f"{ctx.aircraft}/asb/results.json ({inp['date']})")
+    xml = to_daveml(bu, name=f"{ctx.aircraft.capitalize()} aerodynamic model", author="AeroPlan AeroSandbox spoke", org="MUAS",
+                    created=str(inp["date"]),
+                    description=f"{ctx.aircraft} aero build-up from AeroSandbox ({stab['method']}). Moments about the MRP (the "
+                                "mass CG). " + " ".join(bu.notes))
+    errors = validate_dml(xml)
+    if errors:
+        raise ValueError(f"the aero model fails the DAVE-ML 2.0 DTD: {errors[:3]}")
+    src = ctx.source_ref(path, "AeroSandbox jobs: stability derivatives, AeroBuildup polar and cruise trim")
+    ctx.add_dataset(
+        air, f"aero.{ctx.aircraft}", from_xml(xml), role="aero model (DAVE-ML in ADH form)", dataset_role="aero",
+        derived_from=[src["asset"]],
+        meta={"form": "daveml-adh", "fidelity": "L1", "units_system": "SI",
+              "model_description": {"generation_tool": "AeroSandbox + AeroPlan aero build-up",
+                                    "model_name": f"{ctx.aircraft} aero build-up",
+                                    "description": f"AeroSandbox {stab['method']} stability job ({inp['date']}), model file sha256 "
+                                                   f"{inp['model_file_sha256'][:12]}"},
+              "mrp": copy.deepcopy(am["reference"]["mrp"]["point"]), "analysis_mass_model": copy.deepcopy(mp),
+              "placeholder": True,
+              "notes": ["No uncertainty estimate exists in the source (sigma not given).",
+                        "Placeholder: the stall values, the nacelle and stopped-propeller drag areas and the mass model are "
+                        "stand-ins."] + list(bu.notes)})
+    return (f"aero model: {len(bu.coefs)} coefficients ({stab['method']}), CL table of {len(bu.cl_table)} points, CL0 "
+            f"{bu.coefs['CL0'].value:.4f}, CLa {bu.coefs['CLa'].value:.3f} per rad"), src
+
+
 def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     """Write the Rosella quadplane from the sizing result and the Currawong base (ADR 0022).
 
@@ -967,6 +1093,11 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
                             "source": f"full lifting surface from the ADH planform of {inst} (copied from aircraft/{st['base']}, no CAD in Rosella)",
                             "placeholder": True}]
         set_sources(it, NAME, [copy_ref(inst)])
+    for inst in ("aileron_l", "aileron_r", "elevator", "rudder"):       # the copy drops the Currawong CAD views of the surfaces
+        adh_doc.find(doc, inst)["muas"]["visual"] = [
+            {"part": inst, "generator": "planform", "placeholder": True,
+             "source": f"control surface from the ADH planform of its parent and muas.control_surface (span and hinge), "
+                       f"copied from aircraft/{st['base']}, no CAD in Rosella"}]
     tb = adh_doc.find(doc, "tail_boom")["muas"]["tube"]
     tb["source"] = f"Copy of aircraft/{st['base']} tail_boom. " + tb["source"]
     tb["placeholder"] = True
@@ -1219,7 +1350,9 @@ def _ingest_quadplane(doc: Dict[str, Any], ctx: Context):
     tw = t_full / (n["M"] * G0)
     sizing = _sizing_discipline(rep, case, st, tw)
     air["performance"] = [sizing] + [x for x in air.get("performance") or [] if x.get("name") != "sizing"]
-    set_sources(air, NAME, [ref])
+    line, aero_ref = _aero_dataset(air, doc, ctx, mf)
+    changes.append(line)
+    set_sources(air, NAME, [ref] + ([aero_ref] if aero_ref else []))
     changes.append(f"mass: {roll['mass_kg']:.3f} kg, CG x {cg[0]:.4f} m (MRP), Ixx {roll['inertia']['ixx']:.3f} Iyy "
                    f"{roll['inertia']['iyy']:.3f} Izz {roll['inertia']['izz']:.3f} kg m^2 (placeholder)")
     changes.append(f"aero settings: CL_max {am['aero_settings']['cl_max']:g}, CL_min {am['aero_settings']['cl_min']:g} "
@@ -1350,9 +1483,7 @@ def _generate_multirotor(doc: Dict[str, Any], ctx: Context, st: Dict[str, Any]) 
 
 def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
     """Build the AeroSandbox model of the aircraft and run the jobs. Files go to work/<aircraft>/asb/."""
-    if (SETTINGS / f"{ctx.aircraft}.json").is_file():
-        raise ValueError(f"{ctx.aircraft} is a sized quadplane: its model runs in the notebook "
-                         f"(aeroplan/aerosandbox/notebooks/{ctx.aircraft}_sizing.ipynb), not in generate")
+    model_file = SETTINGS / f"{ctx.aircraft}.json"          # a sized quadplane: the fixed-wing jobs run on its tree, plus `stability`
     st = ctx.settings()
     if st.get("kind") == "multirotor":
         return _generate_multirotor(doc, ctx, st)
@@ -1375,6 +1506,15 @@ def generate(doc: Dict[str, Any], ctx: Context) -> List[Path]:
         "static_check": run({"job": "static_check", "spec": spec}),
     }
     results["polar"]["reference"] = flow5_polar(doc, ctx, alphas)
+    if model_file.is_file():
+        method = st.get("aero_method", AERO_METHODS[0])
+        if method not in AERO_METHODS:
+            raise ValueError(f"settings aero_method {method!r} is not one of {AERO_METHODS}")
+        trim = results["cruise_trim"]["cruise_trim"]
+        results["stability"] = run({"job": "stability", "spec": spec, "alpha_deg": trim["alpha_deg"],
+                                    "elevator_deg": trim["elevator_deg"], "method": method})
+        results["inputs"] = {"model_file_sha256": _sha(model_file), "date": date.today().isoformat(), "aero_method": method,
+                             "cg_frd_m": adh_doc.node(doc, "1.2")["muas"]["mass_properties"]["cg"]["xyz"]}
     ref = planform_reference(planform_of(adh_doc.find(doc, st["wings"][0])))
     g = results["geometry"]["geometry"]
     for key, name in (("s_m2", "area_m2"), ("b_m", "span_m"), ("mac_m", "mac_m")):

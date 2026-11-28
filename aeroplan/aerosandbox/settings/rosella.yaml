@@ -10,6 +10,8 @@
 # Proptimiser itself comes from the `sizing` extra of pyproject.toml (ADR 0030).
 # cruise_speed_output: the name of the sizing output (node 1.2 performance "sizing") that gives the cruise speed.
 # alpha_deg: the angles of attack of the polar job.
+# aero_method: the method of the stability job for the aero dataset (quadplane only): combined (vortex lattice of the surfaces plus the
+#   AeroBuildup bodies, default) or aerobuildup (AeroBuildup of the whole airplane). Change it, run generate, then build again.
 wings: [wing_main, htail, fin]
 bodies: [fuselage, tail_boom]
 propeller: prop_cruise
@@ -18,3 +20,4 @@ cruise_speed_output: cruise_speed_laps
 alpha_deg: [-4, -2, 0, 2, 4, 6, 8, 10, 12]
 # altitude_m: the altitude of the flight state. 0 is ISA sea level, the air of the Proptimiser and Propalyser tables.
 altitude_m: 0.0
+aero_method: combined

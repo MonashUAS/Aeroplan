@@ -243,6 +243,21 @@ def test_datum_warns_when_the_geometry_is_newer_than_the_aero_model():
     assert [c.status for c in rep.checks] == ["warn"] and "t@0.1.0" in rep.checks[0].source and rep.ok
 
 
+def test_datum_names_the_tool_of_the_aero_model_in_its_warning():
+    doc = make_doc()
+    air = adh_doc.node(doc, "1.2")
+    aid = "asset:sha256:" + "a" * 64
+    assets.register(doc).append({"id": aid, "kind": "dataset", "name": "aero.t", "role": "aero model", "tool": "AeroSandbox",
+                                 "media_type": "application/json", "size": 2, "built_against": "t@0.1.0"})
+    assets.set_item_dataset(air, "aero", aid)
+    adh_doc.find(doc, "htail")["muas"]["geometry_tool"] = "flow5"
+    rep = datum.DatumReport()
+    datum._geometry_age(rep, doc, air)
+    assert [c.status for c in rep.checks] == ["warn"]
+    assert "comes from AeroSandbox" in rep.checks[0].source and "generate AeroSandbox" in rep.checks[0].source
+    assert "flow5 sweep" not in rep.checks[0].source
+
+
 # ----------------------------------------------------------------------------------------------- OpenVSP needed
 @needs_openvsp
 def test_openvsp_version():

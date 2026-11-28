@@ -19,8 +19,8 @@ sizing = [
     "aerosandbox==4.2.9", "matplotlib", "plotly", "pandas",
     "jupyterlab", "ipykernel", "ipywidgets", "anywidget", "nbformat", "nbclient", "nbconvert",
 ]
-# prop: Proptimiser, pushed commit 711ef86 (the geometric scale). The repository is private: git needs a sign-in with
-# read access. Proptimiser needs Python 3.12 or newer.
+# prop: Proptimiser, commit 711ef86 (the geometric scale). A public repository: pip needs no sign-in.
+# Proptimiser needs Python 3.12 or newer.
 prop = ["proptimiser @ git+https://github.com/MonashUAS/Propcalc-2_prop-er_faster_stronger.git@711ef86 ; python_version >= '3.12'"]
 # dev: the checks that CI runs (ruff, the tests, the duplicate-code report)
 dev = ["pytest", "ruff", "pylint", "pre-commit"]
